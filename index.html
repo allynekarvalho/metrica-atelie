@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Métrica Ateliê</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:"DM Sans",sans-serif;background:#F5F5F5;color:#0A0A0A;padding-bottom:80px}
+header{background:#0A0A0A;padding:18px 20px 0;position:sticky;top:0;z-index:100}
+.hl{display:flex;align-items:center;gap:12px;padding-bottom:14px;border-bottom:1px solid #2E2E2E}
+.hl img{height:40px}
+.ht h1{font-family:"Cormorant Garamond",serif;font-size:17px;font-weight:300;color:#fff;letter-spacing:3px;text-transform:uppercase}
+.ht p{font-size:10px;color:#B8B8B8;letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
+.tabs{display:flex}
+.tab{flex:1;padding:11px 4px;border:none;background:transparent;color:#6B6B6B;font-family:"DM Sans",sans-serif;font-size:11px;font-weight:500;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent}
+.tab.active{color:#fff;border-bottom-color:#fff}
+.sc{display:none;padding:20px}.sc.active{display:block}
+.stitle{font-family:"Cormorant Garamond",serif;font-size:22px;font-weight:300;letter-spacing:1px;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #fff;color:#fff}
+.fg{margin-bottom:14px}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{display:block;font-size:10px;font-weight:600;color:#6B6B6B;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px}
+input,textarea,select{width:100%;padding:12px 14px;border:1px solid #E8E8E8;border-radius:6px;font-family:"DM Sans",sans-serif;font-size:15px;color:#0A0A0A;background:#fff;outline:none;-webkit-appearance:none;appearance:none}
+input:focus,select:focus{border-color:#0A0A0A}
+.vw{position:relative}.vp{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;color:#B8B8B8;pointer-events:none}.vi{padding-left:32px!important}
+.btn-p{width:100%;padding:15px;background:#0A0A0A;color:#fff;border:none;border-radius:6px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-top:4px}
+.btn-s{width:100%;padding:13px;background:transparent;color:#0A0A0A;border:1px solid #E8E8E8;border-radius:6px;font-family:"DM Sans",sans-serif;font-size:13px;cursor:pointer;margin-top:8px}
+.btn-outline{padding:8px 16px;background:transparent;color:#fff;border:1px solid #fff;border-radius:6px;font-family:"DM Sans",sans-serif;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:.5px}
+.stags{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:8px}
+.stag{padding:7px 12px;border:1px solid #E8E8E8;border-radius:20px;font-size:12px;color:#2E2E2E;cursor:pointer;background:#fff;white-space:nowrap}
+.stag.sel{background:#0A0A0A;color:#fff;border-color:#0A0A0A}
+.dinfo{font-size:11px;color:#2E5E2E;margin-top:5px;display:none}
+.btn-foto{width:100%;padding:12px;background:#F5F5F5;color:#0A0A0A;border:1px dashed #B8B8B8;border-radius:6px;font-family:"DM Sans",sans-serif;font-size:13px;cursor:pointer;text-align:center}
+.filtros{display:flex;gap:7px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px}
+.filtro{white-space:nowrap;padding:7px 13px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid #E8E8E8;background:#fff;color:#6B6B6B;cursor:pointer}
+.filtro.ativo{background:#0A0A0A;color:#fff;border-color:#0A0A0A}
+.cli-item{background:#fff;border-radius:8px;margin-bottom:8px;border:1px solid #E8E8E8;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer}
+.cli-nome{font-family:"Cormorant Garamond",serif;font-size:19px;font-weight:400}
+.cli-meta{font-size:11px;color:#6B6B6B;margin-top:2px}
+.cli-arrow{font-size:14px;color:#B8B8B8}
+.perfil-header{background:#0A0A0A;color:#fff;padding:20px;margin:-20px -20px 20px -20px}
+.perfil-nome{font-family:"Cormorant Garamond",serif;font-size:26px;font-weight:300;letter-spacing:1px;margin-bottom:4px}
+.perfil-meta{font-size:11px;color:#B8B8B8;letter-spacing:.5px}
+.perfil-acoes{display:flex;gap:8px;margin-top:14px}
+.btn-perfil{padding:9px 16px;border-radius:6px;font-family:"DM Sans",sans-serif;font-size:12px;font-weight:600;cursor:pointer;border:none;letter-spacing:.5px}
+.btn-perfil.branco{background:#fff;color:#0A0A0A}
+.btn-perfil.outline{background:transparent;color:#fff;border:1px solid #fff}
+.ftabs{display:flex;background:#F5F5F5;border-bottom:1px solid #E8E8E8;margin:0 -20px;padding:0 20px}
+.ftab{flex:1;padding:10px 4px;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;text-align:center;cursor:pointer;border:none;background:transparent;color:#6B6B6B;border-bottom:2px solid transparent;font-family:"DM Sans",sans-serif}
+.ftab.active{color:#0A0A0A;border-bottom-color:#0A0A0A}
+.fpanel{display:none;padding-top:16px}.fpanel.active{display:block}
+.eg{border:1px solid #E8E8E8;border-radius:8px;margin-bottom:12px;overflow:hidden;background:#fff}
+.ehdr{display:flex;justify-content:space-between;padding:10px 14px;background:#F5F5F5;border-bottom:1px solid #E8E8E8}
+.edata{font-size:12px;font-weight:600;color:#2E2E2E}
+.eres{font-size:11px;color:#6B6B6B}
+.pi{padding:12px 14px;border-bottom:1px solid #F5F5F5;display:flex;justify-content:space-between;gap:10px}
+.pi:last-child{border-bottom:none}
+.pin{flex:1}
+.pn{font-size:14px;font-weight:500;margin-bottom:3px}
+.ps{font-size:12px;color:#6B6B6B;margin-bottom:2px}
+.pc{font-size:11px;color:#B8B8B8}
+.pd{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:90px}
+.pv{font-size:14px;font-weight:600}
+.pco{font-size:10px;color:#6B6B6B}
+.pfoto{width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid #E8E8E8;margin-bottom:6px;cursor:pointer}
+.badge{font-size:9px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:.8px;text-transform:uppercase;white-space:nowrap}
+.badge.urgente{background:#FDE8E8;color:#8B0000}
+.badge.aguardando{background:#E8E8E8;color:#6B6B6B}
+.badge.em-andamento{background:#FEF9E7;color:#6B5500}
+.badge.pronto{background:#E8F5E8;color:#2E5E2E}
+.badge.entregue{background:#E8E8E8;color:#B8B8B8}
+.pac{display:flex;gap:6px;padding:8px 14px 10px;flex-wrap:wrap}
+.bm{padding:7px 11px;border-radius:4px;font-size:11px;font-weight:600;border:1px solid #E8E8E8;background:#fff;color:#2E2E2E;cursor:pointer;font-family:"DM Sans",sans-serif}
+.bm.vd{background:#E8F5E8;color:#2E5E2E;border-color:#C5E0C5}
+.bm.vm{background:#FDE8E8;color:#8B0000;border-color:#F5C5C5}
+.etot{padding:10px 14px;background:#0A0A0A;color:#fff;display:flex;justify-content:space-between;font-size:12px;font-weight:600}
+.sbox{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid #E8E8E8;border-radius:8px;overflow:hidden;margin-bottom:14px;background:#fff}
+.si{padding:14px 10px;text-align:center;border-right:1px solid #E8E8E8}
+.si:last-child{border-right:none}
+.sn{font-family:"Cormorant Garamond",serif;font-size:19px;font-weight:400;margin-bottom:3px}
+.sl{font-size:9px;color:#6B6B6B;text-transform:uppercase;letter-spacing:.8px}
+.pgl{background:#fff;border:1px solid #E8E8E8;border-radius:8px;overflow:hidden;margin-bottom:12px}
+.pgi{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-bottom:1px solid #F5F5F5;font-size:13px}
+.pgi:last-child{border-bottom:none}
+.pgv{font-weight:600;color:#2E5E2E}
+.pgd{font-size:11px;color:#6B6B6B}
+.rp{background:#fff;border:1px solid #E8E8E8;border-radius:8px;padding:14px}
+.rpl{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6B6B6B;margin-bottom:10px}
+.rpw{display:flex;gap:8px}
+.rg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.rc{background:#fff;border-radius:8px;padding:16px;border:1px solid #E8E8E8}
+.rn{font-family:"Cormorant Garamond",serif;font-size:36px;font-weight:300;line-height:1;margin-bottom:4px}
+.rl{font-size:10px;color:#6B6B6B;letter-spacing:1px;text-transform:uppercase}
+.cb{background:#fff;border-radius:8px;border:1px solid #E8E8E8;margin-bottom:10px;overflow:hidden}
+.ct{padding:11px 14px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#6B6B6B;background:#F5F5F5;border-bottom:1px solid #E8E8E8}
+.cp{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #F5F5F5;font-size:13px}
+.mov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:flex-end}
+.mov.open{display:flex}
+.mo{background:#fff;width:100%;border-radius:16px 16px 0 0;padding:0 20px 40px;max-height:90vh;overflow-y:auto}
+.mh{width:36px;height:3px;background:#E8E8E8;border-radius:2px;margin:14px auto 18px}
+.mo h2{font-family:"Cormorant Garamond",serif;font-size:22px;font-weight:300;margin-bottom:4px}
+.msub{font-size:12px;color:#6B6B6B;margin-bottom:18px}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.sb{padding:15px;border-radius:8px;border:1px solid #E8E8E8;background:#fff;cursor:pointer;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:500;color:#0A0A0A;text-align:center}
+.sb .ico{font-size:22px;display:block;margin-bottom:5px}
+.wbox{background:#F5F5F5;border-radius:8px;padding:13px;font-size:14px;line-height:1.7;color:#0A0A0A;margin-bottom:12px;white-space:pre-line;border:1px solid #E8E8E8}
+.wbtn{width:100%;padding:14px;background:#25D366;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;font-family:"DM Sans",sans-serif;margin-bottom:10px}
+.vz{text-align:center;padding:40px 20px;color:#6B6B6B}
+.vi2{font-size:36px;display:block;margin-bottom:10px;opacity:.4}
+.loading{text-align:center;padding:30px;color:#6B6B6B;font-size:13px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0A0A0A;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:999;display:none}
+.foto-preview{width:100%;border-radius:8px;margin-top:8px;border:1px solid #E8E8E8;display:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="hl">
+    <img src="data:image/jpeg;base64,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" alt="Métrica">
+    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê</p></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="goTab('clientes',this)">Clientes</button>
+    <button class="tab" onclick="goTab('resumo',this)">Resumo</button>
+  </div>
+</header>
+<div class="toast" id="toast"></div>
+<div class="sc active" id="tela-clientes">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #fff">
+    <p class="stitle" style="margin:0;border:none;padding:0;color:#fff">Clientes</p>
+    <button class="btn-outline" onclick="abrirNovaCli()">+ Nova cliente</button>
+  </div>
+  <div class="filtros">
+    <button class="filtro ativo" onclick="filtrar('todos',this)">Todas</button>
+    <button class="filtro" onclick="filtrar('urgente',this)">🔴 Urgentes</button>
+    <button class="filtro" onclick="filtrar('aguardando',this)">Aguardando</button>
+    <button class="filtro" onclick="filtrar('em-andamento',this)">Em andamento</button>
+    <button class="filtro" onclick="filtrar('pronto',this)">Prontas</button>
+    <button class="filtro" onclick="filtrar('entregue',this)">Entregues</button>
+  </div>
+  <div id="lista-cli"></div>
+</div>
+<div class="sc" id="tela-perfil">
+  <div class="perfil-header">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div class="perfil-nome" id="p-nome"></div>
+        <div class="perfil-meta" id="p-meta"></div>
+      </div>
+      <button onclick="voltarClientes()" style="background:transparent;border:none;color:#B8B8B8;font-size:22px;cursor:pointer;padding:0">←</button>
+    </div>
+    <div class="perfil-acoes">
+      <button class="btn-perfil branco" onclick="abrirNovaPeca()">+ Nova peça</button>
+      <button class="btn-perfil outline" onclick="copiarLinkPortal()">🔗 Link cliente</button>
+    </div>
+  </div>
+  <div class="ftabs">
+    <button class="ftab active" id="ft-p" onclick="mudarFt('p')">Peças</button>
+    <button class="ftab" id="ft-e" onclick="mudarFt('e')">Entregues</button>
+    <button class="ftab" id="ft-f" onclick="mudarFt('f')">💰 Saldo</button>
+  </div>
+  <div class="fpanel active" id="fp-p"></div>
+  <div class="fpanel" id="fp-e"></div>
+  <div class="fpanel" id="fp-f"></div>
+</div>
+<div class="sc" id="tela-resumo">
+  <p class="stitle">Resumo</p>
+  <div class="rg" id="res-n"></div>
+  <div id="res-c"></div>
+</div>
+
+</body>
+</html><!-- MODAL NOVA CLIENTE -->
+<div class="mov" id="mod-ncli">
+  <div class="mo">
+    <div class="mh"></div>
+    <h2>Nova cliente</h2>
+    <div class="fg"><label>Nome</label><input id="ncli-nome" placeholder="Nome completo"></div>
+    <div class="fg"><label>Telefone (opcional)</label><input id="ncli-tel" placeholder="(65) 99999-9999" type="tel"></div>
+    <button class="btn-p" onclick="salvarCli()">Cadastrar cliente</button>
+    <button class="btn-s" onclick="closeMod('mod-ncli')">Cancelar</button>
+  </div>
+</div>
+<!-- MODAL NOVA PEÇA -->
+<div class="mov" id="mod-npeca">
+  <div class="mo">
+    <div class="mh"></div>
+    <h2>Nova peça</h2>
+    <p class="msub" id="npeca-cli-nome"></p>
+    <div class="fg"><label>Peça</label><input id="np-peca" placeholder="Ex: Calça social preta"></div>
+    <div class="fg">
+      <label>Serviço</label>
+      <div class="stags" id="np-stags"></div>
+      <input id="np-serv" placeholder="Serviços selecionados..." readonly style="margin-top:8px">
+      <p class="dinfo" id="np-dinfo"></p>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input id="np-snome" placeholder="+ Novo serviço..." style="flex:2">
+        <div class="vw" style="flex:1"><span class="vp">R$</span><input type="number" id="np-sval" class="vi" placeholder="0" min="0" step="0.01"></div>
+        <button onclick="addServ()" style="padding:0 14px;background:#0A0A0A;color:#fff;border:none;border-radius:6px;font-size:20px;cursor:pointer;flex-shrink:0">+</button>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>Valor (R$)</label><div class="vw"><span class="vp">R$</span><input type="number" id="np-val" class="vi" placeholder="0,00" min="0" step="0.01"></div></div>
+      <div class="fg"><label>Comissão 45%</label><div class="vw"><span class="vp">R$</span><input type="number" id="np-com" class="vi" placeholder="0,00" readonly style="background:#F5F5F5;color:#B8B8B8"></div></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>Costureira</label><select id="np-cos"><option value="">Selecionar...</option><option>Ana</option><option>Maria</option><option>Lucia</option><option>Allyne (eu)</option></select></div>
+      <div class="fg"><label>Prazo</label><input type="date" id="np-prazo"></div>
+    </div>
+    <div class="fg"><label>Prioridade</label><select id="np-prio"><option value="aguardando">Normal</option><option value="urgente">🔴 Urgente</option></select></div>
+    <div class="fg">
+      <label>📸 Foto da peça</label>
+      <input type="file" id="np-cam" accept="image/*" capture="environment" style="display:none" onchange="fotoSelecionada(this)">
+      <button class="btn-foto" onclick="document.getElementById('np-cam').click()">📷 Tirar foto</button>
+      <img id="np-prev" class="foto-preview">
+      <p id="np-foto-status" style="font-size:11px;color:#6B6B6B;margin-top:5px;display:none"></p>
+    </div>
+    <button class="btn-p" id="btn-salvar-peca" onclick="salvarPeca()">Registrar peça</button>
+    <button class="btn-s" onclick="closeMod('mod-npeca')">Cancelar</button>
+  </div>
+</div>
+<!-- MODAL STATUS -->
+<div class="mov" id="mod-st">
+  <div class="mo">
+    <div class="mh"></div>
+    <h2 id="mst-cli"></h2><p class="msub" id="mst-peca"></p>
+    <div class="sg">
+      <button class="sb" onclick="setStatus('aguardando')"><span class="ico">⏳</span>Aguardando</button>
+      <button class="sb" onclick="setStatus('em-andamento')"><span class="ico">🪡</span>Em andamento</button>
+      <button class="sb" onclick="setStatus('pronto')"><span class="ico">✅</span>Pronto</button>
+      <button class="sb" onclick="setStatus('entregue')"><span class="ico">🎁</span>Entregue</button>
+    </div>
+    <button class="btn-s" onclick="closeMod('mod-st')">Cancelar</button>
+  </div>
+</div>
+<!-- MODAL WHATSAPP -->
+<div class="mov" id="mod-wpp">
+  <div class="mo">
+    <div class="mh"></div>
+    <h2>Avisar cliente</h2><p class="msub" id="mw-cli"></p>
+    <div class="wbox" id="mw-txt"></div>
+    <button class="wbtn" onclick="sendWpp()">📲 Abrir WhatsApp</button>
+    <button class="btn-s" onclick="closeMod('mod-wpp')">Fechar</button>
+  </div>
+</div>
+<script>
+var SUPA_URL = "https://trzjmdrwjqvuzbzbxbhu.supabase.co";
+var SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyemptZHJ3anF2dXpiemJ4Ymh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDIyOTAsImV4cCI6MjA5ODg3ODI5MH0.YtZIGWAzpKdHrTdvtwUIRsRYJy5Yvxyn7q3GX_s-uLg";
+var FILTRO = "todos";
+var CLI_ATIVA = null;
+var CLI_ATIVA_ID = null;
+var PECA_ATIVA = null;
+var SEL = [];
+var FOTO_FILE = null;
+var EXTRAS = JSON.parse(localStorage.getItem("metrica_extras") || "[]");
+var SVC_BASE = [
+  {n:"Barra de calça",v:70},{n:"Barra de vestido festa",v:140},
+  {n:"Ajuste cós jeans",v:80},{n:"Ajuste cós simples",v:70},
+  {n:"Ajuste lateral vestido forrado",v:90},{n:"Alças",v:50}
+];
+function allSvc(){ return SVC_BASE.concat(EXTRAS); }
+async function supa(path, opts) {
+  var url = SUPA_URL + "/rest/v1/" + path;
+  var headers = {
+    "apikey": SUPA_KEY,
+    "Authorization": "Bearer " + SUPA_KEY,
+    "Content-Type": "application/json",
+    "Prefer": opts && opts.prefer ? opts.prefer : "return=representation"
+  };
+  var res = await fetch(url, {
+    method: opts && opts.method ? opts.method : "GET",
+    headers: headers,
+    body: opts && opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  if (!res.ok) {
+    var err = await res.text();
+    throw new Error(err);
+  }
+  var text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+async function uploadFoto(file, pecaId) {
+  var ext = file.name.split(".").pop() || "jpg";
+  var path = pecaId + "." + ext;
+  var url = SUPA_URL + "/storage/v1/object/fotos-pecas/" + path;
+  var res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "apikey": SUPA_KEY,
+      "Authorization": "Bearer " + SUPA_KEY,
+      "Content-Type": file.type,
+      "x-upsert": "true"
+    },
+    body: file
+  });
+  if (!res.ok) throw new Error("Erro ao enviar foto");
+  return SUPA_URL + "/storage/v1/object/public/fotos-pecas/" + path;
+}
+function showToast(msg) {
+  var t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.display = "block";
+  setTimeout(function(){ t.style.display = "none"; }, 3000);
+}
+function slbl(s){ return {urgente:"Urgente",aguardando:"Aguardando","em-andamento":"Em andamento",pronto:"Pronto",entregue:"Entregue"}[s]||s; }
+function fdata(d){ if(!d)return""; return new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}); }
+function fval(v){ if(!v&&v!==0)return"—"; return "R$ "+Number(v).toFixed(2).replace(".",","); }
+function initSvc(){
+  var c = document.getElementById("np-stags");
+  c.innerHTML = allSvc().map(function(s,i){
+    return "<button class='stag' data-i='"+i+"' onclick='togSvc("+i+")'>"+s.n+"</button>";
+  }).join("");
+}
+function togSvc(i){
+  var s = allSvc()[i];
+  var btn = document.querySelector(".stag[data-i='"+i+"']");
+  var idx = SEL.findIndex(function(x){ return x.n===s.n; });
+  if(idx>=0){ SEL.splice(idx,1); btn.classList.remove("sel"); }
+  else{ SEL.push({n:s.n,v:s.v}); btn.classList.add("sel"); }
+  updSvc();
+}
+function updSvc(){
+  document.getElementById("np-serv").value = SEL.map(function(s){ return s.n; }).join(" + ");
+  var sub = SEL.reduce(function(t,s){ return t+s.v; },0);
+  var d = SEL.length===2?0.03:SEL.length>=3?0.05:0;
+  var tot = +(sub*(1-d)).toFixed(2);
+  document.getElementById("np-val").value = tot>0?tot:"";
+  calcCom();
+  var inf = document.getElementById("np-dinfo");
+  if(d>0){ inf.style.display="block"; inf.textContent="Desconto "+(d*100)+"% aplicado"; }
+  else{ inf.style.display="none"; }
+}
+function addServ(){
+  var n = document.getElementById("np-snome").value.trim();
+  var v = parseFloat(document.getElementById("np-sval").value)||0;
+  if(!n){ alert("Digite o nome."); return; }
+  EXTRAS.push({n:n,v:v});
+  localStorage.setItem("metrica_extras", JSON.stringify(EXTRAS));
+  document.getElementById("np-snome").value="";
+  document.getElementById("np-sval").value="";
+  initSvc();
+}
+function calcCom(){
+  var v = parseFloat(document.getElementById("np-val").value)||0;
+  document.getElementById("np-com").value = (v*0.45).toFixed(2);
+}
+function fotoSelecionada(inp){
+  if(!inp.files||!inp.files[0]) return;
+  FOTO_FILE = inp.files[0];
+  var r = new FileReader();
+  r.onload = function(e){
+    var img = document.getElementById("np-prev");
+    img.src = e.target.result;
+    img.style.display = "block";
+    var st = document.getElementById("np-foto-status");
+    st.textContent = "📸 Foto pronta para enviar";
+    st.style.display = "block";
+    st.style.color = "#2E5E2E";
+  };
+  r.readAsDataURL(inp.files[0]);
+}
+function goTab(t,btn){
+  document.querySelectorAll(".sc").forEach(function(s){ s.classList.remove("active"); });
+  document.querySelectorAll(".tab").forEach(function(b){ b.classList.remove("active"); });
+  document.getElementById("tela-"+t).classList.add("active");
+  if(btn) btn.classList.add("active");
+  if(t==="clientes") renderLista();
+  if(t==="resumo") renderRes();
+}
+async function renderLista(){
+  var cont = document.getElementById("lista-cli");
+  cont.innerHTML = "<div class='loading'>Carregando...</div>";
+  try {
+    var clientes = await supa("clientes?select=*,pecas(status)&order=nome");
+    if(!clientes||!clientes.length){
+      cont.innerHTML = "<div class='vz'><span class='vi2'>🧵</span>Nenhuma cliente cadastrada.</div>";
+      return;
+    }
+    if(FILTRO!=="todos"){
+      clientes = clientes.filter(function(c){
+        return c.pecas && c.pecas.some(function(p){ return p.status===FILTRO; });
+      });
+    }
+    cont.innerHTML = clientes.map(function(c){
+      var total = c.pecas ? c.pecas.length : 0;
+      var ativas = c.pecas ? c.pecas.filter(function(p){ return p.status!=="entregue"; }).length : 0;
+      var temUrg = c.pecas && c.pecas.some(function(p){ return p.status==="urgente"; });
+      return "<div class='cli-item' data-id='"+c.id+"' data-nome='"+c.nome.replace(/'/g,"&#39;")+"' onclick='abrirPerfil(this.dataset.id,this.dataset.nome)'>" +
+        "<div><div class='cli-nome'>"+(temUrg?"🔴 ":"")+c.nome+"</div><div class='cli-meta'>"+ativas+" ativa"+(ativas!==1?"s":"")+" · "+total+" total</div></div>" +
+        "<span class='cli-arrow'>›</span></div>";
+    }).join("");
+  } catch(e) {
+    cont.innerHTML = "<div class='vz'>Erro ao carregar: "+e.message+"</div>";
+  }
+}
+function filtrar(f,btn){
+  FILTRO=f;
+  document.querySelectorAll(".filtro").forEach(function(x){ x.classList.remove("ativo"); });
+  btn.classList.add("ativo");
+  renderLista();
+}
+function abrirPerfil(id, nome){
+  CLI_ATIVA_ID = id;
+  CLI_ATIVA = nome;
+  document.getElementById("p-nome").textContent = nome;
+  document.getElementById("p-meta").textContent = "carregando...";
+  document.querySelectorAll(".sc").forEach(function(s){ s.classList.remove("active"); });
+  document.getElementById("tela-perfil").classList.add("active");
+  mudarFt("p");
+  renderPerfil();
+}
+function voltarClientes(){
+  CLI_ATIVA = null; CLI_ATIVA_ID = null;
+  goTab("clientes", document.querySelector(".tab"));
+}
+function mudarFt(tab){
+  ["p","e","f"].forEach(function(t){
+    document.getElementById("fp-"+t).classList.remove("active");
+    document.getElementById("ft-"+t).classList.remove("active");
+  });
+  document.getElementById("fp-"+tab).classList.add("active");
+  document.getElementById("ft-"+tab).classList.add("active");
+  if(tab==="f") renderFinanceiro();
+}
+async function renderPerfil(){
+  document.getElementById("fp-p").innerHTML = "<div class='loading'>Carregando...</div>";
+  document.getElementById("fp-e").innerHTML = "<div class='loading'>Carregando...</div>";
+  try {
+    var pecas = await supa("pecas?cliente_id=eq."+CLI_ATIVA_ID+"&order=data_entrada.desc,criado_em.desc");
+    var ativas = pecas.filter(function(p){ return p.status!=="entregue"; });
+    var entregues = pecas.filter(function(p){ return p.status==="entregue"; });
+    document.getElementById("p-meta").textContent = ativas.length+" peça"+(ativas.length!==1?"s":"")+" ativa"+(ativas.length!==1?"s":"")+" · "+pecas.length+" total";
+    document.getElementById("fp-p").innerHTML = mkEntradasHTML(ativas, true) || "<div class='vz'><span class='vi2'>✅</span>Tudo entregue!</div>";
+    document.getElementById("fp-e").innerHTML = mkEntradasHTML(entregues, false) || "<div class='vz'><span class='vi2'>📦</span>Nenhuma entregue.</div>";
+  } catch(e) {
+    document.getElementById("fp-p").innerHTML = "<div class='vz'>Erro: "+e.message+"</div>";
+  }
+}
+function mkEntradasHTML(pecas, comAcoes){
+  if(!pecas.length) return "";
+  var porData = {};
+  pecas.forEach(function(p){
+    var d = p.data_entrada || "—";
+    if(!porData[d]) porData[d]=[];
+    porData[d].push(p);
+  });
+  var datas = Object.keys(porData).sort(function(a,b){ return b.localeCompare(a); });
+  return datas.map(function(d){
+    var pp = porData[d];
+    var tot = pp.reduce(function(s,p){ return s+(p.valor||0); },0);
+    var df = new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
+    return "<div class='eg'><div class='ehdr'><span class='edata'>📅 "+df+"</span><span class='eres'>"+pp.length+" peça"+(pp.length>1?"s":"")+"</span></div>"+
+      pp.map(function(p){ return mkPecaHTML(p, comAcoes); }).join("")+
+      (comAcoes&&tot>0?"<div class='etot'><span>Total entrada</span><span>"+fval(tot)+"</span></div>":"")+
+    "</div>";
+  }).join("");
+}
+function mkPecaHTML(p, comAcoes){
+  var fotoHTML = p.foto_url ? "<img src='"+p.foto_url+"' class='pfoto' data-url='"+p.foto_url+"' onclick='verFoto(this.dataset.url)'>" : "";
+  var html = "<div class='pi'><div class='pin'>"+fotoHTML+"<div class='pn'>"+p.peca+"</div><div class='ps'>"+(p.servico||"—")+"</div><div class='pc'>"+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div></div><div class='pd'><span class='badge "+p.status+"'>"+slbl(p.status)+"</span><div class='pv'>"+fval(p.valor)+"</div><div class='pco'>Com.: "+fval(p.comissao)+"</div></div></div>";
+  if(comAcoes){
+    var id = p.id;
+    var acoes = "<button class='bm' data-id='"+id+"' data-peca='"+p.peca+"' data-serv='"+(p.servico||"")+"' onclick='abrirSt(this)'>Status</button>";
+    if(p.status==="urgente") acoes += "<button class='bm' data-id='"+id+"' onclick='togUrg(this)' style='background:#FDE8E8;color:#8B0000'>✕ Urgente</button>";
+    else acoes += "<button class='bm vm' data-id='"+id+"' onclick='togUrg(this)'>🔴 Urgente</button>";
+    if(p.status==="pronto") acoes += "<button class='bm vd' data-id='"+id+"' data-val='"+p.valor+"' onclick='abrirWpp(this)'>Avisar</button>";
+    acoes += "<button class='bm' data-id='"+id+"' onclick='excluirPeca(this)' style='color:#B8B8B8'>Excluir</button>";
+    html += "<div class='pac'>"+acoes+"</div>";
+  }
+  return "<div>"+html+"</div>";
+}
+function verFoto(url){
+  window.open(url, "_blank");
+}
+async function renderFinanceiro(){
+  document.getElementById("fp-f").innerHTML = "<div class='loading'>Carregando...</div>";
+  try {
+    var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
+    var pecas = await supa("pecas?cliente_id=eq."+CLI_ATIVA_ID);
+    var pags = await supa("pagamentos?cliente_id=eq."+CLI_ATIVA_ID+"&order=criado_em.desc");
+    var saldoAnt = (cli[0]&&cli[0].saldo_anterior)||0;
+    var totP = pecas.reduce(function(s,p){ return s+(p.valor||0); },0) + saldoAnt;
+    var totPg = pags.reduce(function(s,p){ return s+p.valor; },0);
+    var saldo = totP-totPg;
+    var cor = saldo>0?"#8B0000":"#2E5E2E";
+    var saldoAntHTML = saldoAnt>0
+      ? "<div style='background:#FEF9E7;border:1px solid #E8E8E8;border-radius:8px;padding:12px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center'><div><div style='font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6B5500;margin-bottom:2px'>Saldo em aberto anterior</div><div style='font-size:16px;font-weight:600;color:#6B5500'>"+fval(saldoAnt)+"</div></div><button onclick='editarSaldoAnt()' style='font-size:11px;color:#6B5500;border:1px solid #E8D48A;background:#FEF9E7;border-radius:4px;padding:5px 10px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600'>Editar</button></div>"
+      : "<div style='background:#F5F5F5;border:1px solid #E8E8E8;border-radius:8px;padding:12px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center'><div style='font-size:12px;color:#6B6B6B'>Nenhum saldo anterior</div><button onclick='editarSaldoAnt()' style='font-size:11px;color:#0A0A0A;border:1px solid #E8E8E8;background:#fff;border-radius:4px;padding:5px 10px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600'>+ Adicionar</button></div>";
+    var pgHTML = pags.length
+      ? "<div class='pgl'>"+pags.map(function(p){ return "<div class='pgi'><div><div class='pgv'>+ "+fval(p.valor)+"</div><div class='pgd'>"+(p.data||"")+(p.observacao?" · "+p.observacao:"")+"</div></div><button data-id='"+p.id+"' onclick='excluirPag(this)' style='font-size:11px;color:#B8B8B8;border:none;background:none;cursor:pointer'>✕</button></div>"; }).join("")+"</div>"
+      : "<div class='pgl'><div style='padding:16px;font-size:13px;color:#6B6B6B'>Nenhum pagamento registrado.</div></div>";
+    document.getElementById("fp-f").innerHTML =
+      saldoAntHTML+
+      "<div class='sbox'><div class='si'><div class='sn'>"+fval(totP)+"</div><div class='sl'>Total c/ saldo ant.</div></div><div class='si'><div class='sn' style='color:#2E5E2E'>"+fval(totPg)+"</div><div class='sl'>Pago</div></div><div class='si'><div class='sn' style='color:"+cor+"'>"+fval(saldo)+"</div><div class='sl'>Saldo</div></div></div>"+
+      pgHTML+
+      "<div class='rp'><div class='rpl'>Registrar pagamento</div><div class='rpw'><div class='vw' style='flex:1'><span class='vp'>R$</span><input type='number' id='pv-inp' class='vi' placeholder='0,00' min='0' step='0.01' style='width:100%'></div><input id='po-inp' placeholder='Obs.' style='flex:1;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;font-family:DM Sans,sans-serif'><button onclick='regPag()' style='padding:0 14px;background:#0A0A0A;color:#fff;border:none;border-radius:6px;font-size:18px;cursor:pointer'>✓</button></div></div>";
+  } catch(e){
+    document.getElementById("fp-f").innerHTML = "<div class='vz'>Erro: "+e.message+"</div>";
+  }
+}
+async function editarSaldoAnt(){
+  var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
+  var atual = (cli[0]&&cli[0].saldo_anterior)||0;
+  var val = prompt("Saldo em aberto anterior de "+CLI_ATIVA+":", atual);
+  if(val===null) return;
+  var num = parseFloat(val)||0;
+  await supa("clientes?id=eq."+CLI_ATIVA_ID, {method:"PATCH", body:{saldo_anterior:num}});
+  renderFinanceiro();
+}
+async function regPag(){
+  var val = parseFloat(document.getElementById("pv-inp").value)||0;
+  var obs = document.getElementById("po-inp").value.trim();
+  if(!val){ alert("Digite o valor."); return; }
+  var hoje = new Date().toISOString().split("T")[0];
+  await supa("pagamentos", {method:"POST", body:{cliente_id:CLI_ATIVA_ID, cliente_nome:CLI_ATIVA, valor:val, observacao:obs, data:hoje}});
+  showToast("Pagamento registrado!");
+  renderFinanceiro();
+}
+async function excluirPag(btn){
+  if(!confirm("Excluir pagamento?")) return;
+  var id = btn.dataset.id;
+  await supa("pagamentos?id=eq."+id, {method:"DELETE", prefer:"return=minimal"});
+  renderFinanceiro();
+}
+function abrirNovaCli(){
+  document.getElementById("ncli-nome").value="";
+  document.getElementById("ncli-tel").value="";
+  document.getElementById("mod-ncli").classList.add("open");
+}
+async function salvarCli(){
+  var nome = document.getElementById("ncli-nome").value.trim();
+  var tel = document.getElementById("ncli-tel").value.trim();
+  if(!nome){ alert("Digite o nome."); return; }
+  try {
+    var res = await supa("clientes", {method:"POST", body:{nome:nome, telefone:tel, saldo_anterior:0}});
+    closeMod("mod-ncli");
+    showToast("Cliente cadastrada!");
+    if(res&&res[0]) abrirPerfil(res[0].id, res[0].nome);
+  } catch(e){ alert("Erro: "+e.message); }
+}
+function abrirNovaPeca(){
+  SEL=[];
+  FOTO_FILE=null;
+  initSvc();
+  document.getElementById("npeca-cli-nome").textContent = CLI_ATIVA;
+  ["np-peca","np-serv","np-val","np-com","np-prazo"].forEach(function(id){ document.getElementById(id).value=""; });
+  document.getElementById("np-cos").value="";
+  document.getElementById("np-prio").value="aguardando";
+  document.getElementById("np-prev").style.display="none";
+  document.getElementById("np-foto-status").style.display="none";
+  document.getElementById("np-dinfo").style.display="none";
+  document.querySelectorAll(".stag").forEach(function(t){ t.classList.remove("sel"); });
+  document.getElementById("mod-npeca").classList.add("open");
+}
+async function salvarPeca(){
+  var peca = document.getElementById("np-peca").value.trim();
+  if(!peca){ alert("Preencha o nome da peça."); return; }
+  var btn = document.getElementById("btn-salvar-peca");
+  btn.textContent = "Salvando...";
+  btn.disabled = true;
+  try {
+    var cos = document.getElementById("np-cos").value;
+    var serv = document.getElementById("np-serv").value.trim();
+    var val = parseFloat(document.getElementById("np-val").value)||0;
+    var com = parseFloat(document.getElementById("np-com").value)||0;
+    var prazo = document.getElementById("np-prazo").value||null;
+    var prio = document.getElementById("np-prio").value;
+    var hoje = new Date().toISOString().split("T")[0];
+    var body = {cliente_id:CLI_ATIVA_ID, cliente_nome:CLI_ATIVA, peca:peca, servico:serv, costureira:cos, prazo:prazo, status:prio, valor:val, comissao:com, data_entrada:hoje};
+    var res = await supa("pecas", {method:"POST", body:body});
+    if(FOTO_FILE && res && res[0]){
+      btn.textContent = "Enviando foto...";
+      try {
+        var fotoUrl = await uploadFoto(FOTO_FILE, res[0].id);
+        await supa("pecas?id=eq."+res[0].id, {method:"PATCH", body:{foto_url:fotoUrl}});
+      } catch(fe){ console.warn("Foto não enviada:", fe); }
+    }
+    closeMod("mod-npeca");
+    showToast("Peça registrada!");
+    renderPerfil();
+  } catch(e){ alert("Erro: "+e.message); }
+  btn.textContent = "Registrar peça";
+  btn.disabled = false;
+}
+function abrirSt(btn){
+  PECA_ATIVA = btn.dataset.id;
+  document.getElementById("mst-cli").textContent = CLI_ATIVA;
+  document.getElementById("mst-peca").textContent = btn.dataset.peca+(btn.dataset.serv?" · "+btn.dataset.serv:"");
+  document.getElementById("mod-st").classList.add("open");
+}
+async function setStatus(s){
+  await supa("pecas?id=eq."+PECA_ATIVA, {method:"PATCH", body:{status:s}});
+  closeMod("mod-st");
+  showToast("Status atualizado!");
+  renderPerfil();
+}
+async function togUrg(btn){
+  var id = btn.dataset.id;
+  var p = await supa("pecas?id=eq."+id);
+  var novo = p[0].status==="urgente"?"aguardando":"urgente";
+  await supa("pecas?id=eq."+id, {method:"PATCH", body:{status:novo}});
+  renderPerfil();
+}
+function abrirWpp(btn){
+  var id = btn.dataset.id;
+  var val = btn.dataset.val;
+  document.getElementById("mw-cli").textContent = CLI_ATIVA;
+  var linhas = ["Olá, "+CLI_ATIVA+"! 😊","","Sua peça está pronta e passou pela conferência final.","","👗 "+btn.closest(".pi").querySelector(".pn").textContent+"","✂️ "+(btn.closest(".pi").querySelector(".ps").textContent||"Serviço concluído")];
+  if(val&&parseFloat(val)>0) linhas.push("","💰 Valor: "+fval(parseFloat(val)));
+  linhas.push("","Quando preferir vir retirar? 🌸","","— Métrica Ateliê");
+  document.getElementById("mw-txt").textContent = linhas.join("\n");
+  document.getElementById("mod-wpp").classList.add("open");
+}
+function sendWpp(){
+  var msg = document.getElementById("mw-txt").textContent;
+  window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+}
+async function excluirPeca(btn){
+  if(!confirm("Excluir esta peça?")) return;
+  var id = btn.dataset.id;
+  await supa("pecas?id=eq."+id, {method:"DELETE", prefer:"return=minimal"});
+  showToast("Peça excluída!");
+  renderPerfil();
+}
+async function copiarLinkPortal(){
+  try {
+    var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
+    var token = cli[0]&&cli[0].token_portal;
+    if(!token){ showToast("Token não encontrado."); return; }
+    var link = window.location.origin+"/portal/"+token;
+    await navigator.clipboard.writeText(link);
+    showToast("Link copiado! Cole no WhatsApp.");
+  } catch(e){
+    showToast("Erro ao copiar link.");
+  }
+}
+async function renderRes(){
+  document.getElementById("res-n").innerHTML = "<div class='loading' style='grid-column:1/-1'>Carregando...</div>";
+  try {
+    var pecas = await supa("pecas?select=*");
+    var pags = await supa("pagamentos?select=valor");
+    var at = pecas.filter(function(p){ return p.status!=="entregue"; });
+    var urg = at.filter(function(p){ return p.status==="urgente"; }).length;
+    var and = at.filter(function(p){ return p.status==="em-andamento"; }).length;
+    var prt = at.filter(function(p){ return p.status==="pronto"; }).length;
+    var tg = pecas.reduce(function(s,p){ return s+(p.valor||0); },0);
+    var tp = pags.reduce(function(s,p){ return s+p.valor; },0);
+    var sd = tg-tp;
+    document.getElementById("res-n").innerHTML =
+      "<div class='rc'><div class='rn'>"+at.length+"</div><div class='rl'>Ativas</div></div>"+
+      "<div class='rc'><div class='rn' style='color:#8B0000'>"+urg+"</div><div class='rl'>Urgentes</div></div>"+
+      "<div class='rc'><div class='rn'>"+and+"</div><div class='rl'>Em andamento</div></div>"+
+      "<div class='rc'><div class='rn' style='color:#2E5E2E'>"+prt+"</div><div class='rl'>P/ conferir</div></div>"+
+      "<div class='rc' style='grid-column:1/-1'><div class='rn' style='font-size:24px'>"+fval(tg)+"</div><div class='rl'>Total geral</div></div>"+
+      "<div class='rc'><div class='rn' style='font-size:20px;color:#2E5E2E'>"+fval(tp)+"</div><div class='rl'>Recebido</div></div>"+
+      "<div class='rc'><div class='rn' style='font-size:20px;color:#8B0000'>"+fval(sd)+"</div><div class='rl'>A receber</div></div>";
+    var cos=["Ana","Maria","Lucia","Allyne (eu)"];
+    var h=cos.map(function(c){ var pp=at.filter(function(p){ return p.costureira===c; }); if(!pp.length)return""; return "<div class='cb'><div class='ct'>🪡 "+c+" · "+pp.length+" peça"+(pp.length>1?"s":"")+"</div>"+pp.map(function(p){ return "<div class='cp'><span>"+p.cliente_nome+" · "+p.peca+"</span><span class='badge "+p.status+"'>"+slbl(p.status)+"</span></div>"; }).join("")+"</div>"; }).join("");
+    document.getElementById("res-c").innerHTML=h||"<div class='vz'><span class='vi2'>🎉</span>Tudo em dia!</div>";
+  } catch(e){
+    document.getElementById("res-n").innerHTML = "<div style='grid-column:1/-1;padding:20px;color:red'>Erro: "+e.message+"</div>";
+  }
+}
+function closeMod(id){ document.getElementById(id).classList.remove("open"); }
+document.querySelectorAll(".mov").forEach(function(o){ o.addEventListener("click",function(e){ if(e.target===o)closeMod(o.id); }); });
+document.getElementById("np-val").addEventListener("input", calcCom);
+renderLista();
+
+</script>
