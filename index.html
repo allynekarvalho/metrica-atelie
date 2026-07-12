@@ -631,7 +631,7 @@ async function copiarLinkPortal(){
     var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
     var token = cli[0]&&cli[0].token_portal;
     if(!token){ showToast("Token não encontrado."); return; }
-    var link = window.location.origin+"/portal/"+token;
+    var link = window.location.origin+"/metrica-atelie/portal/"+token;
     await navigator.clipboard.writeText(link);
     showToast("Link copiado! Cole no WhatsApp.");
   } catch(e){
