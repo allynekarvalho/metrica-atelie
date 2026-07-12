@@ -8,7 +8,7 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:"DM Sans",sans-serif;background:#F5F5F5;color:#0A0A0A;padding-bottom:80px}
+body{font-family:"DM Sans",sans-serif;background:#0A0A0A;color:#fff;padding-bottom:80px}
 header{background:#0A0A0A;padding:18px 20px 0;position:sticky;top:0;z-index:100}
 .hl{display:flex;align-items:center;gap:12px;padding-bottom:14px;border-bottom:1px solid #2E2E2E}
 .hl img{height:40px}
@@ -17,8 +17,8 @@ header{background:#0A0A0A;padding:18px 20px 0;position:sticky;top:0;z-index:100}
 .tabs{display:flex}
 .tab{flex:1;padding:11px 4px;border:none;background:transparent;color:#6B6B6B;font-family:"DM Sans",sans-serif;font-size:11px;font-weight:500;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent}
 .tab.active{color:#fff;border-bottom-color:#fff}
-.sc{display:none;padding:20px}.sc.active{display:block}
-.stitle{font-family:"Cormorant Garamond",serif;font-size:22px;font-weight:300;letter-spacing:1px;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #fff;color:#fff}
+.sc{display:none;padding:20px;background:#0A0A0A}.sc.active{display:block}
+.stitle{font-family:"Cormorant Garamond",serif;font-size:22px;font-weight:300;letter-spacing:1px;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #E8E8E8;color:#0A0A0A}
 .fg{margin-bottom:14px}
 .fr{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 label{display:block;font-size:10px;font-weight:600;color:#6B6B6B;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px}
@@ -27,18 +27,18 @@ input:focus,select:focus{border-color:#0A0A0A}
 .vw{position:relative}.vp{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;color:#B8B8B8;pointer-events:none}.vi{padding-left:32px!important}
 .btn-p{width:100%;padding:15px;background:#0A0A0A;color:#fff;border:none;border-radius:6px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-top:4px}
 .btn-s{width:100%;padding:13px;background:transparent;color:#0A0A0A;border:1px solid #E8E8E8;border-radius:6px;font-family:"DM Sans",sans-serif;font-size:13px;cursor:pointer;margin-top:8px}
-.btn-outline{padding:8px 16px;background:transparent;color:#fff;border:1px solid #fff;border-radius:6px;font-family:"DM Sans",sans-serif;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:.5px}
+.btn-outline{padding:8px 16px;background:#0A0A0A;color:#fff;border:1px solid #0A0A0A;border-radius:6px;font-family:"DM Sans",sans-serif;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:.5px}
 .stags{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:8px}
 .stag{padding:7px 12px;border:1px solid #E8E8E8;border-radius:20px;font-size:12px;color:#2E2E2E;cursor:pointer;background:#fff;white-space:nowrap}
 .stag.sel{background:#0A0A0A;color:#fff;border-color:#0A0A0A}
 .dinfo{font-size:11px;color:#2E5E2E;margin-top:5px;display:none}
 .btn-foto{width:100%;padding:12px;background:#F5F5F5;color:#0A0A0A;border:1px dashed #B8B8B8;border-radius:6px;font-family:"DM Sans",sans-serif;font-size:13px;cursor:pointer;text-align:center}
 .filtros{display:flex;gap:7px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px}
-.filtro{white-space:nowrap;padding:7px 13px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid #E8E8E8;background:#fff;color:#6B6B6B;cursor:pointer}
+.filtro{white-space:nowrap;padding:7px 13px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid #2E2E2E;background:#1C1C1C;color:#B8B8B8;cursor:pointer}
 .filtro.ativo{background:#0A0A0A;color:#fff;border-color:#0A0A0A}
-.cli-item{background:#fff;border-radius:8px;margin-bottom:8px;border:1px solid #E8E8E8;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer}
-.cli-nome{font-family:"Cormorant Garamond",serif;font-size:19px;font-weight:400}
-.cli-meta{font-size:11px;color:#6B6B6B;margin-top:2px}
+.cli-item{background:#1C1C1C;border-radius:8px;margin-bottom:8px;border:1px solid #2E2E2E;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer}
+.cli-nome{font-family:"Cormorant Garamond",serif;font-size:19px;font-weight:400;color:#fff}
+.cli-meta{font-size:11px;color:#B8B8B8;margin-top:2px}
 .cli-arrow{font-size:14px;color:#B8B8B8}
 .perfil-header{background:#0A0A0A;color:#fff;padding:20px;margin:-20px -20px 20px -20px}
 .perfil-nome{font-family:"Cormorant Garamond",serif;font-size:26px;font-weight:300;letter-spacing:1px;margin-bottom:4px}
@@ -90,9 +90,9 @@ input:focus,select:focus{border-color:#0A0A0A}
 .rpl{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6B6B6B;margin-bottom:10px}
 .rpw{display:flex;gap:8px}
 .rg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
-.rc{background:#fff;border-radius:8px;padding:16px;border:1px solid #E8E8E8}
-.rn{font-family:"Cormorant Garamond",serif;font-size:36px;font-weight:300;line-height:1;margin-bottom:4px}
-.rl{font-size:10px;color:#6B6B6B;letter-spacing:1px;text-transform:uppercase}
+.rc{background:#1C1C1C;border-radius:8px;padding:16px;border:1px solid #2E2E2E}
+.rn{font-family:"Cormorant Garamond",serif;font-size:36px;font-weight:300;line-height:1;margin-bottom:4px;color:#fff}
+.rl{font-size:10px;color:#B8B8B8;letter-spacing:1px;text-transform:uppercase}
 .cb{background:#fff;border-radius:8px;border:1px solid #E8E8E8;margin-bottom:10px;overflow:hidden}
 .ct{padding:11px 14px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#6B6B6B;background:#F5F5F5;border-bottom:1px solid #E8E8E8}
 .cp{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #F5F5F5;font-size:13px}
@@ -107,9 +107,9 @@ input:focus,select:focus{border-color:#0A0A0A}
 .sb .ico{font-size:22px;display:block;margin-bottom:5px}
 .wbox{background:#F5F5F5;border-radius:8px;padding:13px;font-size:14px;line-height:1.7;color:#0A0A0A;margin-bottom:12px;white-space:pre-line;border:1px solid #E8E8E8}
 .wbtn{width:100%;padding:14px;background:#25D366;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;font-family:"DM Sans",sans-serif;margin-bottom:10px}
-.vz{text-align:center;padding:40px 20px;color:#6B6B6B}
+.vz{text-align:center;padding:40px 20px;color:#B8B8B8}
 .vi2{font-size:36px;display:block;margin-bottom:10px;opacity:.4}
-.loading{text-align:center;padding:30px;color:#6B6B6B;font-size:13px}
+.loading{text-align:center;padding:30px;color:#B8B8B8;font-size:13px}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0A0A0A;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:999;display:none}
 .foto-preview{width:100%;border-radius:8px;margin-top:8px;border:1px solid #E8E8E8;display:none}
 </style>
@@ -127,7 +127,7 @@ input:focus,select:focus{border-color:#0A0A0A}
 </header>
 <div class="toast" id="toast"></div>
 <div class="sc active" id="tela-clientes">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #fff">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #E8E8E8">
     <p class="stitle" style="margin:0;border:none;padding:0;color:#fff">Clientes</p>
     <button class="btn-outline" onclick="abrirNovaCli()">+ Nova cliente</button>
   </div>
@@ -165,7 +165,7 @@ input:focus,select:focus{border-color:#0A0A0A}
   <div class="fpanel" id="fp-f"></div>
 </div>
 <div class="sc" id="tela-resumo">
-  <p class="stitle">Resumo</p>
+  <p class="stitle" style="color:#fff;border-bottom:1px solid rgba(255,255,255,0.2)">Resumo</p>
   <div class="rg" id="res-n"></div>
   <div id="res-c"></div>
 </div>
@@ -370,11 +370,16 @@ async function renderLista(){
   var cont = document.getElementById("lista-cli");
   cont.innerHTML = "<div class='loading'>Carregando...</div>";
   try {
-    var clientes = await supa("clientes?select=*,pecas(status)&order=nome");
+    var clientes = await supa("clientes?select=*&order=nome");
     if(!clientes||!clientes.length){
       cont.innerHTML = "<div class='vz'><span class='vi2'>🧵</span>Nenhuma cliente cadastrada.</div>";
       return;
     }
+    var todasPecas = await supa("pecas?select=cliente_id,status");
+    clientes = clientes.map(function(cli){
+      cli.pecas = todasPecas.filter(function(p){ return p.cliente_id===cli.id; });
+      return cli;
+    });
     if(FILTRO!=="todos"){
       clientes = clientes.filter(function(c){
         return c.pecas && c.pecas.some(function(p){ return p.status===FILTRO; });
