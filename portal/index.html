@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Métrica Ateliê</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"DM Sans",sans-serif;background:#0A0A0A;color:#fff;min-height:100vh}
+.header{background:#0A0A0A;padding:24px 20px 20px;border-bottom:1px solid #2E2E2E}
+.logo-row{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.logo-row img{height:36px}
+.logo-txt h1{font-family:"Cormorant Garamond",serif;font-size:16px;font-weight:300;letter-spacing:3px;text-transform:uppercase;color:#fff}
+.logo-txt p{font-size:9px;color:#B8B8B8;letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
+.cli-nome{font-family:"Cormorant Garamond",serif;font-size:28px;font-weight:300;letter-spacing:1px;color:#fff}
+.cli-sub{font-size:11px;color:#B8B8B8;margin-top:4px;letter-spacing:.5px}
+.body{padding:20px}
+.secao-titulo{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#6B6B6B;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #2E2E2E}
+.eg{margin-bottom:20px}
+.ehdr{font-size:11px;font-weight:600;color:#B8B8B8;letter-spacing:.5px;margin-bottom:10px}
+.pcard{background:#1C1C1C;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid #2E2E2E}
+.pfoto{width:100%;max-height:200px;object-fit:cover}
+.pinfo{padding:14px}
+.pnome{font-size:15px;font-weight:500;color:#fff;margin-bottom:4px}
+.pserv{font-size:13px;color:#B8B8B8;margin-bottom:10px}
+.badge{font-size:10px;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:.8px;text-transform:uppercase;display:inline-block}
+.badge.urgente{background:#3D0000;color:#FF6B6B}
+.badge.aguardando{background:#2E2E2E;color:#B8B8B8}
+.badge.em-andamento{background:#3D3000;color:#FFD700}
+.badge.pronto{background:#003D00;color:#6BFF6B}
+.badge.entregue{background:#2E2E2E;color:#6B6B6B}
+.empty{text-align:center;padding:60px 20px;color:#6B6B6B}
+.empty-ico{font-size:40px;display:block;margin-bottom:12px;opacity:.4}
+.footer{text-align:center;padding:30px 20px;border-top:1px solid #2E2E2E;margin-top:20px}
+.footer p{font-size:11px;color:#6B6B6B;letter-spacing:1px;text-transform:uppercase}
+.loading{text-align:center;padding:60px 20px;color:#6B6B6B;font-size:14px}
+.erro{text-align:center;padding:60px 20px;color:#FF6B6B;font-size:14px}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo-row">
+    <img src="logo.png" alt="Métrica">
+    <div class="logo-txt"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê</p></div>
+  </div>
+  <div class="cli-nome" id="cli-nome">Carregando...</div>
+  <div class="cli-sub" id="cli-sub"></div>
+</div>
+<div class="body" id="body">
+  <div class="loading">Buscando suas peças...</div>
+</div>
+<div class="footer"><p>Métrica Ateliê · Cuiabá, MT</p></div>
+<script>
+var SUPA_URL = "https://trzjmdrwjqvuzbzbxbhu.supabase.co";
+var SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyemptZHJ3anF2dXpiemJ4Ymh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDIyOTAsImV4cCI6MjA5ODg3ODI5MH0.YtZIGWAzpKdHrTdvtwUIRsRYJy5Yvxyn7q3GX_s-uLg";
+async function supa(path) {
+  var res = await fetch(SUPA_URL + "/rest/v1/" + path, {
+    headers: {
+      "apikey": SUPA_KEY,
+      "Authorization": "Bearer " + SUPA_KEY
+    }
+  });
+  var text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+function fval(v) {
+  if(!v) return "";
+  return "R$ "+Number(v).toFixed(2).replace(".",",");
+}
+function slbl(s) {
+  return {
+    urgente:"🔴 Urgente",
+    aguardando:"⏳ Aguardando",
+    "em-andamento":"🪡 Em andamento",
+    pronto:"✅ Pronto para retirar",
+    entregue:"🎁 Entregue"
+  }[s] || s;
+}
+function fdata(d) {
+  if(!d) return "";
+  return new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
+}
+async function init() {
+  var token = window.location.pathname.split("/portal/")[1];
+  if(!token) {
+    document.getElementById("body").innerHTML = "<div class='erro'>Link inválido.</div>";
+    return;
+  }
+  try {
+    var clientes = await supa("clientes?token_portal=eq."+token);
+    if(!clientes||!clientes.length) {
+      document.getElementById("body").innerHTML = "<div class='erro'>Cliente não encontrada.</div>";
+      return;
+    }
+    var cli = clientes[0];
+    document.getElementById("cli-nome").textContent = cli.nome;
+    document.getElementById("cli-sub").textContent = "Acompanhamento das suas peças";
+    var pecas = await supa("pecas?cliente_id=eq."+cli.id+"&order=data_entrada.desc,criado_em.desc");
+    var ativas = pecas.filter(function(p){ return p.status !== "entregue"; });
+    var entregues = pecas.filter(function(p){ return p.status === "entregue"; });
+    if(!pecas.length) {
+      document.getElementById("body").innerHTML = "<div class='empty'><span class='empty-ico'>🧵</span>Nenhuma peça no momento.</div>";
+      return;
+    }
+    var html = "";
+    if(ativas.length) {
+      html += "<div class='secao-titulo'>Peças em andamento</div>";
+      var porData = {};
+      ativas.forEach(function(p){
+        var d = p.data_entrada || "—";
+        if(!porData[d]) porData[d]=[];
+        porData[d].push(p);
+      });
+      var datas = Object.keys(porData).sort(function(a,b){ return b.localeCompare(a); });
+      datas.forEach(function(d){
+        html += "<div class='eg'><div class='ehdr'>📅 Entrada em "+fdata(d)+"</div>";
+        porData[d].forEach(function(p){
+          html += "<div class='pcard'>";
+          if(p.foto_url) html += "<img src='"+p.foto_url+"' class='pfoto'>";
+          html += "<div class='pinfo'><div class='pnome'>"+p.peca+"</div>";
+          if(p.servico) html += "<div class='pserv'>"+p.servico+"</div>";
+          html += "<span class='badge "+p.status+"'>"+slbl(p.status)+"</span>";
+          if(p.valor) html += "<div style='margin-top:8px;font-size:14px;font-weight:600;color:#fff'>"+fval(p.valor)+"</div>";
+          html += "</div></div>";
+        });
+        html += "</div>";
+      });
+    }
+    if(entregues.length) {
+      html += "<div class='secao-titulo' style='margin-top:24px'>Peças entregues</div>";
+      entregues.forEach(function(p){
+        html += "<div class='pcard'>";
+        if(p.foto_url) html += "<img src='"+p.foto_url+"' class='pfoto'>";
+        html += "<div class='pinfo'><div class='pnome'>"+p.peca+"</div>";
+        if(p.servico) html += "<div class='pserv'>"+p.servico+"</div>";
+        html += "<span class='badge entregue'>"+slbl("entregue")+"</span>";
+        if(p.valor) html += "<div style='margin-top:8px;font-size:14px;font-weight:600;color:#fff'>"+fval(p.valor)+"</div>";
+        html += "</div></div>";
+      });
+    }
+    document.getElementById("body").innerHTML = html;
+  } catch(e) {
+    document.getElementById("body").innerHTML = "<div class='erro'>Erro ao carregar: "+e.message+"</div>";
+  }
+}
+init();
+</script>
+</body>
+</html>
