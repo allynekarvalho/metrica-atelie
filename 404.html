@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+  <html>
+  <head>
+  <script>
+    var path = window.location.pathname;
+  if(path.indexOf('/portal/') !== -1) {
+    var token = path.split('/portal/')[1];
+    window.location.replace('/metrica-atelie/portal/?token=' + token);
+  }
+</script>
+    </head>
+    </html>
