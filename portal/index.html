@@ -82,7 +82,7 @@ function fdata(d) {
   return new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
 }
 async function init() {
-  var token = window.location.pathname.split("/portal/")[1];
+  var token = new URLSearchParams(window.location.search).get('token');
   if(!token) {
     document.getElementById("body").innerHTML = "<div class='erro'>Link inválido.</div>";
     return;
