@@ -116,131 +116,132 @@ input:focus,select:focus{border-color:#0A0A0A}
 </head>
 <body>
 <header>
-<div class="hl">
-<img src="https://allynekarvalho.github.io/metrica-atelie/logo.png" alt="Métrica">
-<div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê</p></div>
-</div>
-<div class="tabs">
-<button class="tab active" onclick="goTab('clientes',this)">Clientes</button>
-<button class="tab" onclick="goTab('resumo',this)">Resumo</button>
-</div>
+  <div class="hl">
+    <img src="https://allynekarvalho.github.io/metrica-atelie/logo.png" alt="Métrica">
+    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê</p></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="goTab('clientes',this)">Clientes</button>
+    <button class="tab" onclick="goTab('resumo',this)">Resumo</button>
+  </div>
 </header>
 <div class="toast" id="toast"></div>
 <div class="sc active" id="tela-clientes">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #E8E8E8">
-<p class="stitle" style="margin:0;border:none;padding:0;color:#fff">Clientes</p>
-<button class="btn-outline" onclick="abrirNovaCli()">+ Nova cliente</button>
-</div>
-<div class="filtros">
-<button class="filtro ativo" onclick="filtrar('todos',this)">Todas</button>
-<button class="filtro" onclick="filtrar('urgente',this)">🔴 Urgentes</button>
-<button class="filtro" onclick="filtrar('aguardando',this)">Aguardando</button>
-<button class="filtro" onclick="filtrar('em-andamento',this)">Em andamento</button>
-<button class="filtro" onclick="filtrar('pronto',this)">Prontas</button>
-<button class="filtro" onclick="filtrar('entregue',this)">Entregues</button>
-</div>
-<div id="lista-cli"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #E8E8E8">
+    <p class="stitle" style="margin:0;border:none;padding:0;color:#fff">Clientes</p>
+    <button class="btn-outline" onclick="abrirNovaCli()">+ Nova cliente</button>
+  </div>
+  <div class="filtros">
+    <button class="filtro ativo" onclick="filtrar('todos',this)">Todas</button>
+    <button class="filtro" onclick="filtrar('urgente',this)">🔴 Urgentes</button>
+    <button class="filtro" onclick="filtrar('aguardando',this)">Aguardando</button>
+    <button class="filtro" onclick="filtrar('em-andamento',this)">Em andamento</button>
+    <button class="filtro" onclick="filtrar('pronto',this)">Prontas</button>
+    <button class="filtro" onclick="filtrar('entregue',this)">Entregues</button>
+  </div>
+  <div id="lista-cli"></div>
 </div>
 <div class="sc" id="tela-perfil">
-<div class="perfil-header">
-<div style="display:flex;justify-content:space-between;align-items:flex-start">
-<div>
-<div class="perfil-nome" id="p-nome"></div>
-<div class="perfil-meta" id="p-meta"></div>
-</div>
-<button onclick="voltarClientes()" style="background:transparent;border:none;color:#B8B8B8;font-size:22px;cursor:pointer;padding:0">←</button>
-</div>
-<div class="perfil-acoes">
-<button class="btn-perfil branco" onclick="abrirNovaPeca()">+ Nova peça</button>
-<button class="btn-perfil outline" onclick="copiarLinkPortal()">🔗 Link cliente</button>
-</div>
-</div>
-<div class="ftabs">
-<button class="ftab active" id="ft-p" onclick="mudarFt('p')">Peças</button>
-<button class="ftab" id="ft-e" onclick="mudarFt('e')">Entregues</button>
-<button class="ftab" id="ft-f" onclick="mudarFt('f')">💰 Saldo</button>
-</div>
-<div class="fpanel active" id="fp-p"></div>
-<div class="fpanel" id="fp-e"></div>
-<div class="fpanel" id="fp-f"></div>
+  <div class="perfil-header">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div class="perfil-nome" id="p-nome"></div>
+        <div class="perfil-meta" id="p-meta"></div>
+      </div>
+      <button onclick="voltarClientes()" style="background:transparent;border:none;color:#B8B8B8;font-size:22px;cursor:pointer;padding:0">←</button>
+    </div>
+    <div class="perfil-acoes">
+      <button class="btn-perfil branco" onclick="abrirNovaPeca()">+ Nova peça</button>
+      <button class="btn-perfil outline" onclick="copiarLinkPortal()">🔗 Link cliente</button>
+    </div>
+  </div>
+  <div class="ftabs">
+    <button class="ftab active" id="ft-p" onclick="mudarFt('p')">Peças</button>
+    <button class="ftab" id="ft-e" onclick="mudarFt('e')">Entregues</button>
+    <button class="ftab" id="ft-f" onclick="mudarFt('f')">💰 Saldo</button>
+  </div>
+  <div class="fpanel active" id="fp-p"></div>
+  <div class="fpanel" id="fp-e"></div>
+  <div class="fpanel" id="fp-f"></div>
 </div>
 <div class="sc" id="tela-resumo">
-<p class="stitle" style="color:#fff;border-bottom:1px solid rgba(255,255,255,0.2)">Resumo</p>
-<div class="rg" id="res-n"></div>
-<div id="res-c"></div>
+  <p class="stitle" style="color:#fff;border-bottom:1px solid rgba(255,255,255,0.2)">Resumo</p>
+  <div class="rg" id="res-n"></div>
+  <div id="res-c"></div>
 </div>
 <!-- MODAL NOVA CLIENTE -->
 <div class="mov" id="mod-ncli">
-<div class="mo">
-<div class="mh"></div>
-<h2>Nova cliente</h2>
-<div class="fg"><label>Nome</label><input id="ncli-nome" placeholder="Nome completo"></div>
-<div class="fg"><label>Telefone (opcional)</label><input id="ncli-tel" placeholder="(65) 99999-9999" type="tel"></div>
-<button class="btn-p" onclick="salvarCli()">Cadastrar cliente</button>
-<button class="btn-s" onclick="closeMod('mod-ncli')">Cancelar</button>
-</div>
+  <div class="mo">
+    <div class="mh"></div>
+    <h2>Nova cliente</h2>
+    <div class="fg"><label>Nome</label><input id="ncli-nome" placeholder="Nome completo"></div>
+    <div class="fg"><label>Telefone (opcional)</label><input id="ncli-tel" placeholder="(65) 99999-9999" type="tel"></div>
+    <button class="btn-p" onclick="salvarCli()">Cadastrar cliente</button>
+    <button class="btn-s" onclick="closeMod('mod-ncli')">Cancelar</button>
+  </div>
 </div>
 <!-- MODAL NOVA PEÇA -->
 <div class="mov" id="mod-npeca">
-<div class="mo">
-<div class="mh"></div>
-<h2>Nova peça</h2>
-<p class="msub" id="npeca-cli-nome"></p>
-<div class="fg"><label>Peça</label><input id="np-peca" placeholder="Ex: Calça social preta"></div>
-<div class="fg">
-<label>Serviço</label>
-<div class="stags" id="np-stags"></div>
-<input id="np-serv" placeholder="Serviços selecionados..." readonly style="margin-top:8px">
-<p class="dinfo" id="np-dinfo"></p>
-<div style="display:flex;gap:8px;margin-top:8px">
-<input id="np-snome" placeholder="+ Novo serviço..." style="flex:2">
-<div class="vw" style="flex:1"><span class="vp">R$</span><input type="number" id="np-sval" class="vi" placeholder="0" min="0" step="0.01"></div>
-<button onclick="addServ()" style="padding:0 14px;background:#0A0A0A;color:#fff;border:none;border-radius:6px;font-size:20px;cursor:pointer;flex-shrink:0">+</button>
-</div>
-</div>
-<div class="fr">
-<div class="fg"><label>Valor (R$)</label><div class="vw"><span class="vp">R$</span><input type="number" id="np-val" class="vi" placeholder="0,00" min="0" step="0.01"></div></div>
-<div class="fg"><label>Comissão 45%</label><div class="vw"><span class="vp">R$</span><input type="number" id="np-com" class="vi" placeholder="0,00" readonly style="background:#F5F5F5;color:#B8B8B8"></div></div>
-</div>
-<div class="fr">
-<div class="fg"><label>Costureira</label><select id="np-cos"><option value="">Selecionar...</option><option>Ana</option><option>Maria</option><option>Lucia</option><option>Allyne (eu)</option></select></div>
-<div class="fg"><label>Prazo</label><input type="date" id="np-prazo"></div>
-</div>
-<div class="fg"><label>Prioridade</label><select id="np-prio"><option value="aguardando">Normal</option><option value="urgente">🔴 Urgente</option></select></div>
-<div class="fg">
-<label>📸 Foto da peça</label>
-<input type="file" id="np-cam" accept="image/*" capture="environment" style="display:none" onchange="fotoSelecionada(this)">
-<button class="btn-foto" onclick="document.getElementById('np-cam').click()">📷 Tirar foto</button>
-<img id="np-prev" class="foto-preview">
-<p id="np-foto-status" style="font-size:11px;color:#6B6B6B;margin-top:5px;display:none"></p>
-</div>
-<button class="btn-p" id="btn-salvar-peca" onclick="salvarPeca()">Registrar peça</button>
-<button class="btn-s" onclick="closeMod('mod-npeca')">Cancelar</button>
-</div>
+  <div class="mo">
+    <div class="mh"></div>
+    <h2>Nova peça</h2>
+    <p class="msub" id="npeca-cli-nome"></p>
+    <div class="fg"><label>Peça</label><input id="np-peca" placeholder="Ex: Calça social preta"></div>
+    <div class="fg"><label>Marca (opcional)</label><input id="np-marca" placeholder="Ex: Zara, Farm, Louis Vuitton..."></div>
+    <div class="fg">
+      <label>Serviço</label>
+      <div class="stags" id="np-stags"></div>
+      <input id="np-serv" placeholder="Serviços selecionados..." readonly style="margin-top:8px">
+      <p class="dinfo" id="np-dinfo"></p>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input id="np-snome" placeholder="+ Novo serviço..." style="flex:2">
+        <div class="vw" style="flex:1"><span class="vp">R$</span><input type="number" id="np-sval" class="vi" placeholder="0" min="0" step="0.01"></div>
+        <button onclick="addServ()" style="padding:0 14px;background:#0A0A0A;color:#fff;border:none;border-radius:6px;font-size:20px;cursor:pointer;flex-shrink:0">+</button>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>Valor (R$)</label><div class="vw"><span class="vp">R$</span><input type="number" id="np-val" class="vi" placeholder="0,00" min="0" step="0.01"></div></div>
+      <div class="fg"><label>Comissão 45%</label><div class="vw"><span class="vp">R$</span><input type="number" id="np-com" class="vi" placeholder="0,00" readonly style="background:#F5F5F5;color:#B8B8B8"></div></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>Costureira</label><select id="np-cos"><option value="">Selecionar...</option><option>Ana</option><option>Maria</option><option>Lucia</option><option>Allyne (eu)</option></select></div>
+      <div class="fg"><label>Prazo</label><input type="date" id="np-prazo"></div>
+    </div>
+    <div class="fg"><label>Prioridade</label><select id="np-prio"><option value="aguardando">Normal</option><option value="urgente">🔴 Urgente</option></select></div>
+    <div class="fg">
+      <label>📸 Foto da peça</label>
+      <input type="file" id="np-cam" accept="image/*" capture="environment" style="display:none" onchange="fotoSelecionada(this)">
+      <button class="btn-foto" onclick="document.getElementById('np-cam').click()">📷 Tirar foto</button>
+      <img id="np-prev" class="foto-preview">
+      <p id="np-foto-status" style="font-size:11px;color:#6B6B6B;margin-top:5px;display:none"></p>
+    </div>
+    <button class="btn-p" id="btn-salvar-peca" onclick="salvarPeca()">Registrar peça</button>
+    <button class="btn-s" onclick="closeMod('mod-npeca')">Cancelar</button>
+  </div>
 </div>
 <!-- MODAL STATUS -->
 <div class="mov" id="mod-st">
-<div class="mo">
-<div class="mh"></div>
-<h2 id="mst-cli"></h2><p class="msub" id="mst-peca"></p>
-<div class="sg">
-<button class="sb" onclick="setStatus('aguardando')"><span class="ico">⏳</span>Aguardando</button>
-<button class="sb" onclick="setStatus('em-andamento')"><span class="ico">🪡</span>Em andamento</button>
-<button class="sb" onclick="setStatus('pronto')"><span class="ico">✅</span>Pronto</button>
-<button class="sb" onclick="setStatus('entregue')"><span class="ico">🎁</span>Entregue</button>
-</div>
-<button class="btn-s" onclick="closeMod('mod-st')">Cancelar</button>
-</div>
+  <div class="mo">
+    <div class="mh"></div>
+    <h2 id="mst-cli"></h2><p class="msub" id="mst-peca"></p>
+    <div class="sg">
+      <button class="sb" onclick="setStatus('aguardando')"><span class="ico">⏳</span>Aguardando</button>
+      <button class="sb" onclick="setStatus('em-andamento')"><span class="ico">🪡</span>Em andamento</button>
+      <button class="sb" onclick="setStatus('pronto')"><span class="ico">✅</span>Pronto</button>
+      <button class="sb" onclick="setStatus('entregue')"><span class="ico">🎁</span>Entregue</button>
+    </div>
+    <button class="btn-s" onclick="closeMod('mod-st')">Cancelar</button>
+  </div>
 </div>
 <!-- MODAL WHATSAPP -->
 <div class="mov" id="mod-wpp">
-<div class="mo">
-<div class="mh"></div>
-<h2>Avisar cliente</h2><p class="msub" id="mw-cli"></p>
-<div class="wbox" id="mw-txt"></div>
-<button class="wbtn" onclick="sendWpp()">📲 Abrir WhatsApp</button>
-<button class="btn-s" onclick="closeMod('mod-wpp')">Fechar</button>
-</div>
+  <div class="mo">
+    <div class="mh"></div>
+    <h2>Avisar cliente</h2><p class="msub" id="mw-cli"></p>
+    <div class="wbox" id="mw-txt"></div>
+    <button class="wbtn" onclick="sendWpp()">📲 Abrir WhatsApp</button>
+    <button class="btn-s" onclick="closeMod('mod-wpp')">Fechar</button>
+  </div>
 </div>
 <script>
 var SUPA_URL = "https://trzjmdrwjqvuzbzbxbhu.supabase.co";
@@ -253,422 +254,534 @@ var SEL = [];
 var FOTO_FILE = null;
 var EXTRAS = JSON.parse(localStorage.getItem("metrica_extras") || "[]");
 var SVC_BASE = [
-{n:"Barra de calça",v:70},{n:"Barra de vestido festa",v:140},
-{n:"Ajuste cós jeans",v:80},{n:"Ajuste cós simples",v:70},
-{n:"Ajuste lateral vestido forrado",v:90},{n:"Alças",v:50}
+  {n:"Barra de calça",v:70},{n:"Barra de vestido festa",v:140},
+  {n:"Ajuste cós jeans",v:80},{n:"Ajuste cós simples",v:70},
+  {n:"Ajuste lateral vestido forrado",v:90},{n:"Alças",v:50}
 ];
 function allSvc(){ return SVC_BASE.concat(EXTRAS); }
 async function supa(path, opts) {
-var url = SUPA_URL + "/rest/v1/" + path;
-var headers = {
-"apikey": SUPA_KEY,
-"Authorization": "Bearer " + SUPA_KEY,
-"Content-Type": "application/json",
-"Prefer": opts && opts.prefer ? opts.prefer : "return=representation"
-};
-var res = await fetch(url, {
-method: opts && opts.method ? opts.method : "GET",
-headers: headers,
-body: opts && opts.body ? JSON.stringify(opts.body) : undefined
-});
-if (!res.ok) {
-var err = await res.text();
-throw new Error(err);
-}
-var text = await res.text();
-return text ? JSON.parse(text) : null;
+  var url = SUPA_URL + "/rest/v1/" + path;
+  var headers = {
+    "apikey": SUPA_KEY,
+    "Authorization": "Bearer " + SUPA_KEY,
+    "Content-Type": "application/json",
+    "Prefer": opts && opts.prefer ? opts.prefer : "return=representation"
+  };
+  var res = await fetch(url, {
+    method: opts && opts.method ? opts.method : "GET",
+    headers: headers,
+    body: opts && opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  if (!res.ok) {
+    var err = await res.text();
+    throw new Error(err);
+  }
+  var text = await res.text();
+  return text ? JSON.parse(text) : null;
 }
 async function uploadFoto(file, pecaId) {
-var ext = file.name.split(".").pop() || "jpg";
-var path = pecaId + "." + ext;
-var url = SUPA_URL + "/storage/v1/object/fotos-pecas/" + path;
-var res = await fetch(url, {
-method: "POST",
-headers: {
-"apikey": SUPA_KEY,
-"Authorization": "Bearer " + SUPA_KEY,
-"Content-Type": file.type,
-"x-upsert": "true"
-},
-body: file
-});
-if (!res.ok) throw new Error("Erro ao enviar foto");
-return SUPA_URL + "/storage/v1/object/public/fotos-pecas/" + path;
+  var ext = file.name.split(".").pop() || "jpg";
+  var path = pecaId + "." + ext;
+  var url = SUPA_URL + "/storage/v1/object/fotos-pecas/" + path;
+  var res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "apikey": SUPA_KEY,
+      "Authorization": "Bearer " + SUPA_KEY,
+      "Content-Type": file.type,
+      "x-upsert": "true"
+    },
+    body: file
+  });
+  if (!res.ok) throw new Error("Erro ao enviar foto");
+  return SUPA_URL + "/storage/v1/object/public/fotos-pecas/" + path;
 }
 function showToast(msg) {
-var t = document.getElementById("toast");
-t.textContent = msg;
-t.style.display = "block";
-setTimeout(function(){ t.style.display = "none"; }, 3000);
+  var t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.display = "block";
+  setTimeout(function(){ t.style.display = "none"; }, 3000);
 }
 function slbl(s){ return {urgente:"Urgente",aguardando:"Aguardando","em-andamento":"Em andamento",pronto:"Pronto",entregue:"Entregue"}[s]||s; }
 function fdata(d){ if(!d)return""; return new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}); }
 function fval(v){ if(!v&&v!==0)return"—"; return "R$ "+Number(v).toFixed(2).replace(".",","); }
 function initSvc(){
-var c = document.getElementById("np-stags");
-c.innerHTML = allSvc().map(function(s,i){
-return "<button class='stag' data-i='"+i+"' onclick='togSvc("+i+")'>"+s.n+"</button>";
-}).join("");
+  var c = document.getElementById("np-stags");
+  c.innerHTML = allSvc().map(function(s,i){
+    return "<button class='stag' data-i='"+i+"' onclick='togSvc("+i+")'>"+s.n+"</button>";
+  }).join("");
 }
 function togSvc(i){
-var s = allSvc()[i];
-var btn = document.querySelector(".stag[data-i='"+i+"']");
-var idx = SEL.findIndex(function(x){ return x.n===s.n; });
-if(idx>=0){ SEL.splice(idx,1); btn.classList.remove("sel"); }
-else{ SEL.push({n:s.n,v:s.v}); btn.classList.add("sel"); }
-updSvc();
+  var s = allSvc()[i];
+  var btn = document.querySelector(".stag[data-i='"+i+"']");
+  var idx = SEL.findIndex(function(x){ return x.n===s.n; });
+  if(idx>=0){ SEL.splice(idx,1); btn.classList.remove("sel"); }
+  else{ SEL.push({n:s.n,v:s.v}); btn.classList.add("sel"); }
+  updSvc();
 }
 function updSvc(){
-document.getElementById("np-serv").value = SEL.map(function(s){ return s.n; }).join(" + ");
-var sub = SEL.reduce(function(t,s){ return t+s.v; },0);
-var d = SEL.length===2?0.03:SEL.length>=3?0.05:0;
-var tot = +(sub*(1-d)).toFixed(2);
-document.getElementById("np-val").value = tot>0?tot:"";
-calcCom();
-var inf = document.getElementById("np-dinfo");
-if(d>0){ inf.style.display="block"; inf.textContent="Desconto "+(d*100)+"% aplicado"; }
-else{ inf.style.display="none"; }
+  document.getElementById("np-serv").value = SEL.map(function(s){ return s.n; }).join(" + ");
+  var sub = SEL.reduce(function(t,s){ return t+s.v; },0);
+  var d = SEL.length===2?0.03:SEL.length>=3?0.05:0;
+  var tot = +(sub*(1-d)).toFixed(2);
+  document.getElementById("np-val").value = tot>0?tot:"";
+  calcCom();
+  var inf = document.getElementById("np-dinfo");
+  if(d>0){ inf.style.display="block"; inf.textContent="Desconto "+(d*100)+"% aplicado"; }
+  else{ inf.style.display="none"; }
 }
 function addServ(){
-var n = document.getElementById("np-snome").value.trim();
-var v = parseFloat(document.getElementById("np-sval").value)||0;
-if(!n){ alert("Digite o nome."); return; }
-EXTRAS.push({n:n,v:v});
-localStorage.setItem("metrica_extras", JSON.stringify(EXTRAS));
-document.getElementById("np-snome").value="";
-document.getElementById("np-sval").value="";
-initSvc();
+  var n = document.getElementById("np-snome").value.trim();
+  var v = parseFloat(document.getElementById("np-sval").value)||0;
+  if(!n){ alert("Digite o nome."); return; }
+  EXTRAS.push({n:n,v:v});
+  localStorage.setItem("metrica_extras", JSON.stringify(EXTRAS));
+  document.getElementById("np-snome").value="";
+  document.getElementById("np-sval").value="";
+  initSvc();
 }
 function calcCom(){
-var v = parseFloat(document.getElementById("np-val").value)||0;
-document.getElementById("np-com").value = (v*0.45).toFixed(2);
+  var v = parseFloat(document.getElementById("np-val").value)||0;
+  document.getElementById("np-com").value = (v*0.45).toFixed(2);
 }
 function fotoSelecionada(inp){
-if(!inp.files||!inp.files[0]) return;
-FOTO_FILE = inp.files[0];
-var r = new FileReader();
-r.onload = function(e){
-var img = document.getElementById("np-prev");
-img.src = e.target.result;
-img.style.display = "block";
-var st = document.getElementById("np-foto-status");
-st.textContent = "📸 Foto pronta para enviar";
-st.style.display = "block";
-st.style.color = "#2E5E2E";
-};
-r.readAsDataURL(inp.files[0]);
+  if(!inp.files||!inp.files[0]) return;
+  FOTO_FILE = inp.files[0];
+  var r = new FileReader();
+  r.onload = function(e){
+    var img = document.getElementById("np-prev");
+    img.src = e.target.result;
+    img.style.display = "block";
+    var st = document.getElementById("np-foto-status");
+    st.textContent = "📸 Foto pronta para enviar";
+    st.style.display = "block";
+    st.style.color = "#2E5E2E";
+  };
+  r.readAsDataURL(inp.files[0]);
 }
 function goTab(t,btn){
-document.querySelectorAll(".sc").forEach(function(s){ s.classList.remove("active"); });
-document.querySelectorAll(".tab").forEach(function(b){ b.classList.remove("active"); });
-document.getElementById("tela-"+t).classList.add("active");
-if(btn) btn.classList.add("active");
-if(t==="clientes") renderLista();
-if(t==="resumo") renderRes();
+  document.querySelectorAll(".sc").forEach(function(s){ s.classList.remove("active"); });
+  document.querySelectorAll(".tab").forEach(function(b){ b.classList.remove("active"); });
+  document.getElementById("tela-"+t).classList.add("active");
+  if(btn) btn.classList.add("active");
+  if(t==="clientes") renderLista();
+  if(t==="resumo") renderRes();
 }
 async function renderLista(){
-var cont = document.getElementById("lista-cli");
-cont.innerHTML = "<div class='loading'>Carregando...</div>";
-try {
-var clientes = await supa("clientes?select=*&order=nome");
-if(!clientes||!clientes.length){
-cont.innerHTML = "<div class='vz'><span class='vi2'>🧵</span>Nenhuma cliente cadastrada.</div>";
-return;
-}
-var todasPecas = await supa("pecas?select=cliente_id,status");
-clientes = clientes.map(function(cli){
-cli.pecas = todasPecas.filter(function(p){ return p.cliente_id===cli.id; });
-return cli;
-});
-if(FILTRO!=="todos"){
-clientes = clientes.filter(function(c){
-return c.pecas && c.pecas.some(function(p){ return p.status===FILTRO; });
-});
-}
-cont.innerHTML = clientes.map(function(c){
-var total = c.pecas ? c.pecas.length : 0;
-var ativas = c.pecas ? c.pecas.filter(function(p){ return p.status!=="entregue"; }).length : 0;
-var temUrg = c.pecas && c.pecas.some(function(p){ return p.status==="urgente"; });
-return "<div class='cli-item' data-id='"+c.id+"' data-nome='"+c.nome.replace(/'/g,"&#39;")+"' onclick='abrirPerfil(this.dataset.id,this.dataset.nome)'>" +
-"<div><div class='cli-nome'>"+(temUrg?"🔴 ":"")+c.nome+"</div><div class='cli-meta'>"+ativas+" ativa"+(ativas!==1?"s":"")+" · "+total+" total</div></div>" +
-"<span class='cli-arrow'>›</span></div>";
-}).join("");
-} catch(e) {
-cont.innerHTML = "<div class='vz'>Erro ao carregar: "+e.message+"</div>";
-}
+  var cont = document.getElementById("lista-cli");
+  cont.innerHTML = "<div class='loading'>Carregando...</div>";
+  try {
+    var clientes = await supa("clientes?select=*&order=nome");
+    if(!clientes||!clientes.length){
+      cont.innerHTML = "<div class='vz'><span class='vi2'>🧵</span>Nenhuma cliente cadastrada.</div>";
+      return;
+    }
+    var todasPecas = await supa("pecas?select=cliente_id,status");
+    clientes = clientes.map(function(cli){
+      cli.pecas = todasPecas.filter(function(p){ return p.cliente_id===cli.id; });
+      return cli;
+    });
+    if(FILTRO!=="todos"){
+      clientes = clientes.filter(function(c){
+        return c.pecas && c.pecas.some(function(p){ return p.status===FILTRO; });
+      });
+    }
+    cont.innerHTML = clientes.map(function(c){
+      var total = c.pecas ? c.pecas.length : 0;
+      var ativas = c.pecas ? c.pecas.filter(function(p){ return p.status!=="entregue"; }).length : 0;
+      var temUrg = c.pecas && c.pecas.some(function(p){ return p.status==="urgente"; });
+      return "<div class='cli-item' data-id='"+c.id+"' data-nome='"+c.nome.replace(/'/g,"&#39;")+"' onclick='abrirPerfil(this.dataset.id,this.dataset.nome)'>" +
+        "<div><div class='cli-nome'>"+(temUrg?"🔴 ":"")+c.nome+"</div><div class='cli-meta'>"+ativas+" ativa"+(ativas!==1?"s":"")+" · "+total+" total</div></div>" +
+        "<span class='cli-arrow'>›</span></div>";
+    }).join("");
+  } catch(e) {
+    cont.innerHTML = "<div class='vz'>Erro ao carregar: "+e.message+"</div>";
+  }
 }
 function filtrar(f,btn){
-FILTRO=f;
-document.querySelectorAll(".filtro").forEach(function(x){ x.classList.remove("ativo"); });
-btn.classList.add("ativo");
-renderLista();
+  FILTRO=f;
+  document.querySelectorAll(".filtro").forEach(function(x){ x.classList.remove("ativo"); });
+  btn.classList.add("ativo");
+  renderLista();
 }
 function abrirPerfil(id, nome){
-CLI_ATIVA_ID = id;
-CLI_ATIVA = nome;
-document.getElementById("p-nome").textContent = nome;
-document.getElementById("p-meta").textContent = "carregando...";
-document.querySelectorAll(".sc").forEach(function(s){ s.classList.remove("active"); });
-document.getElementById("tela-perfil").classList.add("active");
-mudarFt("p");
-renderPerfil();
+  CLI_ATIVA_ID = id;
+  CLI_ATIVA = nome;
+  document.getElementById("p-nome").textContent = nome;
+  document.getElementById("p-meta").textContent = "carregando...";
+  document.querySelectorAll(".sc").forEach(function(s){ s.classList.remove("active"); });
+  document.getElementById("tela-perfil").classList.add("active");
+  mudarFt("p");
+  renderPerfil();
 }
 function voltarClientes(){
-CLI_ATIVA = null; CLI_ATIVA_ID = null;
-goTab("clientes", document.querySelector(".tab"));
+  CLI_ATIVA = null; CLI_ATIVA_ID = null;
+  goTab("clientes", document.querySelector(".tab"));
 }
 function mudarFt(tab){
-["p","e","f"].forEach(function(t){
-document.getElementById("fp-"+t).classList.remove("active");
-document.getElementById("ft-"+t).classList.remove("active");
-});
-document.getElementById("fp-"+tab).classList.add("active");
-document.getElementById("ft-"+tab).classList.add("active");
-if(tab==="f") renderFinanceiro();
+  ["p","e","f"].forEach(function(t){
+    document.getElementById("fp-"+t).classList.remove("active");
+    document.getElementById("ft-"+t).classList.remove("active");
+  });
+  document.getElementById("fp-"+tab).classList.add("active");
+  document.getElementById("ft-"+tab).classList.add("active");
+  if(tab==="f") renderFinanceiro();
 }
 async function renderPerfil(){
-document.getElementById("fp-p").innerHTML = "<div class='loading'>Carregando...</div>";
-document.getElementById("fp-e").innerHTML = "<div class='loading'>Carregando...</div>";
-try {
-var pecas = await supa("pecas?cliente_id=eq."+CLI_ATIVA_ID+"&order=data_entrada.desc,criado_em.desc");
-var ativas = pecas.filter(function(p){ return p.status!=="entregue"; });
-var entregues = pecas.filter(function(p){ return p.status==="entregue"; });
-document.getElementById("p-meta").textContent = ativas.length+" peça"+(ativas.length!==1?"s":"")+" ativa"+(ativas.length!==1?"s":"")+" · "+pecas.length+" total";
-document.getElementById("fp-p").innerHTML = mkEntradasHTML(ativas, true) || "<div class='vz'><span class='vi2'>✅</span>Tudo entregue!</div>";
-document.getElementById("fp-e").innerHTML = mkEntradasHTML(entregues, false) || "<div class='vz'><span class='vi2'>📦</span>Nenhuma entregue.</div>";
-} catch(e) {
-document.getElementById("fp-p").innerHTML = "<div class='vz'>Erro: "+e.message+"</div>";
-}
+  document.getElementById("fp-p").innerHTML = "<div class='loading'>Carregando...</div>";
+  document.getElementById("fp-e").innerHTML = "<div class='loading'>Carregando...</div>";
+  try {
+    var pecas = await supa("pecas?cliente_id=eq."+CLI_ATIVA_ID+"&order=data_entrada.desc,criado_em.desc");
+    var ativas = pecas.filter(function(p){ return p.status!=="entregue"; });
+    var entregues = pecas.filter(function(p){ return p.status==="entregue"; });
+    document.getElementById("p-meta").textContent = ativas.length+" peça"+(ativas.length!==1?"s":"")+" ativa"+(ativas.length!==1?"s":"")+" · "+pecas.length+" total";
+    document.getElementById("fp-p").innerHTML = mkEntradasHTML(ativas, true) || "<div class='vz'><span class='vi2'>✅</span>Tudo entregue!</div>";
+    document.getElementById("fp-e").innerHTML = mkEntradasHTML(entregues, false) || "<div class='vz'><span class='vi2'>📦</span>Nenhuma entregue.</div>";
+  } catch(e) {
+    document.getElementById("fp-p").innerHTML = "<div class='vz'>Erro: "+e.message+"</div>";
+  }
 }
 function mkEntradasHTML(pecas, comAcoes){
-if(!pecas.length) return "";
-var porData = {};
-pecas.forEach(function(p){
-var d = p.data_entrada || "—";
-if(!porData[d]) porData[d]=[];
-porData[d].push(p);
-});
-var datas = Object.keys(porData).sort(function(a,b){ return b.localeCompare(a); });
-return datas.map(function(d){
-var pp = porData[d];
-var tot = pp.reduce(function(s,p){ return s+(p.valor||0); },0);
-var df = new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
-return "<div class='eg'><div class='ehdr'><span class='edata'>📅 "+df+"</span><span class='eres'>"+pp.length+" peça"+(pp.length>1?"s":"")+"</span></div>"+
-pp.map(function(p){ return mkPecaHTML(p, comAcoes); }).join("")+
-(comAcoes&&tot>0?"<div class='etot'><span>Total entrada</span><span>"+fval(tot)+"</span></div>":"")+
-"</div>";
-}).join("");
+  if(!pecas.length) return "";
+  var porData = {};
+  pecas.forEach(function(p){
+    var d = p.data_entrada || "—";
+    if(!porData[d]) porData[d]=[];
+    porData[d].push(p);
+  });
+  var datas = Object.keys(porData).sort(function(a,b){ return b.localeCompare(a); });
+  return datas.map(function(d){
+    var pp = porData[d];
+    var tot = pp.reduce(function(s,p){ return s+(p.valor||0); },0);
+    var df = new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
+    return "<div class='eg'><div class='ehdr'><span class='edata'>📅 "+df+"</span><span class='eres'>"+pp.length+" peça"+(pp.length>1?"s":"")+"</span></div>"+
+      pp.map(function(p){ return mkPecaHTML(p, comAcoes); }).join("")+
+      (comAcoes&&tot>0?"<div class='etot'><span>Total entrada</span><span>"+fval(tot)+"</span></div>":"")+
+    "</div>";
+  }).join("");
 }
 function mkPecaHTML(p, comAcoes){
-var fotoHTML = p.foto_url ? "<img src='"+p.foto_url+"' class='pfoto' data-url='"+p.foto_url+"' onclick='verFoto(this.dataset.url)'>" : "";
-var html = "<div class='pi'><div class='pin'>"+fotoHTML+"<div class='pn'>"+p.peca+"</div><div class='ps'>"+(p.servico||"—")+"</div><div class='pc'>"+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div></div><div class='pd'><span class='badge "+p.status+"'>"+slbl(p.status)+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
-if(comAcoes){
-var id = p.id;
-var acoes = "<button class='bm' data-id='"+id+"' data-peca='"+p.peca+"' data-serv='"+(p.servico||"")+"' onclick='abrirSt(this)'>Status</button>";
-if(p.status==="urgente") acoes += "<button class='bm' data-id='"+id+"' onclick='togUrg(this)' style='background:#FDE8E8;color:#8B0000'>✕ Urgente</button>";
-else acoes += "<button class='bm vm' data-id='"+id+"' onclick='togUrg(this)'>🔴 Urgente</button>";
-if(p.status==="pronto") acoes += "<button class='bm vd' data-id='"+id+"' data-val='"+p.valor+"' onclick='abrirWpp(this)'>Avisar</button>";
-acoes += "<button class='bm' data-id='"+id+"' onclick='excluirPeca(this)' style='color:#B8B8B8'>Excluir</button>";
-html += "<div class='pac'>"+acoes+"</div>";
-}
-return "<div>"+html+"</div>";
+  var fotoHTML = p.foto_url ? "<img src='"+p.foto_url+"' class='pfoto' data-url='"+p.foto_url+"' onclick='verFoto(this.dataset.url)'>" : "";
+  var html = "<div class='pi'><div class='pin'>"+fotoHTML+"<div class='pn'>"+p.peca+(p.marca?" <span style='font-size:11px;color:#B8B8B8;font-weight:400'>"+p.marca+"</span>":"")+"</div><div class='ps'>"+(p.servico||"—")+"</div><div class='pc'>"+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div></div><div class='pd'><span class='badge "+p.status+"'>"+slbl(p.status)+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
+  if(comAcoes){
+    var id = p.id;
+    var acoes = "<button class='bm' data-id='"+id+"' data-peca='"+p.peca+"' data-serv='"+(p.servico||"")+"' onclick='abrirSt(this)'>Status</button>";
+      acoes += "<button class='bm' data-id='"+id+"' onclick='imprimirComanda(+this.dataset.id)'>🖨️ Comanda</button>";
+      acoes += "<button class='bm' data-id='"+id+"' onclick='abrirEditar(+this.dataset.id)'>✏️ Editar</button>";
+    if(p.status==="urgente") acoes += "<button class='bm' data-id='"+id+"' onclick='togUrg(this)' style='background:#FDE8E8;color:#8B0000'>✕ Urgente</button>";
+    else acoes += "<button class='bm vm' data-id='"+id+"' onclick='togUrg(this)'>🔴 Urgente</button>";
+    if(p.status==="pronto") acoes += "<button class='bm vd' data-id='"+id+"' data-val='"+p.valor+"' onclick='abrirWpp(this)'>Avisar</button>";
+    acoes += "<button class='bm' data-id='"+id+"' onclick='excluirPeca(this)' style='color:#B8B8B8'>Excluir</button>";
+    html += "<div class='pac'>"+acoes+"</div>";
+  }
+  return "<div>"+html+"</div>";
 }
 function verFoto(url){
-window.open(url, "_blank");
+  window.open(url, "_blank");
 }
 async function renderFinanceiro(){
-document.getElementById("fp-f").innerHTML = "<div class='loading'>Carregando...</div>";
-try {
-var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
-var pecas = await supa("pecas?cliente_id=eq."+CLI_ATIVA_ID);
-var pags = await supa("pagamentos?cliente_id=eq."+CLI_ATIVA_ID+"&order=criado_em.desc");
-var saldoAnt = (cli[0]&&cli[0].saldo_anterior)||0;
-var totP = pecas.reduce(function(s,p){ return s+(p.valor||0); },0) + saldoAnt;
-var totPg = pags.reduce(function(s,p){ return s+p.valor; },0);
-var saldo = totP-totPg;
-var cor = saldo>0?"#8B0000":"#2E5E2E";
-var saldoAntHTML = saldoAnt>0
-? "<div style='background:#FEF9E7;border:1px solid #E8E8E8;border-radius:8px;padding:12px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center'><div><div style='font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6B5500;margin-bottom:2px'>Saldo em aberto anterior</div><div style='font-size:16px;font-weight:600;color:#6B5500'>"+fval(saldoAnt)+"</div></div><button onclick='editarSaldoAnt()' style='font-size:11px;color:#6B5500;border:1px solid #E8D48A;background:#FEF9E7;border-radius:4px;padding:5px 10px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600'>Editar</button></div>"
-: "<div style='background:#F5F5F5;border:1px solid #E8E8E8;border-radius:8px;padding:12px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center'><div style='font-size:12px;color:#6B6B6B'>Nenhum saldo anterior</div><button onclick='editarSaldoAnt()' style='font-size:11px;color:#0A0A0A;border:1px solid #E8E8E8;background:#fff;border-radius:4px;padding:5px 10px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600'>+ Adicionar</button></div>";
-var pgHTML = pags.length
-? "<div class='pgl'>"+pags.map(function(p){ return "<div class='pgi'><div><div class='pgv'>+ "+fval(p.valor)+"</div><div class='pgd'>"+(p.data||"")+(p.observacao?" · "+p.observacao:"")+"</div></div><button data-id='"+p.id+"' onclick='excluirPag(this)' style='font-size:11px;color:#B8B8B8;border:none;background:none;cursor:pointer'>✕</button></div>"; }).join("")+"</div>"
-: "<div class='pgl'><div style='padding:16px;font-size:13px;color:#6B6B6B'>Nenhum pagamento registrado.</div></div>";
-document.getElementById("fp-f").innerHTML =
-saldoAntHTML+
-"<div class='sbox'><div class='si'><div class='sn'>"+fval(totP)+"</div><div class='sl'>Total c/ saldo ant.</div></div><div class='si'><div class='sn' style='color:#2E5E2E'>"+fval(totPg)+"</div><div class='sl'>Pago</div></div><div class='si'><div class='sn' style='color:"+cor+"'>"+fval(saldo)+"</div><div class='sl'>Saldo</div></div></div>"+
-pgHTML+
-"<div class='rp'><div class='rpl'>Registrar pagamento</div><div class='rpw'><div class='vw' style='flex:1'><span class='vp'>R$</span><input type='number' id='pv-inp' class='vi' placeholder='0,00' min='0' step='0.01' style='width:100%'></div><input id='po-inp' placeholder='Obs.' style='flex:1;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;font-family:DM Sans,sans-serif'><button onclick='regPag()' style='padding:0 14px;background:#0A0A0A;color:#fff;border:none;border-radius:6px;font-size:18px;cursor:pointer'>✓</button></div></div>";
-} catch(e){
-document.getElementById("fp-f").innerHTML = "<div class='vz'>Erro: "+e.message+"</div>";
-}
+  document.getElementById("fp-f").innerHTML = "<div class='loading'>Carregando...</div>";
+  try {
+    var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
+    var pecas = await supa("pecas?cliente_id=eq."+CLI_ATIVA_ID);
+    var pags = await supa("pagamentos?cliente_id=eq."+CLI_ATIVA_ID+"&order=criado_em.desc");
+    var saldoAnt = (cli[0]&&cli[0].saldo_anterior)||0;
+    var totP = pecas.reduce(function(s,p){ return s+(p.valor||0); },0) + saldoAnt;
+    var totPg = pags.reduce(function(s,p){ return s+p.valor; },0);
+    var saldo = totP-totPg;
+    var cor = saldo>0?"#8B0000":"#2E5E2E";
+    var saldoAntHTML = saldoAnt>0
+      ? "<div style='background:#FEF9E7;border:1px solid #E8E8E8;border-radius:8px;padding:12px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center'><div><div style='font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6B5500;margin-bottom:2px'>Saldo em aberto anterior</div><div style='font-size:16px;font-weight:600;color:#6B5500'>"+fval(saldoAnt)+"</div></div><button onclick='editarSaldoAnt()' style='font-size:11px;color:#6B5500;border:1px solid #E8D48A;background:#FEF9E7;border-radius:4px;padding:5px 10px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600'>Editar</button></div>"
+      : "<div style='background:#F5F5F5;border:1px solid #E8E8E8;border-radius:8px;padding:12px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center'><div style='font-size:12px;color:#6B6B6B'>Nenhum saldo anterior</div><button onclick='editarSaldoAnt()' style='font-size:11px;color:#0A0A0A;border:1px solid #E8E8E8;background:#fff;border-radius:4px;padding:5px 10px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600'>+ Adicionar</button></div>";
+    var pgHTML = pags.length
+      ? "<div class='pgl'>"+pags.map(function(p){ return "<div class='pgi'><div><div class='pgv'>+ "+fval(p.valor)+"</div><div class='pgd'>"+(p.data||"")+(p.observacao?" · "+p.observacao:"")+"</div></div><button data-id='"+p.id+"' onclick='excluirPag(this)' style='font-size:11px;color:#B8B8B8;border:none;background:none;cursor:pointer'>✕</button></div>"; }).join("")+"</div>"
+      : "<div class='pgl'><div style='padding:16px;font-size:13px;color:#6B6B6B'>Nenhum pagamento registrado.</div></div>";
+    document.getElementById("fp-f").innerHTML =
+      saldoAntHTML+
+      "<div class='sbox'><div class='si'><div class='sn'>"+fval(totP)+"</div><div class='sl'>Total c/ saldo ant.</div></div><div class='si'><div class='sn' style='color:#2E5E2E'>"+fval(totPg)+"</div><div class='sl'>Pago</div></div><div class='si'><div class='sn' style='color:"+cor+"'>"+fval(saldo)+"</div><div class='sl'>Saldo</div></div></div>"+
+      pgHTML+
+      "<div class='rp'><div class='rpl'>Registrar pagamento</div><div class='rpw'><div class='vw' style='flex:1'><span class='vp'>R$</span><input type='number' id='pv-inp' class='vi' placeholder='0,00' min='0' step='0.01' style='width:100%'></div><input id='po-inp' placeholder='Obs.' style='flex:1;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;font-family:DM Sans,sans-serif'><button onclick='regPag()' style='padding:0 14px;background:#0A0A0A;color:#fff;border:none;border-radius:6px;font-size:18px;cursor:pointer'>✓</button></div></div>";
+  } catch(e){
+    document.getElementById("fp-f").innerHTML = "<div class='vz'>Erro: "+e.message+"</div>";
+  }
 }
 async function editarSaldoAnt(){
-var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
-var atual = (cli[0]&&cli[0].saldo_anterior)||0;
-var val = prompt("Saldo em aberto anterior de "+CLI_ATIVA+":", atual);
-if(val===null) return;
-var num = parseFloat(val)||0;
-await supa("clientes?id=eq."+CLI_ATIVA_ID, {method:"PATCH", body:{saldo_anterior:num}});
-renderFinanceiro();
+  var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
+  var atual = (cli[0]&&cli[0].saldo_anterior)||0;
+  var val = prompt("Saldo em aberto anterior de "+CLI_ATIVA+":", atual);
+  if(val===null) return;
+  var num = parseFloat(val)||0;
+  await supa("clientes?id=eq."+CLI_ATIVA_ID, {method:"PATCH", body:{saldo_anterior:num}});
+  renderFinanceiro();
 }
 async function regPag(){
-var val = parseFloat(document.getElementById("pv-inp").value)||0;
-var obs = document.getElementById("po-inp").value.trim();
-if(!val){ alert("Digite o valor."); return; }
-var hoje = new Date().toISOString().split("T")[0];
-await supa("pagamentos", {method:"POST", body:{cliente_id:CLI_ATIVA_ID, cliente_nome:CLI_ATIVA, valor:val, observacao:obs, data:hoje}});
-showToast("Pagamento registrado!");
-renderFinanceiro();
+  var val = parseFloat(document.getElementById("pv-inp").value)||0;
+  var obs = document.getElementById("po-inp").value.trim();
+  if(!val){ alert("Digite o valor."); return; }
+  var hoje = new Date().toISOString().split("T")[0];
+  await supa("pagamentos", {method:"POST", body:{cliente_id:CLI_ATIVA_ID, cliente_nome:CLI_ATIVA, valor:val, observacao:obs, data:hoje}});
+  showToast("Pagamento registrado!");
+  renderFinanceiro();
 }
 async function excluirPag(btn){
-if(!confirm("Excluir pagamento?")) return;
-var id = btn.dataset.id;
-await supa("pagamentos?id=eq."+id, {method:"DELETE", prefer:"return=minimal"});
-renderFinanceiro();
+  if(!confirm("Excluir pagamento?")) return;
+  var id = btn.dataset.id;
+  await supa("pagamentos?id=eq."+id, {method:"DELETE", prefer:"return=minimal"});
+  renderFinanceiro();
 }
 function abrirNovaCli(){
-document.getElementById("ncli-nome").value="";
-document.getElementById("ncli-tel").value="";
-document.getElementById("mod-ncli").classList.add("open");
+  document.getElementById("ncli-nome").value="";
+  document.getElementById("ncli-tel").value="";
+  document.getElementById("mod-ncli").classList.add("open");
 }
 async function salvarCli(){
-var nome = document.getElementById("ncli-nome").value.trim();
-var tel = document.getElementById("ncli-tel").value.trim();
-if(!nome){ alert("Digite o nome."); return; }
-try {
-var res = await supa("clientes", {method:"POST", body:{nome:nome, telefone:tel, saldo_anterior:0}});
-closeMod("mod-ncli");
-showToast("Cliente cadastrada!");
-if(res&&res[0]) abrirPerfil(res[0].id, res[0].nome);
-} catch(e){ alert("Erro: "+e.message); }
+  var nome = document.getElementById("ncli-nome").value.trim();
+  var tel = document.getElementById("ncli-tel").value.trim();
+  if(!nome){ alert("Digite o nome."); return; }
+  try {
+    var res = await supa("clientes", {method:"POST", body:{nome:nome, telefone:tel, saldo_anterior:0}});
+    closeMod("mod-ncli");
+    showToast("Cliente cadastrada!");
+    if(res&&res[0]) abrirPerfil(res[0].id, res[0].nome);
+  } catch(e){ alert("Erro: "+e.message); }
 }
 function abrirNovaPeca(){
-SEL=[];
-FOTO_FILE=null;
-initSvc();
-document.getElementById("npeca-cli-nome").textContent = CLI_ATIVA;
-["np-peca","np-serv","np-val","np-com","np-prazo"].forEach(function(id){ document.getElementById(id).value=""; });
-document.getElementById("np-cos").value="";
-document.getElementById("np-prio").value="aguardando";
-document.getElementById("np-prev").style.display="none";
-document.getElementById("np-foto-status").style.display="none";
-document.getElementById("np-dinfo").style.display="none";
-document.querySelectorAll(".stag").forEach(function(t){ t.classList.remove("sel"); });
-document.getElementById("mod-npeca").classList.add("open");
+  SEL=[];
+  FOTO_FILE=null;
+  initSvc();
+  document.getElementById("npeca-cli-nome").textContent = CLI_ATIVA;
+  ["np-peca","np-serv","np-val","np-com","np-prazo"].forEach(function(id){ document.getElementById(id).value=""; });
+  document.getElementById("np-cos").value="";
+  document.getElementById("np-prio").value="aguardando";
+  document.getElementById("np-prev").style.display="none";
+  document.getElementById("np-foto-status").style.display="none";
+  document.getElementById("np-dinfo").style.display="none";
+  document.querySelectorAll(".stag").forEach(function(t){ t.classList.remove("sel"); });
+  document.getElementById("mod-npeca").classList.add("open");
 }
 async function salvarPeca(){
-var peca = document.getElementById("np-peca").value.trim();
-if(!peca){ alert("Preencha o nome da peça."); return; }
-var btn = document.getElementById("btn-salvar-peca");
-btn.textContent = "Salvando...";
-btn.disabled = true;
-try {
-var cos = document.getElementById("np-cos").value;
-var serv = document.getElementById("np-serv").value.trim();
-var val = parseFloat(document.getElementById("np-val").value)||0;
-var com = parseFloat(document.getElementById("np-com").value)||0;
-var prazo = document.getElementById("np-prazo").value||null;
-var prio = document.getElementById("np-prio").value;
-var hoje = new Date().toISOString().split("T")[0];
-var body = {cliente_id:CLI_ATIVA_ID, cliente_nome:CLI_ATIVA, peca:peca, servico:serv, costureira:cos, prazo:prazo, status:prio, valor:val, comissao:com, data_entrada:hoje};
-var res = await supa("pecas", {method:"POST", body:body});
-if(FOTO_FILE && res && res[0]){
-btn.textContent = "Enviando foto...";
-try {
-var fotoUrl = await uploadFoto(FOTO_FILE, res[0].id);
-await supa("pecas?id=eq."+res[0].id, {method:"PATCH", body:{foto_url:fotoUrl}});
-} catch(fe){ console.warn("Foto não enviada:", fe); }
-}
-closeMod("mod-npeca");
-showToast("Peça registrada!");
-renderPerfil();
-} catch(e){ alert("Erro: "+e.message); }
-btn.textContent = "Registrar peça";
-btn.disabled = false;
+  var peca = document.getElementById("np-peca").value.trim();
+  if(!peca){ alert("Preencha o nome da peça."); return; }
+  var btn = document.getElementById("btn-salvar-peca");
+  btn.textContent = "Salvando...";
+  btn.disabled = true;
+  try {
+    var cos = document.getElementById("np-cos").value;
+    var serv = document.getElementById("np-serv").value.trim();
+    var val = parseFloat(document.getElementById("np-val").value)||0;
+    var com = parseFloat(document.getElementById("np-com").value)||0;
+    var prazo = document.getElementById("np-prazo").value||null;
+    var prio = document.getElementById("np-prio").value;
+    var hoje = new Date().toISOString().split("T")[0];
+    var marca = document.getElementById("np-marca").value.trim();
+    var body = {cliente_id:CLI_ATIVA_ID, cliente_nome:CLI_ATIVA, peca:peca, marca:marca, servico:serv, costureira:cos, prazo:prazo, status:prio, valor:val, comissao:com, data_entrada:hoje};
+    var res = await supa("pecas", {method:"POST", body:body});
+    if(FOTO_FILE && res && res[0]){
+      btn.textContent = "Enviando foto...";
+      try {
+        var fotoUrl = await uploadFoto(FOTO_FILE, res[0].id);
+        await supa("pecas?id=eq."+res[0].id, {method:"PATCH", body:{foto_url:fotoUrl}});
+      } catch(fe){ console.warn("Foto não enviada:", fe); }
+    }
+    closeMod("mod-npeca");
+    showToast("Peça registrada!");
+    renderPerfil();
+  } catch(e){ alert("Erro: "+e.message); }
+  btn.textContent = "Registrar peça";
+  btn.disabled = false;
 }
 function abrirSt(btn){
-PECA_ATIVA = btn.dataset.id;
-document.getElementById("mst-cli").textContent = CLI_ATIVA;
-document.getElementById("mst-peca").textContent = btn.dataset.peca+(btn.dataset.serv?" · "+btn.dataset.serv:"");
-document.getElementById("mod-st").classList.add("open");
+  PECA_ATIVA = btn.dataset.id;
+  document.getElementById("mst-cli").textContent = CLI_ATIVA;
+  document.getElementById("mst-peca").textContent = btn.dataset.peca+(btn.dataset.serv?" · "+btn.dataset.serv:"");
+  document.getElementById("mod-st").classList.add("open");
 }
 async function setStatus(s){
-await supa("pecas?id=eq."+PECA_ATIVA, {method:"PATCH", body:{status:s}});
-closeMod("mod-st");
-showToast("Status atualizado!");
-renderPerfil();
+  await supa("pecas?id=eq."+PECA_ATIVA, {method:"PATCH", body:{status:s}});
+  closeMod("mod-st");
+  showToast("Status atualizado!");
+  renderPerfil();
 }
 async function togUrg(btn){
-var id = btn.dataset.id;
-var p = await supa("pecas?id=eq."+id);
-var novo = p[0].status==="urgente"?"aguardando":"urgente";
-await supa("pecas?id=eq."+id, {method:"PATCH", body:{status:novo}});
-renderPerfil();
+  var id = btn.dataset.id;
+  var p = await supa("pecas?id=eq."+id);
+  var novo = p[0].status==="urgente"?"aguardando":"urgente";
+  await supa("pecas?id=eq."+id, {method:"PATCH", body:{status:novo}});
+  renderPerfil();
 }
 function abrirWpp(btn){
-var id = btn.dataset.id;
-var val = btn.dataset.val;
-document.getElementById("mw-cli").textContent = CLI_ATIVA;
-var linhas = ["Olá, "+CLI_ATIVA+"! 😊","","Sua peça está pronta e passou pela conferência final.","","👗 "+btn.closest(".pi").querySelector(".pn").textContent+"","✂️ "+(btn.closest(".pi").querySelector(".ps").textContent||"Serviço concluído")];
-if(val&&parseFloat(val)>0) linhas.push("","💰 Valor: "+fval(parseFloat(val)));
-linhas.push("","Quando preferir vir retirar? 🌸","","— Métrica Ateliê");
-document.getElementById("mw-txt").textContent = linhas.join("\n");
-document.getElementById("mod-wpp").classList.add("open");
+  var id = btn.dataset.id;
+  var val = btn.dataset.val;
+  document.getElementById("mw-cli").textContent = CLI_ATIVA;
+  var linhas = ["Olá, "+CLI_ATIVA+"! 😊","","Sua peça está pronta e passou pela conferência final.","","👗 "+btn.closest(".pi").querySelector(".pn").textContent+"","✂️ "+(btn.closest(".pi").querySelector(".ps").textContent||"Serviço concluído")];
+  if(val&&parseFloat(val)>0) linhas.push("","💰 Valor: "+fval(parseFloat(val)));
+  linhas.push("","Quando preferir vir retirar? 🌸","","— Métrica Ateliê");
+  document.getElementById("mw-txt").textContent = linhas.join("\n");
+  document.getElementById("mod-wpp").classList.add("open");
 }
 function sendWpp(){
-var msg = document.getElementById("mw-txt").textContent;
-window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+  var msg = document.getElementById("mw-txt").textContent;
+  window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
 }
 async function excluirPeca(btn){
-if(!confirm("Excluir esta peça?")) return;
-var id = btn.dataset.id;
-await supa("pecas?id=eq."+id, {method:"DELETE", prefer:"return=minimal"});
-showToast("Peça excluída!");
-renderPerfil();
+  if(!confirm("Excluir esta peça?")) return;
+  var id = btn.dataset.id;
+  await supa("pecas?id=eq."+id, {method:"DELETE", prefer:"return=minimal"});
+  showToast("Peça excluída!");
+  renderPerfil();
 }
 async function copiarLinkPortal(){
-try {
-var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
-var token = cli[0]&&cli[0].token_portal;
-if(!token){ showToast("Token não encontrado."); return; }
-var link = "https://allynekarvalho.github.io/metrica-atelie/portal/"+token;
-await navigator.clipboard.writeText(link);
-showToast("Link copiado! Cole no WhatsApp.");
-} catch(e){
-showToast("Erro ao copiar link.");
-}
+  try {
+    var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
+    var token = cli[0]&&cli[0].token_portal;
+    if(!token){ showToast("Token não encontrado."); return; }
+    var link = "https://allynekarvalho.github.io/metrica-atelie/portal/"+token;
+    await navigator.clipboard.writeText(link);
+    showToast("Link copiado! Cole no WhatsApp.");
+  } catch(e){
+    showToast("Erro ao copiar link.");
+  }
 }
 async function renderRes(){
-document.getElementById("res-n").innerHTML = "<div class='loading' style='grid-column:1/-1'>Carregando...</div>";
-try {
-var pecas = await supa("pecas?select=*");
-var pags = await supa("pagamentos?select=valor");
-var at = pecas.filter(function(p){ return p.status!=="entregue"; });
-var urg = at.filter(function(p){ return p.status==="urgente"; }).length;
-var and = at.filter(function(p){ return p.status==="em-andamento"; }).length;
-var prt = at.filter(function(p){ return p.status==="pronto"; }).length;
-var tg = pecas.reduce(function(s,p){ return s+(p.valor||0); },0);
-var tp = pags.reduce(function(s,p){ return s+p.valor; },0);
-var sd = tg-tp;
-document.getElementById("res-n").innerHTML =
-"<div class='rc'><div class='rn'>"+at.length+"</div><div class='rl'>Ativas</div></div>"+
-"<div class='rc'><div class='rn' style='color:#8B0000'>"+urg+"</div><div class='rl'>Urgentes</div></div>"+
-"<div class='rc'><div class='rn'>"+and+"</div><div class='rl'>Em andamento</div></div>"+
-"<div class='rc'><div class='rn' style='color:#2E5E2E'>"+prt+"</div><div class='rl'>P/ conferir</div></div>"+
-"<div class='rc' style='grid-column:1/-1'><div class='rn' style='font-size:24px'>"+fval(tg)+"</div><div class='rl'>Total geral</div></div>"+
-"<div class='rc'><div class='rn' style='font-size:20px;color:#2E5E2E'>"+fval(tp)+"</div><div class='rl'>Recebido</div></div>"+
-"<div class='rc'><div class='rn' style='font-size:20px;color:#8B0000'>"+fval(sd)+"</div><div class='rl'>A receber</div></div>";
-var cos=["Ana","Maria","Lucia","Allyne (eu)"];
-var h=cos.map(function(c){ var pp=at.filter(function(p){ return p.costureira===c; }); if(!pp.length)return""; return "<div class='cb'><div class='ct'>🪡 "+c+" · "+pp.length+" peça"+(pp.length>1?"s":"")+"</div>"+pp.map(function(p){ return "<div class='cp'><span>"+p.cliente_nome+" · "+p.peca+"</span><span class='badge "+p.status+"'>"+slbl(p.status)+"</span></div>"; }).join("")+"</div>"; }).join("");
-document.getElementById("res-c").innerHTML=h||"<div class='vz'><span class='vi2'>🎉</span>Tudo em dia!</div>";
-} catch(e){
-document.getElementById("res-n").innerHTML = "<div style='grid-column:1/-1;padding:20px;color:red'>Erro: "+e.message+"</div>";
+  document.getElementById("res-n").innerHTML = "<div class='loading' style='grid-column:1/-1'>Carregando...</div>";
+  try {
+    var pecas = await supa("pecas?select=*");
+    var pags = await supa("pagamentos?select=valor");
+    var at = pecas.filter(function(p){ return p.status!=="entregue"; });
+    var urg = at.filter(function(p){ return p.status==="urgente"; }).length;
+    var and = at.filter(function(p){ return p.status==="em-andamento"; }).length;
+    var prt = at.filter(function(p){ return p.status==="pronto"; }).length;
+    var tg = pecas.reduce(function(s,p){ return s+(p.valor||0); },0);
+    var tp = pags.reduce(function(s,p){ return s+p.valor; },0);
+    var sd = tg-tp;
+    document.getElementById("res-n").innerHTML =
+      "<div class='rc'><div class='rn'>"+at.length+"</div><div class='rl'>Ativas</div></div>"+
+      "<div class='rc'><div class='rn' style='color:#8B0000'>"+urg+"</div><div class='rl'>Urgentes</div></div>"+
+      "<div class='rc'><div class='rn'>"+and+"</div><div class='rl'>Em andamento</div></div>"+
+      "<div class='rc'><div class='rn' style='color:#2E5E2E'>"+prt+"</div><div class='rl'>P/ conferir</div></div>"+
+      "<div class='rc' style='grid-column:1/-1'><div class='rn' style='font-size:24px'>"+fval(tg)+"</div><div class='rl'>Total geral</div></div>"+
+      "<div class='rc'><div class='rn' style='font-size:20px;color:#2E5E2E'>"+fval(tp)+"</div><div class='rl'>Recebido</div></div>"+
+      "<div class='rc'><div class='rn' style='font-size:20px;color:#8B0000'>"+fval(sd)+"</div><div class='rl'>A receber</div></div>";
+    var cos=["Ana","Maria","Lucia","Allyne (eu)"];
+    var h=cos.map(function(c){ var pp=at.filter(function(p){ return p.costureira===c; }); if(!pp.length)return""; return "<div class='cb'><div class='ct'>🪡 "+c+" · "+pp.length+" peça"+(pp.length>1?"s":"")+"</div>"+pp.map(function(p){ return "<div class='cp'><span>"+p.cliente_nome+" · "+p.peca+"</span><span class='badge "+p.status+"'>"+slbl(p.status)+"</span></div>"; }).join("")+"</div>"; }).join("");
+    document.getElementById("res-c").innerHTML=h||"<div class='vz'><span class='vi2'>🎉</span>Tudo em dia!</div>";
+  } catch(e){
+    document.getElementById("res-n").innerHTML = "<div style='grid-column:1/-1;padding:20px;color:red'>Erro: "+e.message+"</div>";
+  }
 }
+async function imprimirComanda(id) {
+  var p = await supa("pecas?id=eq."+id);
+  if(!p||!p[0]) return;
+  p = p[0];
+  var data = p.data_entrada ? new Date(p.data_entrada+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"}) : new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
+  var prazo = p.prazo ? new Date(p.prazo+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"}) : "—";
+  var html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><style>"+
+    "body{font-family:Arial,sans-serif;padding:20px;max-width:420px;margin:0 auto}"+
+    ".header{text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:16px}"+
+    ".header h1{font-size:18px;margin:0;letter-spacing:2px}"+
+    ".header p{font-size:11px;color:#666;margin:4px 0 0}"+
+    ".os-num{font-size:12px;color:#999;margin-top:4px}"+
+    ".campo{margin-bottom:12px}"+
+    ".label{font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;color:#666;margin-bottom:3px}"+
+    ".valor{font-size:15px;font-weight:bold;border-bottom:1px solid #ccc;padding-bottom:4px}"+
+    ".servico{font-size:14px;border:1px solid #000;padding:10px;min-height:80px;margin-top:4px;border-radius:4px}"+
+    ".row{display:flex;gap:20px}"+
+    ".assinatura{margin-top:24px;border-top:1px solid #000;padding-top:10px;font-size:12px}"+
+    ".sig-row{display:flex;gap:20px;margin-top:8px}"+
+    ".sig-item{flex:1;border-bottom:1px solid #000;padding-bottom:2px;font-size:11px;color:#999}"+
+    ".rodape{margin-top:16px;text-align:center;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:8px}"+
+    "@media print{body{padding:10px}}"+
+    "</style></head><body>"+
+    "<div class='header'><h1>MÉTRICA ATELIÊ</h1><p>Allyne Carvalho · Ordem de Serviço</p><div class='os-num'>OS #"+p.id.substring(0,8).toUpperCase()+"</div></div>"+
+    "<div class='row'>"+
+    "<div class='campo' style='flex:2'><div class='label'>Cliente</div><div class='valor'>"+p.cliente_nome+"</div></div>"+
+    "<div class='campo' style='flex:1'><div class='label'>Data</div><div class='valor'>"+data+"</div></div>"+
+    "</div>"+
+    "<div class='row'>"+
+    "<div class='campo' style='flex:2'><div class='label'>Peça</div><div class='valor'>"+p.peca+"</div></div>"+
+    (p.marca?"<div class='campo' style='flex:1'><div class='label'>Marca</div><div class='valor'>"+p.marca+"</div></div>":"")+
+    "</div>"+
+    "<div class='campo'><div class='label'>Serviço a realizar</div><div class='servico'>"+(p.servico||"")+"</div></div>"+
+    "<div class='row'>"+
+    "<div class='campo' style='flex:1'><div class='label'>Costureira</div><div class='valor'>"+(p.costureira||"—")+"</div></div>"+
+    "<div class='campo' style='flex:1'><div class='label'>Prazo de entrega</div><div class='valor'>"+prazo+"</div></div>"+
+    "</div>"+
+    "<div class='assinatura'><strong>Conclusão do serviço</strong>"+
+    "<div class='sig-row'>"+
+    "<div class='sig-item'>Valor cobrado: R$ _________</div>"+
+    "<div class='sig-item'>Assinatura: _________</div>"+
+    "</div></div>"+
+    "<div class='rodape'>Métrica Ateliê · Cuiabá, MT</div>"+
+    "</body></html>";
+  var win = window.open("","_blank");
+  win.document.write(html);
+  win.document.close();
+  setTimeout(function(){ win.print(); }, 500);
+}
+async function abrirEditar(id) {
+  var p = await supa("pecas?id=eq."+id);
+  if(!p||!p[0]) return;
+  p = p[0];
+  document.getElementById("ed-id").value = p.id;
+  document.getElementById("ed-peca").value = p.peca||"";
+  document.getElementById("ed-marca").value = p.marca||"";
+  document.getElementById("ed-serv").value = p.servico||"";
+  document.getElementById("ed-val").value = p.valor||"";
+  document.getElementById("ed-com").value = p.comissao||"";
+  document.getElementById("ed-cos").value = p.costureira||"";
+  document.getElementById("ed-prazo").value = p.prazo||"";
+  document.getElementById("ed-prio").value = p.status==="urgente"?"urgente":"aguardando";
+  document.getElementById("mod-editar").classList.add("open");
+}
+async function salvarEdicao() {
+  var id = document.getElementById("ed-id").value;
+  var val = parseFloat(document.getElementById("ed-val").value)||0;
+  var com = parseFloat(document.getElementById("ed-com").value)||0;
+  var body = {
+    peca: document.getElementById("ed-peca").value.trim(),
+    marca: document.getElementById("ed-marca").value.trim(),
+    servico: document.getElementById("ed-serv").value.trim(),
+    costureira: document.getElementById("ed-cos").value,
+    prazo: document.getElementById("ed-prazo").value||null,
+    status: document.getElementById("ed-prio").value,
+    valor: val,
+    comissao: com
+  };
+  await supa("pecas?id=eq."+id, {method:"PATCH", body:body});
+  closeMod("mod-editar");
+  showToast("Peça atualizada!");
+  renderPerfil();
+}
+function calcComEd() {
+  var v = parseFloat(document.getElementById("ed-val").value)||0;
+  document.getElementById("ed-com").value = (v*0.45).toFixed(2);
 }
 function closeMod(id){ document.getElementById(id).classList.remove("open"); }
 document.querySelectorAll(".mov").forEach(function(o){ o.addEventListener("click",function(e){ if(e.target===o)closeMod(o.id); }); });
 document.getElementById("np-val").addEventListener("input", calcCom);
 renderLista();
 </script>
+<!-- MODAL EDITAR PEÇA -->
+<div class="mov" id="mod-editar">
+  <div class="mo">
+    <div class="mh"></div>
+    <h2>Editar peça</h2>
+    <input type="hidden" id="ed-id">
+    <div class="fg"><label>Peça</label><input id="ed-peca" placeholder="Nome da peça"></div>
+    <div class="fg"><label>Marca (opcional)</label><input id="ed-marca" placeholder="Ex: Zara, Farm..."></div>
+    <div class="fg"><label>Serviço</label><textarea id="ed-serv" style="height:80px;resize:none;width:100%;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-family:DM Sans,sans-serif;font-size:14px" placeholder="Descrição do serviço"></textarea></div>
+    <div class="fr">
+      <div class="fg"><label>Valor (R$)</label><div class="vw"><span class="vp">R$</span><input type="number" id="ed-val" class="vi" placeholder="0,00" min="0" step="0.01" oninput="calcComEd()"></div></div>
+      <div class="fg"><label>Comissão 45%</label><div class="vw"><span class="vp">R$</span><input type="number" id="ed-com" class="vi" placeholder="0,00" readonly style="background:#F5F5F5;color:#B8B8B8"></div></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>Costureira</label><select id="ed-cos"><option value="">Selecionar...</option><option>Ana</option><option>Maria</option><option>Lucia</option><option>Allyne (eu)</option></select></div>
+      <div class="fg"><label>Prazo</label><input type="date" id="ed-prazo"></div>
+    </div>
+    <div class="fg"><label>Prioridade</label><select id="ed-prio"><option value="aguardando">Normal</option><option value="urgente">🔴 Urgente</option></select></div>
+    <button class="btn-p" onclick="salvarEdicao()">Salvar alterações</button>
+    <button class="btn-s" onclick="closeMod('mod-editar')">Cancelar</button>
+  </div>
+</div>
 </body>
 </html>
