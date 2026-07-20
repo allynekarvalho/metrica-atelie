@@ -713,10 +713,10 @@ async function imprimirComanda(id) {
     "</div></div>"+
     "<div class='rodape'>Métrica Ateliê · Cuiabá, MT</div>"+
     "</body></html>";
-  var win = window.open("","_blank");
-  win.document.write(html);
-  win.document.close();
-  setTimeout(function(){ win.print(); }, 500);
+  var blob = new Blob([html], {type:"text/html"});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a"); a.href = url; a.target = "_blank";
+  a.click(); URL.revokeObjectURL(url);
 }
 async function abrirEditar(id) {
   var p = await supa("pecas?id=eq."+id);
