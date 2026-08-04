@@ -636,8 +636,7 @@ async function copiarLinkPortal(){
     var token = cli[0]&&cli[0].token_portal;
     if(!token){ showToast("Token não encontrado."); return; }
     var link = "https://allynekarvalho.github.io/metrica-atelie/portal/"+token;
-    var msg = "Olá! Aqui está o link para acompanhar suas peças na Métrica Ateliê:
-"+link; window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+    var msg = "Olá! Aqui está o link para acompanhar suas peças na Métrica Ateliê:\n"+link; window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
     
   } catch(e){
     showToast("Erro ao gerar link.");
