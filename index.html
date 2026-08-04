@@ -466,8 +466,8 @@ function mkPecaHTML(p, comAcoes){
   if(comAcoes){
     var id = p.id;
     var acoes = "<button class='bm' data-id='"+id+"' data-peca='"+p.peca+"' data-serv='"+(p.servico||"")+"' onclick='abrirSt(this)'>Status</button>";
-      acoes += "<button class='bm' data-id='"+id+"' onclick='imprimirComanda(+this.dataset.id)'>🖨️ Comanda</button>";
-      acoes += "<button class='bm' data-id='"+id+"' onclick='abrirEditar(+this.dataset.id)'>✏️ Editar</button>";
+      acoes += "<button class='bm' data-id='"+id+"' onclick='imprimirComanda(this.dataset.id)'>🖨️ Comanda</button>";
+      acoes += "<button class='bm' data-id='"+id+"' onclick='abrirEditar(this.dataset.id)'>✏️ Editar</button>";
     if(p.status==="urgente") acoes += "<button class='bm' data-id='"+id+"' onclick='togUrg(this)' style='background:#FDE8E8;color:#8B0000'>✕ Urgente</button>";
     else acoes += "<button class='bm vm' data-id='"+id+"' onclick='togUrg(this)'>🔴 Urgente</button>";
     if(p.status==="pronto") acoes += "<button class='bm vd' data-id='"+id+"' data-val='"+p.valor+"' onclick='abrirWpp(this)'>Avisar</button>";
