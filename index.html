@@ -797,23 +797,15 @@ p = p[0];
 var pecasDia = p.data_entrada ? await supa("pecas?cliente_id=eq."+p.cliente_id+"&data_entrada=eq."+p.data_entrada+"&order=criado_em") : [p];
 if(!pecasDia||!pecasDia.length) pecasDia = [p];
 var data = p.data_entrada ? new Date(p.data_entrada+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"}) : new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
+var totalDia = pecasDia.reduce(function(s,pc){ return s+(pc.valor||0); },0);
 var itensHTML = pecasDia.map(function(pc){
-var prazoPc = pc.prazo ? new Date(pc.prazo+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"}) : "—";
 return "<div class='item-peca'>"+
 "<div class='row'>"+
 "<div class='campo' style='flex:2'><div class='label'>Peça</div><div class='valor'>"+pc.peca+"</div></div>"+
 (pc.marca?"<div class='campo' style='flex:1'><div class='label'>Marca</div><div class='valor'>"+pc.marca+"</div></div>":"")+
 "</div>"+
 "<div class='campo'><div class='label'>Serviço a realizar</div><div class='servico'>"+(pc.servico||"")+"</div></div>"+
-"<div class='row'>"+
-"<div class='campo' style='flex:1'><div class='label'>Costureira</div><div class='valor'>"+(pc.costureira||"—")+"</div></div>"+
-"<div class='campo' style='flex:1'><div class='label'>Prazo de entrega</div><div class='valor'>"+prazoPc+"</div></div>"+
-"</div>"+
-"<div class='assinatura'><strong>Conclusão do serviço</strong>"+
-"<div class='sig-row'>"+
-"<div class='sig-item'>Valor cobrado: R$ _________</div>"+
-"<div class='sig-item'>Assinatura: _________</div>"+
-"</div></div>"+
+"<div class='campo'><div class='label'>Valor do serviço</div><div class='valor'>"+fval(pc.valor)+"</div></div>"+
 "</div>";
 }).join("<hr class='sep'>");
 var html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><style>"+
@@ -840,6 +832,11 @@ var html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><style>"+
 "<div class='campo' style='flex:1'><div class='label'>Data</div><div class='valor'>"+data+"</div></div>"+
 "</div>"+
 itensHTML+
+"<div class='assinatura'><strong>Conclusão do serviço</strong>"+
+"<div class='sig-row'>"+
+"<div class='sig-item'>Valor cobrado: R$ _________</div>"+
+"<div class='sig-item'>Assinatura: _________</div>"+
+"</div></div>"+
 "<div class='rodape'>Métrica Ateliê · Cuiabá, MT</div>"+
 "</body></html>";
 var blob = new Blob([html], {type:"text/html"});
