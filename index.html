@@ -112,6 +112,14 @@ input:focus,select:focus{border-color:#0A0A0A}
 .loading{text-align:center;padding:30px;color:#B8B8B8;font-size:13px}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0A0A0A;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:999;display:none}
 .foto-preview{width:100%;border-radius:8px;margin-top:8px;border:1px solid #E8E8E8;display:none}
+.cfg-title{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#B8B8B8;margin-bottom:10px}
+.cfg-sec{margin-bottom:24px}
+.cfg-row{display:flex;align-items:center;gap:8px;background:#1C1C1C;border:1px solid #2E2E2E;border-radius:8px;padding:8px 10px;margin-bottom:8px}
+.cfg-row input{flex:1;padding:8px 10px;font-size:13px}
+.cfg-row .vw{flex:0 0 100px}
+.cfg-del{background:transparent;border:none;color:#B8B8B8;font-size:16px;cursor:pointer;padding:0 6px}
+.cfg-add{display:flex;gap:8px;margin-top:6px}
+.eprint{padding:10px 14px;border-top:1px solid #E8E8E8}
 </style>
 </head>
 <body>
@@ -123,9 +131,12 @@ input:focus,select:focus{border-color:#0A0A0A}
   <div class="tabs">
     <button class="tab active" onclick="goTab('clientes',this)">Clientes</button>
     <button class="tab" onclick="goTab('resumo',this)">Resumo</button>
-  </div>
+  
+  <button class="tab" onclick="goTab('config',this)">Config</button>
+</div>
 </header>
 <div class="toast" id="toast"></div>
+<datalist id="marcas-dl"></datalist>
 <div class="sc active" id="tela-clientes">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #E8E8E8">
     <p class="stitle" style="margin:0;border:none;padding:0;color:#fff">Clientes</p>
@@ -169,6 +180,26 @@ input:focus,select:focus{border-color:#0A0A0A}
   <div class="rg" id="res-n"></div>
   <div id="res-c"></div>
 </div>
+<div class="sc" id="tela-config">
+  <p class="stitle" style="color:#fff;border-bottom:1px solid rgba(255,255,255,0.2)">Configurações</p>
+  <div class="cfg-sec">
+    <div class="cfg-title">Serviços e valores</div>
+    <div id="cfg-servicos"></div>
+    <div class="cfg-add">
+      <input id="cfg-sv-nome" placeholder="Nome do serviço">
+      <div class="vw"><span class="vp">R$</span><input type="number" id="cfg-sv-val" class="vi" placeholder="0" min="0" step="0.01"></div>
+      <button onclick="addServico()" style="padding:0 14px;background:#fff;color:#0A0A0A;border:1px solid #E8E8E8;border-radius:6px;font-size:20px;cursor:pointer">+</button>
+    </div>
+  </div>
+  <div class="cfg-sec">
+    <div class="cfg-title">Marcas cadastradas</div>
+    <div id="cfg-marcas"></div>
+    <div class="cfg-add">
+      <input id="cfg-mc-nome" placeholder="Nome da marca">
+      <button onclick="addMarca()" style="padding:0 14px;background:#fff;color:#0A0A0A;border:1px solid #E8E8E8;border-radius:6px;font-size:20px;cursor:pointer">+</button>
+    </div>
+  </div>
+</div>
 <!-- MODAL NOVA CLIENTE -->
 <div class="mov" id="mod-ncli">
   <div class="mo">
@@ -187,7 +218,7 @@ input:focus,select:focus{border-color:#0A0A0A}
     <h2>Nova peça</h2>
     <p class="msub" id="npeca-cli-nome"></p>
     <div class="fg"><label>Peça</label><input id="np-peca" placeholder="Ex: Calça social preta"></div>
-    <div class="fg"><label>Marca (opcional)</label><input id="np-marca" placeholder="Ex: Zara, Farm, Louis Vuitton..."></div>
+    <div class="fg"><label>Marca (opcional)</label><input id="np-marca" list="marcas-dl" placeholder="Ex: Zara, Farm, Louis Vuitton..."></div>
     <div class="fg">
       <label>Serviço</label>
       <div class="stags" id="np-stags"></div>
@@ -252,13 +283,30 @@ var CLI_ATIVA_ID = null;
 var PECA_ATIVA = null;
 var SEL = [];
 var FOTO_FILE = null;
-var EXTRAS = JSON.parse(localStorage.getItem("metrica_extras") || "[]");
-var SVC_BASE = [
-  {n:"Barra de calça",v:70},{n:"Barra de vestido festa",v:140},
-  {n:"Ajuste cós jeans",v:80},{n:"Ajuste cós simples",v:70},
-  {n:"Ajuste lateral vestido forrado",v:90},{n:"Alças",v:50}
+var FOTO_FILE_EDIT = null;
+var SVC_BASE_PADRAO = [
+{n:"Barra de calça",v:70},{n:"Barra de vestido festa",v:140},
+{n:"Ajuste cós jeans",v:80},{n:"Ajuste cós simples",v:70},
+{n:"Ajuste lateral vestido forrado",v:90},{n:"Alças",v:50}
 ];
-function allSvc(){ return SVC_BASE.concat(EXTRAS); }
+var SERVICOS = JSON.parse(localStorage.getItem("metrica_servicos") || "null");
+if(!SERVICOS){ SERVICOS = SVC_BASE_PADRAO.slice(); localStorage.setItem("metrica_servicos", JSON.stringify(SERVICOS)); }
+var MARCAS = JSON.parse(localStorage.getItem("metrica_marcas") || "[]");
+function saveServicos(){ localStorage.setItem("metrica_servicos", JSON.stringify(SERVICOS)); }
+function saveMarcas(){ localStorage.setItem("metrica_marcas", JSON.stringify(MARCAS)); }
+function registrarMarca(nome){
+if(!nome) return;
+nome = nome.trim();
+if(!nome) return;
+var existe = MARCAS.some(function(m){ return m.toLowerCase()===nome.toLowerCase(); });
+if(!existe){ MARCAS.push(nome); saveMarcas(); populateMarcasDL(); }
+}
+function populateMarcasDL(){
+var dl = document.getElementById("marcas-dl");
+if(!dl) return;
+dl.innerHTML = MARCAS.slice().sort().map(function(m){ return "<option value='"+m.replace(/'/g,"&#39;")+"'>"; }).join("");
+}
+function allSvc(){ return SERVICOS; }
 async function supa(path, opts) {
   var url = SUPA_URL + "/rest/v1/" + path;
   var headers = {
@@ -331,14 +379,69 @@ function updSvc(){
   else{ inf.style.display="none"; }
 }
 function addServ(){
-  var n = document.getElementById("np-snome").value.trim();
-  var v = parseFloat(document.getElementById("np-sval").value)||0;
-  if(!n){ alert("Digite o nome."); return; }
-  EXTRAS.push({n:n,v:v});
-  localStorage.setItem("metrica_extras", JSON.stringify(EXTRAS));
-  document.getElementById("np-snome").value="";
-  document.getElementById("np-sval").value="";
-  initSvc();
+var n = document.getElementById("np-snome").value.trim();
+var v = parseFloat(document.getElementById("np-sval").value)||0;
+if(!n){ alert("Digite o nome."); return; }
+SERVICOS.push({n:n,v:v});
+saveServicos();
+document.getElementById("np-snome").value="";
+document.getElementById("np-sval").value="";
+initSvc();
+if(document.getElementById("tela-config").classList.contains("active")) renderConfig();
+}
+function renderConfig(){
+var c = document.getElementById("cfg-servicos");
+c.innerHTML = SERVICOS.map(function(s,i){
+return "<div class='cfg-row'><input value='"+s.n.replace(/'/g,"&#39;")+"' onchange='updateServicoNome("+i+",this.value)'>"+
+"<div class='vw'><span class='vp'>R$</span><input type='number' class='vi' value='"+s.v+"' min='0' step='0.01' onchange='updateServicoVal("+i+",this.value)'></div>"+
+"<button class='cfg-del' onclick='delServico("+i+")'>✕</button></div>";
+}).join("") || "<div class='vz'>Nenhum serviço cadastrado.</div>";
+var m = document.getElementById("cfg-marcas");
+m.innerHTML = MARCAS.map(function(nm,i){
+return "<div class='cfg-row'><input value='"+nm.replace(/'/g,"&#39;")+"' onchange='updateMarcaNome("+i+",this.value)'>"+
+"<button class='cfg-del' onclick='delMarca("+i+")'>✕</button></div>";
+}).join("") || "<div class='vz'>Nenhuma marca cadastrada.</div>";
+}
+function addServico(){
+var n = document.getElementById("cfg-sv-nome").value.trim();
+var v = parseFloat(document.getElementById("cfg-sv-val").value)||0;
+if(!n){ alert("Digite o nome do serviço."); return; }
+SERVICOS.push({n:n,v:v});
+saveServicos();
+document.getElementById("cfg-sv-nome").value="";
+document.getElementById("cfg-sv-val").value="";
+renderConfig();
+initSvc();
+}
+function updateServicoNome(i,val){ SERVICOS[i].n = val.trim(); saveServicos(); initSvc(); }
+function updateServicoVal(i,val){ SERVICOS[i].v = parseFloat(val)||0; saveServicos(); initSvc(); }
+function delServico(i){
+if(!confirm("Remover este serviço?")) return;
+SERVICOS.splice(i,1);
+saveServicos();
+renderConfig();
+initSvc();
+}
+function addMarca(){
+var n = document.getElementById("cfg-mc-nome").value.trim();
+if(!n){ alert("Digite o nome da marca."); return; }
+registrarMarca(n);
+document.getElementById("cfg-mc-nome").value="";
+renderConfig();
+}
+function updateMarcaNome(i,val){
+val = val.trim();
+if(!val) return;
+MARCAS[i]=val;
+saveMarcas();
+populateMarcasDL();
+}
+function delMarca(i){
+if(!confirm("Remover esta marca?")) return;
+MARCAS.splice(i,1);
+saveMarcas();
+renderConfig();
+populateMarcasDL();
 }
 function calcCom(){
   var v = parseFloat(document.getElementById("np-val").value)||0;
@@ -359,13 +462,29 @@ function fotoSelecionada(inp){
   };
   r.readAsDataURL(inp.files[0]);
 }
+function fotoSelecionadaEdit(inp){
+if(!inp.files||!inp.files[0]) return;
+FOTO_FILE_EDIT = inp.files[0];
+var r = new FileReader();
+r.onload = function(e){
+var img = document.getElementById("ed-prev");
+img.src = e.target.result;
+img.style.display = "block";
+var st = document.getElementById("ed-foto-status");
+st.textContent = "📸 Nova foto pronta para enviar";
+st.style.display = "block";
+st.style.color = "#2E5E2E";
+};
+r.readAsDataURL(inp.files[0]);
+}
 function goTab(t,btn){
-  document.querySelectorAll(".sc").forEach(function(s){ s.classList.remove("active"); });
-  document.querySelectorAll(".tab").forEach(function(b){ b.classList.remove("active"); });
-  document.getElementById("tela-"+t).classList.add("active");
-  if(btn) btn.classList.add("active");
-  if(t==="clientes") renderLista();
-  if(t==="resumo") renderRes();
+document.querySelectorAll(".sc").forEach(function(s){ s.classList.remove("active"); });
+document.querySelectorAll(".tab").forEach(function(b){ b.classList.remove("active"); });
+document.getElementById("tela-"+t).classList.add("active");
+if(btn) btn.classList.add("active");
+if(t==="clientes") renderLista();
+if(t==="resumo") renderRes();
+if(t==="config") renderConfig();
 }
 async function renderLista(){
   var cont = document.getElementById("lista-cli");
@@ -442,23 +561,24 @@ async function renderPerfil(){
   }
 }
 function mkEntradasHTML(pecas, comAcoes){
-  if(!pecas.length) return "";
-  var porData = {};
-  pecas.forEach(function(p){
-    var d = p.data_entrada || "—";
-    if(!porData[d]) porData[d]=[];
-    porData[d].push(p);
-  });
-  var datas = Object.keys(porData).sort(function(a,b){ return b.localeCompare(a); });
-  return datas.map(function(d){
-    var pp = porData[d];
-    var tot = pp.reduce(function(s,p){ return s+(p.valor||0); },0);
-    var df = new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
-    return "<div class='eg'><div class='ehdr'><span class='edata'>📅 "+df+"</span><span class='eres'>"+pp.length+" peça"+(pp.length>1?"s":"")+"</span></div>"+
-      pp.map(function(p){ return mkPecaHTML(p, comAcoes); }).join("")+
-      (comAcoes&&tot>0?"<div class='etot'><span>Total entrada</span><span>"+fval(tot)+"</span></div>":"")+
-    "</div>";
-  }).join("");
+if(!pecas.length) return "";
+var porData = {};
+pecas.forEach(function(p){
+var d = p.data_entrada || "—";
+if(!porData[d]) porData[d]=[];
+porData[d].push(p);
+});
+var datas = Object.keys(porData).sort(function(a,b){ return b.localeCompare(a); });
+return datas.map(function(d){
+var pp = porData[d];
+var tot = pp.reduce(function(s,p){ return s+(p.valor||0); },0);
+var df = new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
+return "<div class='eg'><div class='ehdr'><span class='edata'>📅 "+df+"</span><span class='eres'>"+pp.length+" peça"+(pp.length>1?"s":"")+"</span></div>"+
+pp.map(function(p){ return mkPecaHTML(p, comAcoes); }).join("")+
+(comAcoes&&tot>0?"<div class='etot'><span>Total entrada</span><span>"+fval(tot)+"</span></div>":"")+
+(comAcoes?"<div class='eprint'><button class='bm' style='width:100%' data-id='"+pp[0].id+"' onclick='imprimirComanda(this.dataset.id)'>🖨️ Imprimir todas as peças do dia</button></div>":"")+
+"</div>";
+}).join("");
 }
 function mkPecaHTML(p, comAcoes){
   var fotoHTML = p.foto_url ? "<img src='"+p.foto_url+"' class='pfoto' data-url='"+p.foto_url+"' onclick='verFoto(this.dataset.url)'>" : "";
@@ -550,7 +670,7 @@ function abrirNovaPeca(){
   FOTO_FILE=null;
   initSvc();
   document.getElementById("npeca-cli-nome").textContent = CLI_ATIVA;
-  ["np-peca","np-serv","np-val","np-com","np-prazo"].forEach(function(id){ document.getElementById(id).value=""; });
+  ["np-peca","np-marca","np-serv","np-val","np-com","np-prazo"].forEach(function(id){ document.getElementById(id).value=""; });
   document.getElementById("np-cos").value="";
   document.getElementById("np-prio").value="aguardando";
   document.getElementById("np-prev").style.display="none";
@@ -574,6 +694,7 @@ async function salvarPeca(){
     var prio = document.getElementById("np-prio").value;
     var hoje = new Date().toISOString().split("T")[0];
     var marca = document.getElementById("np-marca").value.trim();
+if(marca) registrarMarca(marca);
     var body = {cliente_id:CLI_ATIVA_ID, cliente_nome:CLI_ATIVA, peca:peca, marca:marca, servico:serv, costureira:cos, prazo:prazo, status:prio, valor:val, comissao:com, data_entrada:hoje};
     var res = await supa("pecas", {method:"POST", body:body});
     if(FOTO_FILE && res && res[0]){
@@ -727,38 +848,61 @@ var a = document.createElement("a"); a.href = url; a.target = "_blank";
 a.click(); URL.revokeObjectURL(url);
 }
 async function abrirEditar(id) {
-  var p = await supa("pecas?id=eq."+id);
-  if(!p||!p[0]) return;
-  p = p[0];
-  document.getElementById("ed-id").value = p.id;
-  document.getElementById("ed-peca").value = p.peca||"";
-  document.getElementById("ed-marca").value = p.marca||"";
-  document.getElementById("ed-serv").value = p.servico||"";
-  document.getElementById("ed-val").value = p.valor||"";
-  document.getElementById("ed-com").value = p.comissao||"";
-  document.getElementById("ed-cos").value = p.costureira||"";
-  document.getElementById("ed-prazo").value = p.prazo||"";
-  document.getElementById("ed-prio").value = p.status==="urgente"?"urgente":"aguardando";
-  document.getElementById("mod-editar").classList.add("open");
+var p = await supa("pecas?id=eq."+id);
+if(!p||!p[0]) return;
+p = p[0];
+document.getElementById("ed-id").value = p.id;
+document.getElementById("ed-peca").value = p.peca||"";
+document.getElementById("ed-marca").value = p.marca||"";
+document.getElementById("ed-serv").value = p.servico||"";
+document.getElementById("ed-val").value = p.valor||"";
+document.getElementById("ed-com").value = p.comissao||"";
+document.getElementById("ed-cos").value = p.costureira||"";
+document.getElementById("ed-prazo").value = p.prazo||"";
+document.getElementById("ed-data").value = p.data_entrada||"";
+document.getElementById("ed-prio").value = p.status==="urgente"?"urgente":"aguardando";
+FOTO_FILE_EDIT = null;
+var edPrev = document.getElementById("ed-prev");
+var edSt = document.getElementById("ed-foto-status");
+if(p.foto_url){
+edPrev.src = p.foto_url;
+edPrev.style.display = "block";
+edSt.textContent = "Foto atual (toque no botão para trocar)";
+edSt.style.display = "block";
+edSt.style.color = "#6B6B6B";
+} else {
+edPrev.style.display = "none";
+edSt.style.display = "none";
+}
+document.getElementById("mod-editar").classList.add("open");
 }
 async function salvarEdicao() {
-  var id = document.getElementById("ed-id").value;
-  var val = parseFloat(document.getElementById("ed-val").value)||0;
-  var com = parseFloat(document.getElementById("ed-com").value)||0;
-  var body = {
-    peca: document.getElementById("ed-peca").value.trim(),
-    marca: document.getElementById("ed-marca").value.trim(),
-    servico: document.getElementById("ed-serv").value.trim(),
-    costureira: document.getElementById("ed-cos").value,
-    prazo: document.getElementById("ed-prazo").value||null,
-    status: document.getElementById("ed-prio").value,
-    valor: val,
-    comissao: com
-  };
-  await supa("pecas?id=eq."+id, {method:"PATCH", body:body});
-  closeMod("mod-editar");
-  showToast("Peça atualizada!");
-  renderPerfil();
+var id = document.getElementById("ed-id").value;
+var val = parseFloat(document.getElementById("ed-val").value)||0;
+var com = parseFloat(document.getElementById("ed-com").value)||0;
+var marcaEd = document.getElementById("ed-marca").value.trim();
+var body = {
+peca: document.getElementById("ed-peca").value.trim(),
+marca: marcaEd,
+servico: document.getElementById("ed-serv").value.trim(),
+costureira: document.getElementById("ed-cos").value,
+prazo: document.getElementById("ed-prazo").value||null,
+data_entrada: document.getElementById("ed-data").value||null,
+status: document.getElementById("ed-prio").value,
+valor: val,
+comissao: com
+};
+if(marcaEd) registrarMarca(marcaEd);
+await supa("pecas?id=eq."+id, {method:"PATCH", body:body});
+if(FOTO_FILE_EDIT){
+try {
+var fotoUrlEd = await uploadFoto(FOTO_FILE_EDIT, id);
+await supa("pecas?id=eq."+id, {method:"PATCH", body:{foto_url:fotoUrlEd}});
+} catch(fe){ console.warn("Foto não enviada:", fe); }
+}
+closeMod("mod-editar");
+showToast("Peça atualizada!");
+renderPerfil();
 }
 function calcComEd() {
   var v = parseFloat(document.getElementById("ed-val").value)||0;
@@ -767,6 +911,7 @@ function calcComEd() {
 function closeMod(id){ document.getElementById(id).classList.remove("open"); }
 document.querySelectorAll(".mov").forEach(function(o){ o.addEventListener("click",function(e){ if(e.target===o)closeMod(o.id); }); });
 document.getElementById("np-val").addEventListener("input", calcCom);
+populateMarcasDL();
 renderLista();
 </script>
 <!-- MODAL EDITAR PEÇA -->
@@ -776,7 +921,7 @@ renderLista();
     <h2>Editar peça</h2>
     <input type="hidden" id="ed-id">
     <div class="fg"><label>Peça</label><input id="ed-peca" placeholder="Nome da peça"></div>
-    <div class="fg"><label>Marca (opcional)</label><input id="ed-marca" placeholder="Ex: Zara, Farm..."></div>
+    <div class="fg"><label>Marca (opcional)</label><input id="ed-marca" list="marcas-dl" placeholder="Ex: Zara, Farm..."></div>
     <div class="fg"><label>Serviço</label><textarea id="ed-serv" style="height:80px;resize:none;width:100%;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-family:DM Sans,sans-serif;font-size:14px" placeholder="Descrição do serviço"></textarea></div>
     <div class="fr">
       <div class="fg"><label>Valor (R$)</label><div class="vw"><span class="vp">R$</span><input type="number" id="ed-val" class="vi" placeholder="0,00" min="0" step="0.01" oninput="calcComEd()"></div></div>
@@ -785,6 +930,14 @@ renderLista();
     <div class="fr">
       <div class="fg"><label>Costureira</label><select id="ed-cos"><option value="">Selecionar...</option><option>Ana</option><option>Maria</option><option>Lucia</option><option>Allyne (eu)</option></select></div>
       <div class="fg"><label>Prazo</label><input type="date" id="ed-prazo"></div>
+    </div>
+    <div class="fg"><label>Data de entrada</label><input type="date" id="ed-data"></div>
+    <div class="fg">
+      <label>📸 Foto da peça</label>
+      <input type="file" id="ed-cam" accept="image/*" capture="environment" style="display:none" onchange="fotoSelecionadaEdit(this)">
+      <button class="btn-foto" type="button" onclick="document.getElementById('ed-cam').click()">📷 Adicionar/Trocar foto</button>
+      <img id="ed-prev" class="foto-preview">
+      <p id="ed-foto-status" style="font-size:11px;color:#6B6B6B;margin-top:5px;display:none"></p>
     </div>
     <div class="fg"><label>Prioridade</label><select id="ed-prio"><option value="aguardando">Normal</option><option value="urgente">🔴 Urgente</option></select></div>
     <button class="btn-p" onclick="salvarEdicao()">Salvar alterações</button>
