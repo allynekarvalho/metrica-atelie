@@ -150,6 +150,7 @@ input:focus,select:focus{border-color:#0A0A0A}
     <button class="filtro" onclick="filtrar('pronto',this)">Prontas</button>
     <button class="filtro" onclick="filtrar('entregue',this)">Entregues</button>
   </div>
+  <input id="busca-cli" placeholder="🔍 Buscar cliente..." oninput="renderLista()" style="width:100%;padding:12px 14px;border:1px solid #2E2E2E;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:15px;color:#fff;background:#1C1C1C;outline:none;margin-bottom:14px">
   <div id="lista-cli"></div>
 </div>
 <div class="sc" id="tela-perfil">
@@ -500,6 +501,10 @@ async function renderLista(){
       cli.pecas = todasPecas.filter(function(p){ return p.cliente_id===cli.id; });
       return cli;
     });
+    var busca = (document.getElementById("busca-cli")||{}).value||"";
+    if(busca){
+      clientes = clientes.filter(function(c){ return c.nome.toLowerCase().includes(busca.toLowerCase()); });
+    }
     if(FILTRO!=="todos"){
       clientes = clientes.filter(function(c){
         return c.pecas && c.pecas.some(function(p){ return p.status===FILTRO; });
@@ -511,7 +516,7 @@ async function renderLista(){
       var temUrg = c.pecas && c.pecas.some(function(p){ return p.status==="urgente"; });
       return "<div class='cli-item' data-id='"+c.id+"' data-nome='"+c.nome.replace(/'/g,"&#39;")+"' onclick='abrirPerfil(this.dataset.id,this.dataset.nome)'>" +
         "<div><div class='cli-nome'>"+(temUrg?"🔴 ":"")+c.nome+"</div><div class='cli-meta'>"+ativas+" ativa"+(ativas!==1?"s":"")+" · "+total+" total</div></div>" +
-        "<span class='cli-arrow'>›</span></div>";
+        "<div style='display:flex;gap:6px;align-items:center'><button class='bm' data-id='"+c.id+"' data-nome='"+c.nome+"' onclick='event.stopPropagation();editarCliente(this)' style='font-size:11px'>✏️</button><button class='bm' data-id='"+c.id+"' onclick='event.stopPropagation();excluirCliente(this)' style='font-size:11px;color:#B8B8B8'>🗑️</button><span class='cli-arrow'>›</span></div></div>";
     }).join("");
   } catch(e) {
     cont.innerHTML = "<div class='vz'>Erro ao carregar: "+e.message+"</div>";
@@ -582,7 +587,7 @@ pp.map(function(p){ return mkPecaHTML(p, comAcoes); }).join("")+
 }
 function mkPecaHTML(p, comAcoes){
   var fotoHTML = p.foto_url ? "<img src='"+p.foto_url+"' class='pfoto' data-url='"+p.foto_url+"' onclick='verFoto(this.dataset.url)'>" : "";
-  var html = "<div class='pi'><div class='pin'>"+fotoHTML+"<div class='pn'>"+p.peca+(p.marca?" <span style='font-size:11px;color:#B8B8B8;font-weight:400'>"+p.marca+"</span>":"")+"</div><div class='ps'>"+(p.servico||"—")+"</div><div class='pc'>"+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div></div><div class='pd'><span class='badge "+p.status+"'>"+slbl(p.status)+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
+  var html = "<div class='pi'><div class='pin'>"+fotoHTML+"<div class='pn'>"+p.peca+(p.marca?" <span style='font-size:11px;color:#B8B8B8;font-weight:400'>"+p.marca+"</span>":"")+"</div><div class='ps'>"+(p.servico||"—")+"</div>"+(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+Number(p.valor).toFixed(2).replace('.',',')+"</div>":"")+"<div class='pc'>"+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div></div><div class='pd'><span class='badge "+p.status+"'>"+slbl(p.status)+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
   if(comAcoes){
     var id = p.id;
     var acoes = "<button class='bm' data-id='"+id+"' data-peca='"+p.peca+"' data-serv='"+(p.servico||"")+"' onclick='abrirSt(this)'>Status</button>";
@@ -757,7 +762,7 @@ async function copiarLinkPortal(){
     var token = cli[0]&&cli[0].token_portal;
     if(!token){ showToast("Token não encontrado."); return; }
     var link = "https://allynekarvalho.github.io/metrica-atelie/portal/"+token;
-    var msg = "Olá! Aqui está o link para acompanhar suas peças na Métrica Ateliê:\n"+link; window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+    var msg = "😉 Métrica Ateliê\nOlá! Aqui está o link para acompanhar suas peças:\n"+link; window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
     
   } catch(e){
     showToast("Erro ao gerar link.");
@@ -904,6 +909,19 @@ renderPerfil();
 function calcComEd() {
   var v = parseFloat(document.getElementById("ed-val").value)||0;
   document.getElementById("ed-com").value = (v*0.45).toFixed(2);
+}
+async function editarCliente(btn){
+  var nome = prompt("Novo nome:", btn.dataset.nome);
+  if(!nome||nome===btn.dataset.nome) return;
+  await supa("clientes?id=eq."+btn.dataset.id,{method:"PATCH",body:{nome:nome}});
+  showToast("Cliente atualizada!");
+  renderLista();
+}
+async function excluirCliente(btn){
+  if(!confirm("Excluir cliente "+btn.dataset.nome+"?")) return;
+  await supa("clientes?id=eq."+btn.dataset.id,{method:"DELETE",prefer:"return=minimal"});
+  showToast("Cliente excluída!");
+  renderLista();
 }
 function closeMod(id){ document.getElementById(id).classList.remove("open"); }
 document.querySelectorAll(".mov").forEach(function(o){ o.addEventListener("click",function(e){ if(e.target===o)closeMod(o.id); }); });
