@@ -64,7 +64,7 @@ input:focus,select:focus{border-color:#0A0A0A}
 .pd{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:90px}
 .pv{font-size:14px;font-weight:600}
 .pco{font-size:10px;color:#6B6B6B}
-.pfoto{width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid #E8E8E8;margin-bottom:6px;cursor:pointer}
+.pfoto{width:84px;height:84px;object-fit:cover;border-radius:6px;border:1px solid #E8E8E8;margin-bottom:6px;cursor:pointer}
 .badge{font-size:9px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:.8px;text-transform:uppercase;white-space:nowrap}
 .badge.urgente{background:#FDE8E8;color:#8B0000}
 .badge.aguardando{background:#E8E8E8;color:#6B6B6B}
@@ -165,6 +165,7 @@ input:focus,select:focus{border-color:#0A0A0A}
     <div class="perfil-acoes">
       <button class="btn-perfil branco" onclick="abrirNovaPeca()">+ Nova peça</button>
       <button class="btn-perfil outline" onclick="copiarLinkPortal()">🔗 Link cliente</button>
+        <button class="btn-perfil outline" onclick="gerarPDFCliente()">📄 PDF</button>
     </div>
   </div>
   <div class="ftabs">
@@ -242,8 +243,8 @@ input:focus,select:focus{border-color:#0A0A0A}
     <div class="fg"><label>Prioridade</label><select id="np-prio"><option value="aguardando">Normal</option><option value="urgente">🔴 Urgente</option></select></div>
     <div class="fg">
       <label>📸 Foto da peça</label>
-      <input type="file" id="np-cam" accept="image/*" capture="environment" style="display:none" onchange="fotoSelecionada(this)">
-      <button class="btn-foto" onclick="document.getElementById('np-cam').click()">📷 Tirar foto</button>
+      <input type="file" id="np-cam" accept="image/*" style="display:none" onchange="fotoSelecionada(this)">
+      <button class="btn-foto" onclick="document.getElementById('np-cam').click()">📷 Adicionar foto</button>
       <img id="np-prev" class="foto-preview">
       <p id="np-foto-status" style="font-size:11px;color:#6B6B6B;margin-top:5px;display:none"></p>
     </div>
@@ -371,7 +372,7 @@ function togSvc(i){
 function updSvc(){
   document.getElementById("np-serv").value = SEL.map(function(s){ return s.n; }).join(" + ");
   var sub = SEL.reduce(function(t,s){ return t+s.v; },0);
-  var d = SEL.length===2?0.03:SEL.length>=3?0.05:0;
+  var d = 0;
   var tot = +(sub*(1-d)).toFixed(2);
   document.getElementById("np-val").value = tot>0?tot:"";
   calcCom();
@@ -516,7 +517,7 @@ async function renderLista(){
       var temUrg = c.pecas && c.pecas.some(function(p){ return p.status==="urgente"; });
       return "<div class='cli-item' data-id='"+c.id+"' data-nome='"+c.nome.replace(/'/g,"&#39;")+"' onclick='abrirPerfil(this.dataset.id,this.dataset.nome)'>" +
         "<div><div class='cli-nome'>"+(temUrg?"🔴 ":"")+c.nome+"</div><div class='cli-meta'>"+ativas+" ativa"+(ativas!==1?"s":"")+" · "+total+" total</div></div>" +
-        "<div style='display:flex;gap:6px;align-items:center'><button class='bm' data-id='"+c.id+"' data-nome='"+c.nome+"' onclick='event.stopPropagation();editarCliente(this)' style='font-size:11px'>✏️</button><button class='bm' data-id='"+c.id+"' onclick='event.stopPropagation();excluirCliente(this)' style='font-size:11px;color:#B8B8B8'>🗑️</button><span class='cli-arrow'>›</span></div></div>";
+        "<div style='display:flex;gap:6px;align-items:center'><button class='bm' data-id='"+c.id+"' data-nome='"+c.nome+"' data-tel='"+(c.telefone||"")+"' data-end='"+(c.endereco||"")+"' onclick='event.stopPropagation();editarCliente(this)' style='font-size:11px'>✏️</button><button class='bm' data-id='"+c.id+"' onclick='event.stopPropagation();excluirCliente(this)' style='font-size:11px;color:#B8B8B8'>🗑️</button><span class='cli-arrow'>›</span></div></div>";
     }).join("");
   } catch(e) {
     cont.innerHTML = "<div class='vz'>Erro ao carregar: "+e.message+"</div>";
@@ -587,7 +588,7 @@ pp.map(function(p){ return mkPecaHTML(p, comAcoes); }).join("")+
 }
 function mkPecaHTML(p, comAcoes){
   var fotoHTML = p.foto_url ? "<img src='"+p.foto_url+"' class='pfoto' data-url='"+p.foto_url+"' onclick='verFoto(this.dataset.url)'>" : "";
-  var html = "<div class='pi'><div class='pin'>"+fotoHTML+"<div class='pn'>"+p.peca+(p.marca?" <span style='font-size:11px;color:#B8B8B8;font-weight:400'>"+p.marca+"</span>":"")+"</div><div class='ps'>"+(p.servico||"—")+"</div>"+(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+Number(p.valor).toFixed(2).replace('.',',')+"</div>":"")+"<div class='pc'>"+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div></div><div class='pd'><span class='badge "+p.status+"'>"+slbl(p.status)+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
+  var html = "<div class='pi'><div class='pin'>"+fotoHTML+"<div class='pn' style='text-transform:uppercase'>"+p.peca+"</div>"+(p.marca?"<div class='ps' style='text-transform:uppercase;font-weight:700;color:#6B6B6B'>"+p.marca+"</div>":"")+(p.servico?p.servico.split(" + ").map(function(sv){ return "<div class='ps'>• "+sv+"</div>"; }).join(""):"<div class='ps'>—</div>")+(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+Number(p.valor).toFixed(2).replace('.',',')+"</div>":"")+"<div class='pc'>"+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div></div><div class='pd'><span class='badge "+p.status+"'>"+slbl(p.status)+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
   if(comAcoes){
     var id = p.id;
     var acoes = "<button class='bm' data-id='"+id+"' data-peca='"+p.peca+"' data-serv='"+(p.servico||"")+"' onclick='abrirSt(this)'>Status</button>";
@@ -613,7 +614,7 @@ async function renderFinanceiro(){
     var saldoAnt = (cli[0]&&cli[0].saldo_anterior)||0;
     var totP = pecas.reduce(function(s,p){ return s+(p.valor||0); },0) + saldoAnt;
     var totPg = pags.reduce(function(s,p){ return s+p.valor; },0);
-    var saldo = totP-totPg;
+    var descOnPrev = document.getElementById("fin-desc-on")?document.getElementById("fin-desc-on").checked:false; var descValPrev = document.getElementById("fin-desc-val")?document.getElementById("fin-desc-val").value:"5"; var descPerc = descOnPrev?(parseFloat(descValPrev)||0):0; var totPD = +(totP*(1-descPerc/100)).toFixed(2); var saldo = totPD-totPg;
     var cor = saldo>0?"#8B0000":"#2E5E2E";
     var saldoAntHTML = saldoAnt>0
       ? "<div style='background:#FEF9E7;border:1px solid #E8E8E8;border-radius:8px;padding:12px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center'><div><div style='font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6B5500;margin-bottom:2px'>Saldo em aberto anterior</div><div style='font-size:16px;font-weight:600;color:#6B5500'>"+fval(saldoAnt)+"</div></div><button onclick='editarSaldoAnt()' style='font-size:11px;color:#6B5500;border:1px solid #E8D48A;background:#FEF9E7;border-radius:4px;padding:5px 10px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600'>Editar</button></div>"
@@ -623,7 +624,7 @@ async function renderFinanceiro(){
       : "<div class='pgl'><div style='padding:16px;font-size:13px;color:#6B6B6B'>Nenhum pagamento registrado.</div></div>";
     document.getElementById("fp-f").innerHTML =
       saldoAntHTML+
-      "<div class='sbox'><div class='si'><div class='sn'>"+fval(totP)+"</div><div class='sl'>Total c/ saldo ant.</div></div><div class='si'><div class='sn' style='color:#2E5E2E'>"+fval(totPg)+"</div><div class='sl'>Pago</div></div><div class='si'><div class='sn' style='color:"+cor+"'>"+fval(saldo)+"</div><div class='sl'>Saldo</div></div></div>"+
+      "<div class='rp' style='margin-bottom:10px'><div class='rpl'>Desconto final</div><div class='rpw' style='align-items:center'><label style='display:flex;align-items:center;gap:6px;font-size:13px;flex:1'><input type='checkbox' id='fin-desc-on' "+(descOnPrev?"checked":"")+" onchange='renderFinanceiro()'> Aplicar desconto</label><input type='number' id='fin-desc-val' value='"+descValPrev+"' min='0' max='100' step='0.1' placeholder='%' style='width:70px;padding:10px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px' onchange='renderFinanceiro()'></div></div>"+"<div class='sbox'><div class='si'><div class='sn'>"+fval(totPD)+"</div><div class='sl'>Total c/ saldo ant.</div></div><div class='si'><div class='sn' style='color:#2E5E2E'>"+fval(totPg)+"</div><div class='sl'>Pago</div></div><div class='si'><div class='sn' style='color:"+cor+"'>"+fval(saldo)+"</div><div class='sl'>Saldo</div></div></div>"+
       pgHTML+
       "<div class='rp'><div class='rpl'>Registrar pagamento</div><div class='rpw'><div class='vw' style='flex:1'><span class='vp'>R$</span><input type='number' id='pv-inp' class='vi' placeholder='0,00' min='0' step='0.01' style='width:100%'></div><input id='po-inp' placeholder='Obs.' style='flex:1;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;font-family:DM Sans,sans-serif'><button onclick='regPag()' style='padding:0 14px;background:#0A0A0A;color:#fff;border:none;border-radius:6px;font-size:18px;cursor:pointer'>✓</button></div></div>";
   } catch(e){
@@ -913,7 +914,11 @@ function calcComEd() {
 async function editarCliente(btn){
   var nome = prompt("Novo nome:", btn.dataset.nome);
   if(!nome||nome===btn.dataset.nome) return;
-  await supa("clientes?id=eq."+btn.dataset.id,{method:"PATCH",body:{nome:nome}});
+var tel = prompt("Telefone:", btn.dataset.tel||"");
+if(tel===null) return;
+var end = prompt("Endereço:", btn.dataset.end||"");
+if(end===null) return;
+  await supa("clientes?id=eq."+btn.dataset.id,{method:"PATCH",body:{nome:nome,telefone:tel,endereco:end}});
   showToast("Cliente atualizada!");
   renderLista();
 }
@@ -923,6 +928,23 @@ async function excluirCliente(btn){
   showToast("Cliente excluída!");
   renderLista();
 }
+async function gerarPDFCliente(){
+  var pecas = await supa("pecas?cliente_id=eq."+CLI_ATIVA_ID+"&order=data_entrada.desc");
+  var html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><style>body{font-family:Arial,sans-serif;padding:20px;max-width:480px;margin:0 auto}.topo{text-align:center;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:20px}.topo h1{font-size:18px;letter-spacing:2px;margin:0}.topo p{font-size:11px;color:#666;margin:4px 0 0}.cli{font-size:22px;font-weight:300;margin-bottom:4px}.sub{font-size:11px;color:#999;margin-bottom:20px}.pcard{border:1px solid #ddd;border-radius:6px;padding:12px;margin-bottom:12px}.pnome{font-size:15px;font-weight:bold;margin-bottom:4px}.pserv{font-size:13px;color:#666;margin-bottom:6px}.pval{font-size:14px;font-weight:bold}.badge{font-size:10px;font-weight:bold;padding:3px 8px;border-radius:20px;background:#f0f0f0;color:#333}.rodape{text-align:center;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:10px;margin-top:20px}@media print{body{padding:10px}}</style></head><body>"+
+    "<div class='topo'><h1>MÉTRICA ATELIÊ</h1><p>Allyne Carvalho · Cuiabá, MT</p></div>"+
+    "<div class='cli'>"+CLI_ATIVA+"</div>"+
+    "<div class='sub'>Atualizado em "+new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"})+"</div>"+
+    pecas.filter(function(p){ return p.status!=="entregue"; }).map(function(p){
+      var sl = {urgente:"🔴 Urgente",aguardando:"⏳ Aguardando","em-andamento":"🪡 Em andamento",pronto:"✅ Pronto para retirar",entregue:"🎁 Entregue"}[p.status]||p.status;
+      return "<div class='pcard'><div class='pnome'>"+p.peca+(p.marca?" · <span style='font-weight:normal;color:#999'>"+p.marca+"</span>":"")+"</div><div class='pserv'>"+(p.servico||"")+"</div><div style='display:flex;justify-content:space-between;align-items:center;margin-top:6px'><span class='badge'>"+sl+"</span>"+(p.valor?"<div class='pval'>R$ "+Number(p.valor).toFixed(2).replace(".",",")+"</div>":"")+"</div></div>";
+    }).join("")+
+    "<div class='rodape'>Métrica Ateliê · Allyne Carvalho</div></body></html>";
+  var win = window.open("","_blank");
+  win.document.write(html);
+  win.document.close();
+  setTimeout(function(){ win.print(); },500);
+}
+
 function closeMod(id){ document.getElementById(id).classList.remove("open"); }
 document.querySelectorAll(".mov").forEach(function(o){ o.addEventListener("click",function(e){ if(e.target===o)closeMod(o.id); }); });
 document.getElementById("np-val").addEventListener("input", calcCom);
@@ -949,7 +971,7 @@ renderLista();
     <div class="fg"><label>Data de entrada</label><input type="date" id="ed-data"></div>
     <div class="fg">
       <label>📸 Foto da peça</label>
-      <input type="file" id="ed-cam" accept="image/*" capture="environment" style="display:none" onchange="fotoSelecionadaEdit(this)">
+      <input type="file" id="ed-cam" accept="image/*" style="display:none" onchange="fotoSelecionadaEdit(this)">
       <button class="btn-foto" type="button" onclick="document.getElementById('ed-cam').click()">📷 Adicionar/Trocar foto</button>
       <img id="ed-prev" class="foto-preview">
       <p id="ed-foto-status" style="font-size:11px;color:#6B6B6B;margin-top:5px;display:none"></p>
