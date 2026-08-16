@@ -20,7 +20,7 @@ body{font-family:"DM Sans",sans-serif;background:#0A0A0A;color:#fff;min-height:1
 .eg{margin-bottom:20px}
 .ehdr{font-size:11px;font-weight:600;color:#B8B8B8;letter-spacing:.5px;margin-bottom:10px}
 .pcard{background:#1C1C1C;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid #2E2E2E}
-.pfoto{width:100%;max-height:200px;object-fit:cover}
+.pfoto{width:100%;height:280px;object-fit:contain;background:#111}
 .pinfo{padding:14px}
 .pnome{font-size:15px;font-weight:500;color:#fff;margin-bottom:4px}
 .pserv{font-size:13px;color:#B8B8B8;margin-bottom:10px}
@@ -36,6 +36,13 @@ body{font-family:"DM Sans",sans-serif;background:#0A0A0A;color:#fff;min-height:1
 .footer p{font-size:11px;color:#6B6B6B;letter-spacing:1px;text-transform:uppercase}
 .loading{text-align:center;padding:60px 20px;color:#6B6B6B;font-size:14px}
 .erro{text-align:center;padding:60px 20px;color:#FF6B6B;font-size:14px}
+.saldo-box{background:#1C1C1C;border:1px solid #2E2E2E;border-radius:10px;padding:18px;margin-bottom:24px}
+.saldo-lbl{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#6B6B6B;margin-bottom:6px}
+.saldo-val{font-family:"Cormorant Garamond",serif;font-size:32px;font-weight:600;color:#fff;margin-bottom:14px}
+.pix-row{display:flex;align-items:center;gap:8px;background:#0A0A0A;border:1px solid #2E2E2E;border-radius:8px;padding:10px 12px;margin-bottom:12px}
+.pix-chave{flex:1;font-size:13px;color:#fff;word-break:break-all}
+.btn-pix{background:#fff;color:#0A0A0A;border:none;border-radius:6px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif;white-space:nowrap}
+.saldo-msg{font-size:12px;color:#B8B8B8;line-height:1.5}
 </style>
 </head>
 <body>
@@ -54,6 +61,7 @@ body{font-family:"DM Sans",sans-serif;background:#0A0A0A;color:#fff;min-height:1
 <script>
 var SUPA_URL = "https://trzjmdrwjqvuzbzbxbhu.supabase.co";
 var SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyemptZHJ3anF2dXpiemJ4Ymh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDIyOTAsImV4cCI6MjA5ODg3ODI5MH0.YtZIGWAzpKdHrTdvtwUIRsRYJy5Yvxyn7q3GX_s-uLg";
+var CHAVE_PIX_ATELIE = "65996885868";
 async function supa(path) {
   var res = await fetch(SUPA_URL + "/rest/v1/" + path, {
     headers: {
@@ -81,6 +89,12 @@ function fdata(d) {
   if(!d) return "";
   return new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
 }
+function copiarPix() {
+  navigator.clipboard.writeText(CHAVE_PIX_ATELIE).then(function(){
+    var btn = document.querySelector(".btn-pix");
+    if(btn){ var t = btn.textContent; btn.textContent = "Copiado!"; setTimeout(function(){ btn.textContent = t; },1500); }
+  });
+}
 async function init() {
   var token = new URLSearchParams(window.location.search).get('token');
   if(!token) {
@@ -90,20 +104,33 @@ async function init() {
   try {
     var clientes = await supa("clientes?token_portal=eq."+token);
     if(!clientes||!clientes.length) {
-      document.getElementById("body").innerHTML = "<div class='erro'>Cliente não encontrada.</div>";
+      document.getElementById("body").innerHTML = "<div class='erro'>Cliente não encontrado.</div>";
       return;
     }
     var cli = clientes[0];
     document.getElementById("cli-nome").textContent = cli.nome;
     document.getElementById("cli-sub").textContent = "Acompanhamento das suas peças";
     var pecas = await supa("pecas?cliente_id=eq."+cli.id+"&order=data_entrada.desc,criado_em.desc");
+    var pagamentos = await supa("pagamentos?cliente_id=eq."+cli.id);
     var ativas = pecas.filter(function(p){ return p.status !== "entregue"; });
     var entregues = pecas.filter(function(p){ return p.status === "entregue"; });
+    var saldoAnt = cli.saldo_anterior || 0;
+    var totP = pecas.reduce(function(s,p){ return s+(p.valor||0); },0) + saldoAnt;
+    var totPg = pagamentos.reduce(function(s,p){ return s+(p.valor||0); },0);
+    var saldo = totP - totPg;
     if(!pecas.length) {
       document.getElementById("body").innerHTML = "<div class='empty'><span class='empty-ico'>🧵</span>Nenhuma peça no momento.</div>";
       return;
     }
     var html = "";
+    if(saldo > 0) {
+      html += "<div class='saldo-box'>"+
+        "<div class='saldo-lbl'>Saldo em aberto</div>"+
+        "<div class='saldo-val'>"+fval(saldo)+"</div>"+
+        "<div class='pix-row'><div class='pix-chave' id='pix-chave'>"+CHAVE_PIX_ATELIE+"</div><button class='btn-pix' onclick='copiarPix()'>Copiar chave Pix</button></div>"+
+        "<div class='saldo-msg'>Após o pagamento, envie o comprovante aqui pelo WhatsApp para darmos baixa no seu saldo. 🙏</div>"+
+        "</div>";
+    }
     if(ativas.length) {
       html += "<div class='secao-titulo'>Peças em andamento</div>";
       var porData = {};
