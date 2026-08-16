@@ -140,14 +140,14 @@ input:focus,select:focus{border-color:#0A0A0A}
 <div class="sc active" id="tela-clientes">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #E8E8E8">
     <p class="stitle" style="margin:0;border:none;padding:0;color:#fff">Clientes</p>
-    <button class="btn-outline" onclick="abrirNovaCli()">+ Nova cliente</button>
+    <button class="btn-outline" onclick="abrirNovaCli()">+ Novo cliente</button>
   </div>
   <div class="filtros">
-    <button class="filtro ativo" onclick="filtrar('todos',this)">Todas</button>
+    <button class="filtro ativo" onclick="filtrar('todos',this)">Todos</button>
     <button class="filtro" onclick="filtrar('urgente',this)">🔴 Urgentes</button>
     <button class="filtro" onclick="filtrar('aguardando',this)">Aguardando</button>
     <button class="filtro" onclick="filtrar('em-andamento',this)">Em andamento</button>
-    <button class="filtro" onclick="filtrar('pronto',this)">Prontas</button>
+    <button class="filtro" onclick="filtrar('pronto',this)">Prontos</button>
     <button class="filtro" onclick="filtrar('entregue',this)">Entregues</button>
   </div>
   <input id="busca-cli" placeholder="🔍 Buscar cliente..." oninput="renderLista()" style="width:100%;padding:12px 14px;border:1px solid #2E2E2E;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:15px;color:#fff;background:#1C1C1C;outline:none;margin-bottom:14px">
@@ -165,6 +165,7 @@ input:focus,select:focus{border-color:#0A0A0A}
     <div class="perfil-acoes">
       <button class="btn-perfil branco" onclick="abrirNovaPeca()">+ Nova peça</button>
       <button class="btn-perfil outline" onclick="copiarLinkPortal()">🔗 Link cliente</button>
+      <button class="btn-perfil outline" onclick="enviarSaldo()">💰 Enviar saldo</button>
         <button class="btn-perfil outline" onclick="gerarPDFCliente()">📄 PDF</button>
     </div>
   </div>
@@ -181,6 +182,7 @@ input:focus,select:focus{border-color:#0A0A0A}
   <p class="stitle" style="color:#fff;border-bottom:1px solid rgba(255,255,255,0.2)">Resumo</p>
   <div class="rg" id="res-n"></div>
   <div id="res-c"></div>
+  <button class="btn-p" onclick="fazerBackup()" style="margin-top:16px">☁️ Fazer backup no Google Sheets</button>
 </div>
 <div class="sc" id="tela-config">
   <p class="stitle" style="color:#fff;border-bottom:1px solid rgba(255,255,255,0.2)">Configurações</p>
@@ -206,8 +208,8 @@ input:focus,select:focus{border-color:#0A0A0A}
 <div class="mov" id="mod-ncli">
   <div class="mo">
     <div class="mh"></div>
-    <h2>Nova cliente</h2>
-    <div class="fg"><label>Nome</label><input id="ncli-nome" placeholder="Nome completo"></div>
+    <h2>Novo cliente</h2>
+    <div class="fg"><label>Nome</label><input id="ncli-nome" placeholder="Nome completo" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
     <div class="fg"><label>Telefone (opcional)</label><input id="ncli-tel" placeholder="(65) 99999-9999" type="tel"></div>
     <button class="btn-p" onclick="salvarCli()">Cadastrar cliente</button>
     <button class="btn-s" onclick="closeMod('mod-ncli')">Cancelar</button>
@@ -219,8 +221,8 @@ input:focus,select:focus{border-color:#0A0A0A}
     <div class="mh"></div>
     <h2>Nova peça</h2>
     <p class="msub" id="npeca-cli-nome"></p>
-    <div class="fg"><label>Peça</label><input id="np-peca" placeholder="Ex: Calça social preta"></div>
-    <div class="fg"><label>Marca (opcional)</label><input id="np-marca" list="marcas-dl" placeholder="Ex: Zara, Farm, Louis Vuitton..."></div>
+    <div class="fg"><label>Peça</label><input id="np-peca" placeholder="Ex: Calça social preta" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
+    <div class="fg"><label>Marca (opcional)</label><input id="np-marca" list="marcas-dl" placeholder="Ex: Zara, Farm, Louis Vuitton..." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
     <div class="fg">
       <label>Serviço</label>
       <div class="stags" id="np-stags"></div>
@@ -279,6 +281,7 @@ input:focus,select:focus{border-color:#0A0A0A}
 <script>
 var SUPA_URL = "https://trzjmdrwjqvuzbzbxbhu.supabase.co";
 var SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyemptZHJ3anF2dXpiemJ4Ymh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDIyOTAsImV4cCI6MjA5ODg3ODI5MH0.YtZIGWAzpKdHrTdvtwUIRsRYJy5Yvxyn7q3GX_s-uLg";
+var CHAVE_PIX_ATELIE = "65996885868";
 var FILTRO = "todos";
 var CLI_ATIVA = null;
 var CLI_ATIVA_ID = null;
@@ -494,7 +497,7 @@ async function renderLista(){
   try {
     var clientes = await supa("clientes?select=*&order=nome");
     if(!clientes||!clientes.length){
-      cont.innerHTML = "<div class='vz'><span class='vi2'>🧵</span>Nenhuma cliente cadastrada.</div>";
+      cont.innerHTML = "<div class='vz'><span class='vi2'>🧵</span>Nenhum cliente cadastrado.</div>";
       return;
     }
     var todasPecas = await supa("pecas?select=cliente_id,status");
@@ -599,6 +602,8 @@ function mkPecaHTML(p, comAcoes){
     if(p.status==="pronto") acoes += "<button class='bm vd' data-id='"+id+"' data-val='"+p.valor+"' onclick='abrirWpp(this)'>Avisar</button>";
     acoes += "<button class='bm' data-id='"+id+"' onclick='excluirPeca(this)' style='color:#B8B8B8'>Excluir</button>";
     html += "<div class='pac'>"+acoes+"</div>";
+  } else {
+    html += "<div class='pac'><button class='bm' data-id='"+p.id+"' onclick='retornarPeca(+this.dataset.id)'>↩️ Retornar peça</button></div>";
   }
   return "<div>"+html+"</div>";
 }
@@ -614,7 +619,7 @@ async function renderFinanceiro(){
     var saldoAnt = (cli[0]&&cli[0].saldo_anterior)||0;
     var totP = pecas.reduce(function(s,p){ return s+(p.valor||0); },0) + saldoAnt;
     var totPg = pags.reduce(function(s,p){ return s+p.valor; },0);
-    var descOnPrev = document.getElementById("fin-desc-on")?document.getElementById("fin-desc-on").checked:false; var descValPrev = document.getElementById("fin-desc-val")?document.getElementById("fin-desc-val").value:"5"; var descPerc = descOnPrev?(parseFloat(descValPrev)||0):0; var totPD = +(totP*(1-descPerc/100)).toFixed(2); var saldo = totPD-totPg;
+    var descOnPrev = document.getElementById("fin-desc-on")?document.getElementById("fin-desc-on").checked:false; var descValPrev = document.getElementById("fin-desc-val")?document.getElementById("fin-desc-val").value:""; var descPerc = descOnPrev?(parseFloat(descValPrev)||0):0; var totPD = +(totP*(1-descPerc/100)).toFixed(2); var saldo = totPD-totPg;
     var cor = saldo>0?"#8B0000":"#2E5E2E";
     var saldoAntHTML = saldoAnt>0
       ? "<div style='background:#FEF9E7;border:1px solid #E8E8E8;border-radius:8px;padding:12px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center'><div><div style='font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6B5500;margin-bottom:2px'>Saldo em aberto anterior</div><div style='font-size:16px;font-weight:600;color:#6B5500'>"+fval(saldoAnt)+"</div></div><button onclick='editarSaldoAnt()' style='font-size:11px;color:#6B5500;border:1px solid #E8D48A;background:#FEF9E7;border-radius:4px;padding:5px 10px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600'>Editar</button></div>"
@@ -667,7 +672,7 @@ async function salvarCli(){
   try {
     var res = await supa("clientes", {method:"POST", body:{nome:nome, telefone:tel, saldo_anterior:0}});
     closeMod("mod-ncli");
-    showToast("Cliente cadastrada!");
+    showToast("Cliente cadastrado!");
     if(res&&res[0]) abrirPerfil(res[0].id, res[0].nome);
   } catch(e){ alert("Erro: "+e.message); }
 }
@@ -763,7 +768,7 @@ async function copiarLinkPortal(){
     var token = cli[0]&&cli[0].token_portal;
     if(!token){ showToast("Token não encontrado."); return; }
     var link = "https://allynekarvalho.github.io/metrica-atelie/portal/"+token;
-    var msg = "😉 Métrica Ateliê\nOlá! Aqui está o link para acompanhar suas peças:\n"+link; window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+    var msg = "😉 *Métrica Ateliê*\nOlá, "+CLI_ATIVA+"!\n\nAqui está o link para acompanhar suas peças:\n"+link; window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
     
   } catch(e){
     showToast("Erro ao gerar link.");
@@ -915,18 +920,19 @@ async function editarCliente(btn){
   var nome = prompt("Novo nome:", btn.dataset.nome);
   if(nome===null) return;
 if(!nome) nome = btn.dataset.nome;
+nome = nome.toUpperCase();
 var tel = prompt("Telefone:", btn.dataset.tel||"");
 if(tel===null) return;
 var end = prompt("Endereço:", btn.dataset.end||"");
 if(end===null) return;
   await supa("clientes?id=eq."+btn.dataset.id,{method:"PATCH",body:{nome:nome,telefone:tel,endereco:end}});
-  showToast("Cliente atualizada!");
+  showToast("Cliente atualizado!");
   renderLista();
 }
 async function excluirCliente(btn){
   if(!confirm("Excluir cliente "+btn.dataset.nome+"?")) return;
   await supa("clientes?id=eq."+btn.dataset.id,{method:"DELETE",prefer:"return=minimal"});
-  showToast("Cliente excluída!");
+  showToast("Cliente excluído!");
   renderLista();
 }
 async function gerarPDFCliente(){
@@ -946,6 +952,41 @@ async function gerarPDFCliente(){
   setTimeout(function(){ win.print(); },500);
 }
 
+async function retornarPeca(id){
+  if(!confirm("Retornar esta peça para o ateliê?")) return;
+  await supa("pecas?id=eq."+id,{method:"PATCH",body:{status:"aguardando"}});
+  showToast("Peça retornada!");
+  renderPerfil();
+}
+async function enviarSaldo(){
+  var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
+  var pecas = await supa("pecas?cliente_id=eq."+CLI_ATIVA_ID);
+  var pags = await supa("pagamentos?cliente_id=eq."+CLI_ATIVA_ID);
+  var saldoAnt = (cli[0]&&cli[0].saldo_anterior)||0;
+  var totP = pecas.reduce(function(s,p){ return s+(p.valor||0); },0)+saldoAnt;
+  var totPg = pags.reduce(function(s,p){ return s+p.valor; },0);
+  var saldo = totP-totPg;
+  var chave = CHAVE_PIX_ATELIE;
+  var msg = "😉 *Métrica Ateliê*\nOlá, "+CLI_ATIVA+"!\n\nSeu saldo em aberto: *R$ "+Number(saldo).toFixed(2).replace(".",",")+
+    "*\n\n📋 Chave Pix:\n"+chave+
+    "\n\nApós o pagamento, por favor envie o comprovante aqui no WhatsApp. 🙏";
+  window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+}
+async function fazerBackup(){
+  var clientes = await supa("clientes?select=*");
+  var pecas = await supa("pecas?select=*");
+  var pags = await supa("pagamentos?select=*");
+  var data = {clientes:clientes, pecas:pecas, pagamentos:pags, geradoEm:new Date().toISOString()};
+  var json = JSON.stringify(data, null, 2);
+  var blob = new Blob([json],{type:"application/json"});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href=url;
+  a.download="backup_metrica_"+new Date().toISOString().split("T")[0]+".json";
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast("Backup baixado com sucesso!");
+}
 function closeMod(id){ document.getElementById(id).classList.remove("open"); }
 document.querySelectorAll(".mov").forEach(function(o){ o.addEventListener("click",function(e){ if(e.target===o)closeMod(o.id); }); });
 document.getElementById("np-val").addEventListener("input", calcCom);
@@ -958,8 +999,8 @@ renderLista();
     <div class="mh"></div>
     <h2>Editar peça</h2>
     <input type="hidden" id="ed-id">
-    <div class="fg"><label>Peça</label><input id="ed-peca" placeholder="Nome da peça"></div>
-    <div class="fg"><label>Marca (opcional)</label><input id="ed-marca" list="marcas-dl" placeholder="Ex: Zara, Farm..."></div>
+    <div class="fg"><label>Peça</label><input id="ed-peca" placeholder="Nome da peça" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
+    <div class="fg"><label>Marca (opcional)</label><input id="ed-marca" list="marcas-dl" placeholder="Ex: Zara, Farm..." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
     <div class="fg"><label>Serviço</label><textarea id="ed-serv" style="height:80px;resize:none;width:100%;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-family:DM Sans,sans-serif;font-size:14px" placeholder="Descrição do serviço"></textarea></div>
     <div class="fr">
       <div class="fg"><label>Valor (R$)</label><div class="vw"><span class="vp">R$</span><input type="number" id="ed-val" class="vi" placeholder="0,00" min="0" step="0.01" oninput="calcComEd()"></div></div>
