@@ -768,7 +768,7 @@ async function copiarLinkPortal(){
     var token = cli[0]&&cli[0].token_portal;
     if(!token){ showToast("Token não encontrado."); return; }
     var link = "https://allynekarvalho.github.io/metrica-atelie/portal/"+token;
-    var msg = "😉 *Métrica Ateliê*\nOlá, "+CLI_ATIVA+"!\n\nAqui está o link para acompanhar suas peças:\n"+link; window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+    var msg = "😉 *Métrica Ateliê | ALLYNE CARVALHO*\nOlá, "+CLI_ATIVA+"!\n\nAqui está o link para acompanhar suas peças:\n"+link; window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
     
   } catch(e){
     showToast("Erro ao gerar link.");
@@ -967,7 +967,7 @@ async function enviarSaldo(){
   var totPg = pags.reduce(function(s,p){ return s+p.valor; },0);
   var saldo = totP-totPg;
   var chave = CHAVE_PIX_ATELIE;
-  var msg = "😉 *Métrica Ateliê*\nOlá, "+CLI_ATIVA+"!\n\nSeu saldo em aberto: *R$ "+Number(saldo).toFixed(2).replace(".",",")+
+  var msg = "😉 *Métrica Ateliê | ALLYNE CARVALHO*\nOlá, "+CLI_ATIVA+"!\n\nSeu saldo em aberto: *R$ "+Number(saldo).toFixed(2).replace(".",",")+
     "*\n\n📋 Chave Pix:\n"+chave+
     "\n\nApós o pagamento, por favor envie o comprovante aqui no WhatsApp. 🙏";
   window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
