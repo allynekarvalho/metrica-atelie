@@ -274,7 +274,7 @@ input:focus,select:focus{border-color:#0A0A0A}
     <div class="mh"></div>
     <h2>Avisar cliente</h2><p class="msub" id="mw-cli"></p>
     <div class="wbox" id="mw-txt"></div>
-    <button class="wbtn" onclick="sendWpp()">📲 Abrir WhatsApp</button>
+    <a class="wbtn" id="wpp-open" href="https://wa.me/" target="_blank" rel="noopener" style="text-decoration:none;text-align:center;display:block;box-sizing:border-box">📲 Abrir WhatsApp</a>
     <button class="btn-s" onclick="closeMod('mod-wpp')">Fechar</button>
   </div>
 </div>
@@ -584,7 +584,7 @@ var tot = pp.reduce(function(s,p){ return s+(p.valor||0); },0);
 var df = new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
 return "<div class='eg'><div class='ehdr'><span class='edata'>📅 "+df+"</span><span class='eres'>"+pp.length+" peça"+(pp.length>1?"s":"")+"</span></div>"+
 pp.map(function(p){ return mkPecaHTML(p, comAcoes); }).join("")+
-(comAcoes&&tot>0?"<div class='etot'><span>Total entrada</span><span>"+fval(tot)+"</span></div>":"")+
+(comAcoes&&tot>0?"<div class='etot' style='flex-direction:column;align-items:stretch;gap:4px'><div style='display:flex;justify-content:space-between'><span>Total entrada</span><span>"+fval(tot)+"</span></div><div style='display:flex;justify-content:space-between;font-size:10px;font-weight:500;color:#B8B8B8'><span>Quantidade de peças</span><span>"+pp.length+"</span></div></div>":"")+
 (comAcoes?"<div class='eprint'><button class='bm' style='width:100%' data-id='"+pp[0].id+"' onclick='imprimirComanda(this.dataset.id)'>🖨️ Imprimir todas as peças do dia</button></div>":"")+
 "</div>";
 }).join("");
@@ -748,12 +748,10 @@ function abrirWpp(btn){
   var linhas = ["Olá, "+CLI_ATIVA+"! 😊","","Sua peça está pronta e passou pela conferência final.","","👗 "+btn.closest(".pi").querySelector(".pn").textContent+"","✂️ "+(btn.closest(".pi").querySelector(".ps").textContent||"Serviço concluído")];
   if(val&&parseFloat(val)>0) linhas.push("","💰 Valor: "+fval(parseFloat(val)));
   linhas.push("","Quando preferir vir retirar? 🌸","","— Métrica Ateliê");
-  document.getElementById("mw-txt").textContent = linhas.join("\n");
+  var msgWpp = linhas.join("\n");
+  document.getElementById("mw-txt").textContent = msgWpp;
+  document.getElementById("wpp-open").href = "https://wa.me/?text="+encodeURIComponent(msgWpp);
   document.getElementById("mod-wpp").classList.add("open");
-}
-function sendWpp(){
-  var msg = document.getElementById("mw-txt").textContent;
-  window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
 }
 async function excluirPeca(btn){
   if(!confirm("Excluir esta peça?")) return;
@@ -771,6 +769,7 @@ async function copiarLinkPortal(){
     var msg = "😉 *Métrica Ateliê | ALLYNE CARVALHO*\nOlá, "+CLI_ATIVA+"!\n\nAqui está o link para acompanhar suas peças:\n"+link;
     document.getElementById("mw-cli").textContent = CLI_ATIVA;
     document.getElementById("mw-txt").textContent = msg;
+    document.getElementById("wpp-open").href = "https://wa.me/?text="+encodeURIComponent(msg);
     document.getElementById("mod-wpp").classList.add("open");
   } catch(e){
     showToast("Erro ao gerar link.");
@@ -975,6 +974,7 @@ async function enviarSaldo(){
       "\n\nApós o pagamento, por favor envie o comprovante aqui no WhatsApp. 🙏";
     document.getElementById("mw-cli").textContent = CLI_ATIVA;
     document.getElementById("mw-txt").textContent = msg;
+    document.getElementById("wpp-open").href = "https://wa.me/?text="+encodeURIComponent(msg);
     document.getElementById("mod-wpp").classList.add("open");
   } catch(e){
     showToast("Erro ao enviar saldo.");
