@@ -763,14 +763,17 @@ async function excluirPeca(btn){
   renderPerfil();
 }
 async function copiarLinkPortal(){
+  var win = window.open("", "_blank");
   try {
     var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
     var token = cli[0]&&cli[0].token_portal;
-    if(!token){ showToast("Token não encontrado."); return; }
+    if(!token){ showToast("Token não encontrado."); if(win) win.close(); return; }
     var link = "https://allynekarvalho.github.io/metrica-atelie/portal/"+token;
-    var msg = "😉 *Métrica Ateliê | ALLYNE CARVALHO*\nOlá, "+CLI_ATIVA+"!\n\nAqui está o link para acompanhar suas peças:\n"+link; window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
-    
+    var msg = "😉 *Métrica Ateliê | ALLYNE CARVALHO*\nOlá, "+CLI_ATIVA+"!\n\nAqui está o link para acompanhar suas peças:\n"+link;
+    if(win) win.location.href = "https://wa.me/?text="+encodeURIComponent(msg);
+    else window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
   } catch(e){
+    if(win) win.close();
     showToast("Erro ao gerar link.");
   }
 }
@@ -936,6 +939,7 @@ async function excluirCliente(btn){
   renderLista();
 }
 async function gerarPDFCliente(){
+  var win = window.open("","_blank");
   var pecas = await supa("pecas?cliente_id=eq."+CLI_ATIVA_ID+"&order=data_entrada.desc");
   var html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><style>body{font-family:Arial,sans-serif;padding:20px;max-width:480px;margin:0 auto}.topo{text-align:center;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:20px}.topo h1{font-size:18px;letter-spacing:2px;margin:0}.topo p{font-size:11px;color:#666;margin:4px 0 0}.cli{font-size:22px;font-weight:300;margin-bottom:4px}.sub{font-size:11px;color:#999;margin-bottom:20px}.pcard{border:1px solid #ddd;border-radius:6px;padding:12px;margin-bottom:12px}.pnome{font-size:15px;font-weight:bold;margin-bottom:4px}.pserv{font-size:13px;color:#666;margin-bottom:6px}.pval{font-size:14px;font-weight:bold}.badge{font-size:10px;font-weight:bold;padding:3px 8px;border-radius:20px;background:#f0f0f0;color:#333}.rodape{text-align:center;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:10px;margin-top:20px}@media print{body{padding:10px}.barra{display:none}}.barra{position:sticky;top:0;background:#fff;padding:10px 0;display:flex;gap:10px;justify-content:flex-end;border-bottom:1px solid #ddd;margin-bottom:14px}.barra button{font-size:13px;padding:8px 14px;border-radius:6px;border:1px solid #ccc;background:#f5f5f5;cursor:pointer}</style></head><body>"+"<div class='barra'><button onclick='window.close()'>✕ Fechar</button><button onclick='window.print()'>🖨️ Imprimir</button></div>"+
     "<div class='topo'><h1>MÉTRICA ATELIÊ</h1><p>Allyne Carvalho · Cuiabá, MT</p></div>"+
@@ -946,7 +950,6 @@ async function gerarPDFCliente(){
       return "<div class='pcard'><div class='pnome'>"+p.peca+(p.marca?" · <span style='font-weight:normal;color:#999'>"+p.marca+"</span>":"")+"</div><div class='pserv'>"+(p.servico||"")+"</div><div style='display:flex;justify-content:space-between;align-items:center;margin-top:6px'><span class='badge'>"+sl+"</span>"+(p.valor?"<div class='pval'>R$ "+Number(p.valor).toFixed(2).replace(".",",")+"</div>":"")+"</div></div>";
     }).join("")+
     "<div class='rodape'>Métrica Ateliê · Allyne Carvalho</div></body></html>";
-  var win = window.open("","_blank");
   win.document.write(html);
   win.document.close();
   setTimeout(function(){ win.print(); },500);
@@ -959,18 +962,25 @@ async function retornarPeca(id){
   renderPerfil();
 }
 async function enviarSaldo(){
-  var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
-  var pecas = await supa("pecas?cliente_id=eq."+CLI_ATIVA_ID);
-  var pags = await supa("pagamentos?cliente_id=eq."+CLI_ATIVA_ID);
-  var saldoAnt = (cli[0]&&cli[0].saldo_anterior)||0;
-  var totP = pecas.reduce(function(s,p){ return s+(p.valor||0); },0)+saldoAnt;
-  var totPg = pags.reduce(function(s,p){ return s+p.valor; },0);
-  var saldo = totP-totPg;
-  var chave = CHAVE_PIX_ATELIE;
-  var msg = "😉 *Métrica Ateliê | ALLYNE CARVALHO*\nOlá, "+CLI_ATIVA+"!\n\nSeu saldo em aberto: *R$ "+Number(saldo).toFixed(2).replace(".",",")+
-    "*\n\n📋 Chave Pix:\n"+chave+
-    "\n\nApós o pagamento, por favor envie o comprovante aqui no WhatsApp. 🙏";
-  window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+  var win = window.open("", "_blank");
+  try {
+    var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
+    var pecas = await supa("pecas?cliente_id=eq."+CLI_ATIVA_ID);
+    var pags = await supa("pagamentos?cliente_id=eq."+CLI_ATIVA_ID);
+    var saldoAnt = (cli[0]&&cli[0].saldo_anterior)||0;
+    var totP = pecas.reduce(function(s,p){ return s+(p.valor||0); },0)+saldoAnt;
+    var totPg = pags.reduce(function(s,p){ return s+p.valor; },0);
+    var saldo = totP-totPg;
+    var chave = CHAVE_PIX_ATELIE;
+    var msg = "😉 *Métrica Ateliê | ALLYNE CARVALHO*\nOlá, "+CLI_ATIVA+"!\n\nSeu saldo em aberto: *R$ "+Number(saldo).toFixed(2).replace(".",",")+
+      "*\n\n📋 Chave Pix:\n"+chave+
+      "\n\nApós o pagamento, por favor envie o comprovante aqui no WhatsApp. 🙏";
+    if(win) win.location.href = "https://wa.me/?text="+encodeURIComponent(msg);
+    else window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+  } catch(e){
+    if(win) win.close();
+    showToast("Erro ao enviar saldo.");
+  }
 }
 async function fazerBackup(){
   var clientes = await supa("clientes?select=*");
