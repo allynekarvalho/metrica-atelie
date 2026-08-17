@@ -763,17 +763,16 @@ async function excluirPeca(btn){
   renderPerfil();
 }
 async function copiarLinkPortal(){
-  var win = window.open("", "_blank");
   try {
     var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
     var token = cli[0]&&cli[0].token_portal;
-    if(!token){ showToast("Token não encontrado."); if(win) win.close(); return; }
+    if(!token){ showToast("Token não encontrado."); return; }
     var link = "https://allynekarvalho.github.io/metrica-atelie/portal/"+token;
     var msg = "😉 *Métrica Ateliê | ALLYNE CARVALHO*\nOlá, "+CLI_ATIVA+"!\n\nAqui está o link para acompanhar suas peças:\n"+link;
-    if(win) win.location.href = "https://wa.me/?text="+encodeURIComponent(msg);
-    else window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+    document.getElementById("mw-cli").textContent = CLI_ATIVA;
+    document.getElementById("mw-txt").textContent = msg;
+    document.getElementById("mod-wpp").classList.add("open");
   } catch(e){
-    if(win) win.close();
     showToast("Erro ao gerar link.");
   }
 }
@@ -962,7 +961,6 @@ async function retornarPeca(id){
   renderPerfil();
 }
 async function enviarSaldo(){
-  var win = window.open("", "_blank");
   try {
     var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
     var pecas = await supa("pecas?cliente_id=eq."+CLI_ATIVA_ID);
@@ -975,10 +973,10 @@ async function enviarSaldo(){
     var msg = "😉 *Métrica Ateliê | ALLYNE CARVALHO*\nOlá, "+CLI_ATIVA+"!\n\nSeu saldo em aberto: *R$ "+Number(saldo).toFixed(2).replace(".",",")+
       "*\n\n📋 Chave Pix:\n"+chave+
       "\n\nApós o pagamento, por favor envie o comprovante aqui no WhatsApp. 🙏";
-    if(win) win.location.href = "https://wa.me/?text="+encodeURIComponent(msg);
-    else window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+    document.getElementById("mw-cli").textContent = CLI_ATIVA;
+    document.getElementById("mw-txt").textContent = msg;
+    document.getElementById("mod-wpp").classList.add("open");
   } catch(e){
-    if(win) win.close();
     showToast("Erro ao enviar saldo.");
   }
 }
