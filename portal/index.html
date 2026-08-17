@@ -36,13 +36,13 @@ body{font-family:"DM Sans",sans-serif;background:#0A0A0A;color:#fff;min-height:1
 .footer p{font-size:11px;color:#6B6B6B;letter-spacing:1px;text-transform:uppercase}
 .loading{text-align:center;padding:60px 20px;color:#6B6B6B;font-size:14px}
 .erro{text-align:center;padding:60px 20px;color:#FF6B6B;font-size:14px}
-.saldo-box{background:#1C1C1C;border:1px solid #2E2E2E;border-radius:10px;padding:18px;margin-bottom:24px}
-.saldo-lbl{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#6B6B6B;margin-bottom:6px}
-.saldo-val{font-family:"Cormorant Garamond",serif;font-size:32px;font-weight:600;color:#fff;margin-bottom:14px}
-.pix-row{display:flex;align-items:center;gap:8px;background:#0A0A0A;border:1px solid #2E2E2E;border-radius:8px;padding:10px 12px;margin-bottom:12px}
-.pix-chave{flex:1;font-size:13px;color:#fff;word-break:break-all}
-.btn-pix{background:#fff;color:#0A0A0A;border:none;border-radius:6px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif;white-space:nowrap}
-.saldo-msg{font-size:12px;color:#B8B8B8;line-height:1.5}
+.saldo-box{border-top:1px solid #2E2E2E;padding-top:14px;margin-top:28px}
+.saldo-lbl{font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#6B6B6B;margin-bottom:4px}
+.saldo-val{font-size:13px;font-weight:600;color:#B8B8B8;margin-bottom:8px}
+.pix-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.pix-chave{flex:1;font-size:11px;color:#6B6B6B;word-break:break-all}
+.btn-pix{background:transparent;color:#B8B8B8;border:1px solid #2E2E2E;border-radius:5px;padding:5px 10px;font-size:10px;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif;white-space:nowrap}
+.saldo-msg{font-size:10px;color:#6B6B6B;line-height:1.4}
 </style>
 </head>
 <body>
@@ -123,14 +123,6 @@ async function init() {
       return;
     }
     var html = "";
-    if(saldo > 0) {
-      html += "<div class='saldo-box'>"+
-        "<div class='saldo-lbl'>Saldo em aberto</div>"+
-        "<div class='saldo-val'>"+fval(saldo)+"</div>"+
-        "<div class='pix-row'><div class='pix-chave' id='pix-chave'>"+CHAVE_PIX_ATELIE+"</div><button class='btn-pix' onclick='copiarPix()'>Copiar chave Pix</button></div>"+
-        "<div class='saldo-msg'>Após o pagamento, envie o comprovante aqui pelo WhatsApp para darmos baixa no seu saldo. 🙏</div>"+
-        "</div>";
-    }
     if(ativas.length) {
       html += "<div class='secao-titulo'>Peças em andamento</div>";
       var porData = {};
@@ -165,6 +157,14 @@ async function init() {
         if(p.valor) html += "<div style='margin-top:8px;font-size:14px;font-weight:600;color:#fff'>"+fval(p.valor)+"</div>";
         html += "</div></div>";
       });
+    }
+    if(saldo > 0) {
+      html += "<div class='saldo-box'>"+
+        "<div class='saldo-lbl'>Saldo em aberto</div>"+
+        "<div class='saldo-val'>"+fval(saldo)+"</div>"+
+        "<div class='pix-row'><div class='pix-chave' id='pix-chave'>"+CHAVE_PIX_ATELIE+"</div><button class='btn-pix' onclick='copiarPix()'>Copiar chave Pix</button></div>"+
+        "<div class='saldo-msg'>Após o pagamento, envie o comprovante aqui pelo WhatsApp para darmos baixa no seu saldo. 🙏</div>"+
+        "</div>";
     }
     document.getElementById("body").innerHTML = html;
   } catch(e) {
