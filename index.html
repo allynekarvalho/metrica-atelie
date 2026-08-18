@@ -221,7 +221,7 @@ input:focus,select:focus{border-color:#0A0A0A}
     <div class="mh"></div>
     <h2>Nova peça</h2>
     <p class="msub" id="npeca-cli-nome"></p>
-    <div class="fg"><label>Peça</label><input id="np-peca" placeholder="Ex: Calça social preta" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
+    <div class="fg"><label>Peça</label><input id="np-peca" placeholder="Ex: Calça social preta" style="text-transform:uppercase" oninput="corrigirCampoPeca(this)" onblur="corrigirUltimaPalavra(this)"></div>
     <div class="fg"><label>Marca (opcional)</label><input id="np-marca" list="marcas-dl" placeholder="Ex: Zara, Farm, Louis Vuitton..." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
     <div class="fg">
       <label>Serviço</label>
@@ -358,6 +358,83 @@ function showToast(msg) {
 function slbl(s){ return {urgente:"Urgente",aguardando:"Aguardando","em-andamento":"Em andamento",pronto:"Pronto",entregue:"Entregue"}[s]||s; }
 function fdata(d){ if(!d)return""; return new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}); }
 function fval(v){ if(!v&&v!==0)return"—"; return "R$ "+Number(v).toFixed(2).replace(".",","); }
+var PECAS_DIC = {
+"calca":"calça","calcas":"calças","macacao":"macacão","macacoes":"macacões",
+"camisa":"camisa","camisas":"camisas","camiseta":"camiseta","camisetas":"camisetas",
+"vestido":"vestido","vestidos":"vestidos","saia":"saia","saias":"saias",
+"blusa":"blusa","blusas":"blusas","short":"short","shorts":"shorts",
+"bermuda":"bermuda","bermudas":"bermudas","jardineira":"jardineira","jardineiras":"jardineiras",
+"jaqueta":"jaqueta","jaquetas":"jaquetas","casaco":"casaco","casacos":"casacos",
+"colete":"colete","coletes":"coletes","terno":"terno","ternos":"ternos",
+"paleto":"paletó","paletos":"paletós","sobretudo":"sobretudo","sobretudos":"sobretudos",
+"capa":"capa","capas":"capas","roupao":"roupão","roupoes":"roupões",
+"camisola":"camisola","camisolas":"camisolas","pijama":"pijama","pijamas":"pijamas",
+"cueca":"cueca","cuecas":"cuecas","calcinha":"calcinha","calcinhas":"calcinhas",
+"sutia":"sutiã","sutias":"sutiãs","meia":"meia","meias":"meias",
+"luva":"luva","luvas":"luvas","cachecol":"cachecol","cachecois":"cachecóis",
+"gravata":"gravata","gravatas":"gravatas","cinto":"cinto","cintos":"cintos",
+"bolsa":"bolsa","bolsas":"bolsas","mochila":"mochila","mochilas":"mochilas",
+"chapeu":"chapéu","chapeus":"chapéus","bone":"boné","bones":"bonés",
+"avental":"avental","aventais":"aventais","regata":"regata","regatas":"regatas",
+"cropped":"cropped","kimono":"kimono","kimonos":"kimonos","quimono":"quimono","quimonos":"quimonos",
+"blazer":"blazer","blazers":"blazers","body":"body","bodies":"bodies",
+"sueter":"suéter","sueteres":"suéteres","cardiga":"cardigã","cardigas":"cardigãs",
+"malha":"malha","malhas":"malhas","tunica":"túnica","tunicas":"túnicas",
+"poncho":"poncho","ponchos":"ponchos","camisao":"camisão","camisoes":"camisões",
+"anagua":"anágua","anaguas":"anáguas","espartilho":"espartilho","espartilhos":"espartilhos",
+"top":"top","tops":"tops","echarpe":"echarpe","echarpes":"echarpes",
+"manta":"manta","mantas":"mantas","xale":"xale","xales":"xales",
+"babador":"babador","babadores":"babadores","fralda":"fralda","fraldas":"fraldas",
+"colcha":"colcha","colchas":"colchas","cortina":"cortina","cortinas":"cortinas",
+"lencol":"lençol","lencois":"lençóis","fronha":"fronha","fronhas":"fronhas",
+"toalha":"toalha","toalhas":"toalhas","almofada":"almofada","almofadas":"almofadas"
+};
+function normPal(w){ return w.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase(); }
+function corrigirPalavra(w){
+  var m = w.match(/^(\W*)(\w+)(\W*)$/);
+  if(!m) return w;
+  var pref = m[1], nucleo = m[2], suf = m[3];
+  var corr = PECAS_DIC[normPal(nucleo)];
+  if(!corr) return w;
+  return pref+corr+suf;
+}
+function corrigirCampoPeca(inp){
+  var val = inp.value;
+  var pos = inp.selectionStart;
+  if(pos>0 && val.charAt(pos-1)===" "){
+    var before = val.slice(0,pos-1);
+    var after = val.slice(pos);
+    var m = before.match(/(\S+)$/);
+    if(m){
+      var palavra = m[1];
+      var corrigida = corrigirPalavra(palavra);
+      if(corrigida!==palavra){
+        var novoBefore = before.slice(0, before.length-palavra.length)+corrigida;
+        var novoVal = novoBefore+" "+after;
+        var delta = novoVal.length-val.length;
+        inp.value = novoVal.toUpperCase();
+        var novaPos = pos+delta;
+        inp.setSelectionRange(novaPos, novaPos);
+        return;
+      }
+    }
+  }
+  inp.value = val.toUpperCase();
+  inp.setSelectionRange(pos, pos);
+}
+function corrigirUltimaPalavra(inp){
+  var val = inp.value;
+  if(!val){ return; }
+  var partes = val.split(" ");
+  var ultima = partes[partes.length-1];
+  var corrigida = corrigirPalavra(ultima);
+  if(corrigida!==ultima){
+    partes[partes.length-1] = corrigida;
+    inp.value = partes.join(" ").toUpperCase();
+  } else {
+    inp.value = val.toUpperCase();
+  }
+}
 function initSvc(){
   var c = document.getElementById("np-stags");
   c.innerHTML = allSvc().map(function(s,i){
@@ -1007,7 +1084,7 @@ renderLista();
     <div class="mh"></div>
     <h2>Editar peça</h2>
     <input type="hidden" id="ed-id">
-    <div class="fg"><label>Peça</label><input id="ed-peca" placeholder="Nome da peça" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
+    <div class="fg"><label>Peça</label><input id="ed-peca" placeholder="Nome da peça" style="text-transform:uppercase" oninput="corrigirCampoPeca(this)" onblur="corrigirUltimaPalavra(this)"></div>
     <div class="fg"><label>Marca (opcional)</label><input id="ed-marca" list="marcas-dl" placeholder="Ex: Zara, Farm..." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
     <div class="fg"><label>Serviço</label><textarea id="ed-serv" style="height:80px;resize:none;width:100%;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-family:DM Sans,sans-serif;font-size:14px" placeholder="Descrição do serviço"></textarea></div>
     <div class="fr">
