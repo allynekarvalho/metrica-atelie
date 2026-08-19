@@ -5,8 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Métrica Ateliê</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap"></noscript>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:"DM Sans",sans-serif;background:#0A0A0A;color:#fff;padding-bottom:80px}
 header{background:#0A0A0A;padding:18px 20px 0;position:sticky;top:0;z-index:100}
@@ -225,7 +228,9 @@ input:focus,select:focus{border-color:#0A0A0A}
     <div class="fg"><label>Marca (opcional)</label><input id="np-marca" list="marcas-dl" placeholder="Ex: Zara, Farm, Louis Vuitton..." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
     <div class="fg">
       <label>Serviço</label>
+      <input id="np-svc-busca" placeholder="🔍 Buscar serviço..." oninput="renderSvcTags(this.value)" style="margin-bottom:8px">
       <div class="stags" id="np-stags"></div>
+      <p id="np-svc-vazio" style="display:none;font-size:12px;color:#B8B8B8;padding:8px 0">Nenhum serviço encontrado.</p>
       <input id="np-serv" placeholder="Serviços selecionados..." readonly style="margin-top:8px">
       <p class="dinfo" id="np-dinfo"></p>
       <div style="display:flex;gap:8px;margin-top:8px">
@@ -436,10 +441,21 @@ function corrigirUltimaPalavra(inp){
   }
 }
 function initSvc(){
+  var busca = document.getElementById("np-svc-busca");
+  if(busca) busca.value = "";
+  renderSvcTags("");
+}
+function renderSvcTags(filtro){
   var c = document.getElementById("np-stags");
-  c.innerHTML = allSvc().map(function(s,i){
-    return "<button class='stag' data-i='"+i+"' onclick='togSvc("+i+")'>"+s.n+"</button>";
+  var vazio = document.getElementById("np-svc-vazio");
+  var q = normPal((filtro||"").trim());
+  var lista = allSvc().map(function(s,i){ return {s:s,i:i}; });
+  if(q){ lista = lista.filter(function(o){ return normPal(o.s.n).indexOf(q)>=0; }); }
+  c.innerHTML = lista.map(function(o){
+    var sel = SEL.some(function(x){ return x.n===o.s.n; });
+    return "<button class='stag"+(sel?" sel":"")+"' data-i='"+o.i+"' onclick='togSvc("+o.i+")'>"+o.s.n+"</button>";
   }).join("");
+  if(vazio) vazio.style.display = lista.length ? "none" : "block";
 }
 function togSvc(i){
   var s = allSvc()[i];
@@ -572,12 +588,16 @@ async function renderLista(){
   var cont = document.getElementById("lista-cli");
   cont.innerHTML = "<div class='loading'>Carregando...</div>";
   try {
-    var clientes = await supa("clientes?select=*&order=nome");
+    var res0 = await Promise.all([
+      supa("clientes?select=*&order=nome"),
+      supa("pecas?select=cliente_id,status")
+    ]);
+    var clientes = res0[0];
+    var todasPecas = res0[1];
     if(!clientes||!clientes.length){
       cont.innerHTML = "<div class='vz'><span class='vi2'>🧵</span>Nenhum cliente cadastrado.</div>";
       return;
     }
-    var todasPecas = await supa("pecas?select=cliente_id,status");
     clientes = clientes.map(function(cli){
       cli.pecas = todasPecas.filter(function(p){ return p.cliente_id===cli.id; });
       return cli;
@@ -690,9 +710,12 @@ function verFoto(url){
 async function renderFinanceiro(){
   document.getElementById("fp-f").innerHTML = "<div class='loading'>Carregando...</div>";
   try {
-    var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
-    var pecas = await supa("pecas?cliente_id=eq."+CLI_ATIVA_ID);
-    var pags = await supa("pagamentos?cliente_id=eq."+CLI_ATIVA_ID+"&order=criado_em.desc");
+    var res1 = await Promise.all([
+      supa("clientes?id=eq."+CLI_ATIVA_ID),
+      supa("pecas?cliente_id=eq."+CLI_ATIVA_ID),
+      supa("pagamentos?cliente_id=eq."+CLI_ATIVA_ID+"&order=criado_em.desc")
+    ]);
+    var cli = res1[0], pecas = res1[1], pags = res1[2];
     var saldoAnt = (cli[0]&&cli[0].saldo_anterior)||0;
     var totP = pecas.reduce(function(s,p){ return s+(p.valor||0); },0) + saldoAnt;
     var totPg = pags.reduce(function(s,p){ return s+p.valor; },0);
@@ -855,8 +878,11 @@ async function copiarLinkPortal(){
 async function renderRes(){
   document.getElementById("res-n").innerHTML = "<div class='loading' style='grid-column:1/-1'>Carregando...</div>";
   try {
-    var pecas = await supa("pecas?select=*");
-    var pags = await supa("pagamentos?select=valor");
+    var res2 = await Promise.all([
+      supa("pecas?select=*"),
+      supa("pagamentos?select=valor")
+    ]);
+    var pecas = res2[0], pags = res2[1];
     var at = pecas.filter(function(p){ return p.status!=="entregue"; });
     var urg = at.filter(function(p){ return p.status==="urgente"; }).length;
     var and = at.filter(function(p){ return p.status==="em-andamento"; }).length;
