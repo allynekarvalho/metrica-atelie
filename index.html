@@ -617,7 +617,7 @@ async function renderLista(){
       var temUrg = c.pecas && c.pecas.some(function(p){ return p.status==="urgente"; });
       return "<div class='cli-item' data-id='"+c.id+"' data-nome='"+c.nome.replace(/'/g,"&#39;")+"' onclick='abrirPerfil(this.dataset.id,this.dataset.nome)'>" +
         "<div><div class='cli-nome'>"+(temUrg?"🔴 ":"")+c.nome+"</div><div class='cli-meta'>"+ativas+" ativa"+(ativas!==1?"s":"")+" · "+total+" total</div></div>" +
-        "<div style='display:flex;gap:6px;align-items:center'><button class='bm' data-id='"+c.id+"' data-nome='"+c.nome+"' data-tel='"+(c.telefone||"")+"' data-end='"+(c.endereco||"")+"' onclick='event.stopPropagation();editarCliente(this)' style='font-size:11px'>✏️</button><button class='bm' data-id='"+c.id+"' onclick='event.stopPropagation();excluirCliente(this)' style='font-size:11px;color:#B8B8B8'>🗑️</button><span class='cli-arrow'>›</span></div></div>";
+        "<div style='display:flex;gap:6px;align-items:center'><button class='bm' data-id='"+c.id+"' data-nome='"+c.nome.replace(/'/g,"&#39;")+"' data-tel='"+(c.telefone||"").replace(/'/g,"&#39;")+"' data-end='"+(c.endereco||"").replace(/'/g,"&#39;")+"' onclick='event.stopPropagation();editarCliente(this)' style='font-size:11px'>✏️</button><button class='bm' data-id='"+c.id+"' onclick='event.stopPropagation();excluirCliente(this)' style='font-size:11px;color:#B8B8B8'>🗑️</button><span class='cli-arrow'>›</span></div></div>";
     }).join("");
   } catch(e) {
     cont.innerHTML = "<div class='vz'>Erro ao carregar: "+e.message+"</div>";
@@ -1029,9 +1029,13 @@ var tel = prompt("Telefone:", btn.dataset.tel||"");
 if(tel===null) return;
 var end = prompt("Endereço:", btn.dataset.end||"");
 if(end===null) return;
-  await supa("clientes?id=eq."+btn.dataset.id,{method:"PATCH",body:{nome:nome,telefone:tel,endereco:end}});
-  showToast("Cliente atualizado!");
-  renderLista();
+  try {
+    await supa("clientes?id=eq."+btn.dataset.id,{method:"PATCH",body:{nome:nome,telefone:tel,endereco:end}});
+    showToast("Cliente atualizado!");
+    renderLista();
+  } catch(e){
+    alert("Não foi possível salvar: "+e.message);
+  }
 }
 async function excluirCliente(btn){
   if(!confirm("Excluir cliente "+btn.dataset.nome+"?")) return;
