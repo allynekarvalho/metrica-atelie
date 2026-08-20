@@ -866,7 +866,7 @@ async function copiarLinkPortal(){
     var token = cli[0]&&cli[0].token_portal;
     if(!token){ showToast("Token não encontrado."); return; }
     var link = "https://allynekarvalho.github.io/metrica-atelie/portal/"+token;
-    var msg = "😉 *Métrica Ateliê*\nOlá, "+CLI_ATIVA+"!\n\nAqui está o link para acompanhar suas peças:\n"+link;
+    var msg = "😉 *Métrica Ateliê | ALLYNE CARVALHO*\nOlá, "+CLI_ATIVA+"!\n\nAqui está o link para acompanhar suas peças:\n"+link;
     document.getElementById("mw-cli").textContent = CLI_ATIVA;
     document.getElementById("mw-txt").textContent = msg;
     document.getElementById("wpp-open").href = "https://wa.me/?text="+encodeURIComponent(msg);
