@@ -136,7 +136,7 @@ async function init() {
         html += "<div class='eg'><div class='ehdr'>📅 Entrada em "+fdata(d)+"</div>";
         porData[d].forEach(function(p){
           html += "<div class='pcard'>";
-          if(p.foto_url) html += "<img src='"+p.foto_url+"' class='pfoto'>";
+          if(p.foto_url) html += "<img src='"+p.foto_url+"' class='pfoto' loading='lazy' decoding='async'>";
           html += "<div class='pinfo'><div class='pnome'>"+p.peca+"</div>";
           if(p.servico) html += "<div class='pserv'>"+p.servico+"</div>";
           html += "<span class='badge "+p.status+"'>"+slbl(p.status)+"</span>";
@@ -150,7 +150,7 @@ async function init() {
       html += "<div class='secao-titulo' style='margin-top:24px'>Peças entregues</div>";
       entregues.forEach(function(p){
         html += "<div class='pcard'>";
-        if(p.foto_url) html += "<img src='"+p.foto_url+"' class='pfoto'>";
+        if(p.foto_url) html += "<img src='"+p.foto_url+"' class='pfoto' loading='lazy' decoding='async'>";
         html += "<div class='pinfo'><div class='pnome'>"+p.peca+"</div>";
         if(p.servico) html += "<div class='pserv'>"+p.servico+"</div>";
         html += "<span class='badge entregue'>"+slbl("entregue")+"</span>";
