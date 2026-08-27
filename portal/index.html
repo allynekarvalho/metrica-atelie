@@ -114,11 +114,15 @@ async function init() {
     var pagamentos = await supa("pagamentos?cliente_id=eq."+cli.id);
     var ativas = pecas.filter(function(p){ return p.status !== "entregue"; });
     var entregues = pecas.filter(function(p){ return p.status === "entregue"; });
-    var saldoAnt = cli.saldo_anterior || 0;
-    var totP = pecas.reduce(function(s,p){ return s+(p.valor||0); },0) + saldoAnt;
+        var saldoAnt = cli.saldo_anterior || 0;
+    var pecasSum = pecas.reduce(function(s,p){ return s+(p.valor||0); },0);
+    var totP = pecasSum + saldoAnt;
     var totPg = pagamentos.reduce(function(s,p){ return s+(p.valor||0); },0);
     var saldo = totP - totPg;
-    if(!pecas.length) {
+    var pgParaAnterior = Math.min(totPg, saldoAnt);
+    var saldoAntRestante = Math.max(0, saldoAnt-pgParaAnterior);
+    var pecasRestante = Math.max(0, (totP-saldoAnt)-(totPg-pgParaAnterior));
+if(!pecas.length) {
       document.getElementById("body").innerHTML = "<div class='empty'><span class='empty-ico'>🧵</span>Nenhuma peça no momento.</div>";
       return;
     }
@@ -158,15 +162,21 @@ async function init() {
         html += "</div></div>";
       });
     }
-    if(saldo > 0) {
-      html += "<div class='saldo-box'>"+
-        "<div class='saldo-lbl'>Saldo em aberto</div>"+
-        "<div class='saldo-val'>"+fval(saldo)+"</div>"+
-        "<div class='pix-row'><div class='pix-chave' id='pix-chave'>"+CHAVE_PIX_ATELIE+"</div><button class='btn-pix' onclick='copiarPix()'>Copiar chave Pix</button></div>"+
-        "<div class='saldo-msg'>Após o pagamento, envie o comprovante aqui pelo WhatsApp para darmos baixa no seu saldo. 🙏</div>"+
-        "</div>";
-    }
-    document.getElementById("body").innerHTML = html;
+        var corP = saldo>0?"#8B0000":"#2E5E2E";
+    var saldoAntHTML = saldoAntRestante>0
+      ? "<div style='background:#FEF9E7;border:1px solid #E8D48A;border-radius:10px;padding:18px 16px;margin-bottom:14px'><div style='font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6B5500;margin-bottom:6px'>Saldo em aberto anterior</div><div style='font-size:28px;font-weight:700;color:#6B5500'>R$ "+saldoAntRestante.toFixed(2).replace(".",",")+"</div></div>"
+      : "";
+    html += "<div class='saldo-box'>"+
+      saldoAntHTML+
+      "<div style='display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid #E8E8E8;border-radius:8px;overflow:hidden;margin-bottom:12px;background:#fff'>"+
+        "<div style='padding:14px 8px;text-align:center;border-right:1px solid #E8E8E8'><div style='font-size:18px;font-weight:700;color:#0A0A0A;margin-bottom:3px'>R$ "+totP.toFixed(2).replace(".",",")+"</div><div style='font-size:9px;color:#6B6B6B;text-transform:uppercase;letter-spacing:.5px'>Total c/ saldo ant.</div></div>"+
+        "<div style='padding:14px 8px;text-align:center;border-right:1px solid #E8E8E8'><div style='font-size:18px;font-weight:700;color:#2E5E2E;margin-bottom:3px'>R$ "+totPg.toFixed(2).replace(".",",")+"</div><div style='font-size:9px;color:#6B6B6B;text-transform:uppercase;letter-spacing:.5px'>Pago</div></div>"+
+        "<div style='padding:14px 8px;text-align:center'><div style='font-size:18px;font-weight:700;color:"+corP+";margin-bottom:3px'>R$ "+saldo.toFixed(2).replace(".",",")+"</div><div style='font-size:9px;color:#6B6B6B;text-transform:uppercase;letter-spacing:.5px'>Valor a pagar</div></div>"+
+      "</div>"+
+      "<div class='pix-row'><div class='pix-chave' id='pix-chave'>"+CHAVE_PIX_ATELIE+"</div><button class='btn-pix' onclick='copiarPix()'>Copiar chave Pix</button></div>"+
+      (saldo>0?"<div class='saldo-msg'>Após o pagamento, envie o comprovante aqui pelo WhatsApp para darmos baixa no seu saldo. 🙏</div>":"<div class='saldo-msg' style='color:#2E5E2E'>Tudo em dia por aqui! 🎉</div>")+
+      "</div>";
+document.getElementById("body").innerHTML = html;
   } catch(e) {
     document.getElementById("body").innerHTML = "<div class='erro'>Erro ao carregar: "+e.message+"</div>";
   }
