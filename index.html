@@ -700,7 +700,7 @@ function mkPecaHTML(p, comAcoes){
     acoes += "<button class='bm' data-id='"+id+"' onclick='excluirPeca(this)' style='color:#B8B8B8'>Excluir</button>";
     html += "<div class='pac'>"+acoes+"</div>";
   } else {
-    html += "<div class='pac'><button class='bm' data-id='"+p.id+"' onclick='retornarPeca(+this.dataset.id)'>↩️ Retornar peça</button></div>";
+    html += "<div class='pac'><button class='bm' data-id='"+p.id+"' onclick='abrirEditar(this.dataset.id)'>↩️ Retornar peça</button></div>";
   }
   return "<div>"+html+"</div>";
 }
@@ -1060,12 +1060,6 @@ async function gerarPDFCliente(){
   setTimeout(function(){ win.print(); },500);
 }
 
-async function retornarPeca(id){
-  if(!confirm("Retornar esta peça para o ateliê?")) return;
-  await supa("pecas?id=eq."+id,{method:"PATCH",body:{status:"aguardando"}});
-  showToast("Peça retornada!");
-  renderPerfil();
-}
 async function enviarSaldo(){
   try {
     var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
