@@ -82,7 +82,7 @@ input:focus,select:focus{border-color:#0A0A0A}
 .sbox{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid #E8E8E8;border-radius:8px;overflow:hidden;margin-bottom:14px;background:#fff}
 .si{padding:14px 10px;text-align:center;border-right:1px solid #E8E8E8}
 .si:last-child{border-right:none}
-.sn{font-family:"Cormorant Garamond",serif;font-size:19px;font-weight:400;margin-bottom:3px}
+.sn{font-family:DM Sans,sans-serif;font-size:20px;font-weight:700;margin-bottom:3px}
 .sl{font-size:9px;color:#6B6B6B;text-transform:uppercase;letter-spacing:.8px}
 .pgl{background:#fff;border:1px solid #E8E8E8;border-radius:8px;overflow:hidden;margin-bottom:12px}
 .pgi{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-bottom:1px solid #F5F5F5;font-size:13px}
@@ -752,25 +752,38 @@ async function renderFinanceiro(){
       supa("pagamentos?cliente_id=eq."+CLI_ATIVA_ID+"&order=criado_em.desc")
     ]);
     var cli = res1[0], pecas = res1[1], pags = res1[2];
-    var saldoAnt = (cli[0]&&cli[0].saldo_anterior)||0;
-    var totP = pecas.reduce(function(s,p){ return s+(p.valor||0); },0) + saldoAnt;
+        var saldoAnt = (cli[0]&&cli[0].saldo_anterior)||0;
+    var pecasSum = pecas.reduce(function(s,p){ return s+(p.valor||0); },0);
+    var totP = pecasSum + saldoAnt;
     var totPg = pags.reduce(function(s,p){ return s+p.valor; },0);
     var descOnPrev = document.getElementById("fin-desc-on")?document.getElementById("fin-desc-on").checked:false; var descValPrev = document.getElementById("fin-desc-val")?document.getElementById("fin-desc-val").value:""; var descPerc = descOnPrev?(parseFloat(descValPrev)||0):0; var totPD = +(totP*(1-descPerc/100)).toFixed(2); var saldo = totPD-totPg;
     var cor = saldo>0?"#8B0000":"#2E5E2E";
+    var saldoAntD = +(saldoAnt*(1-descPerc/100)).toFixed(2);
+    var pecasD = +(totPD-saldoAntD).toFixed(2);
+    var pgParaAnterior = Math.min(totPg, saldoAntD);
+    var saldoAntRestante = Math.max(0, +(saldoAntD-pgParaAnterior).toFixed(2));
+    var pecasRestante = Math.max(0, +(pecasD-(totPg-pgParaAnterior)).toFixed(2));
     var saldoAntHTML = saldoAnt>0
-      ? "<div style='background:#FEF9E7;border:1px solid #E8E8E8;border-radius:8px;padding:12px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center'><div><div style='font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6B5500;margin-bottom:2px'>Saldo em aberto anterior</div><div style='font-size:16px;font-weight:600;color:#6B5500'>"+fval(saldoAnt)+"</div></div><button onclick='editarSaldoAnt()' style='font-size:11px;color:#6B5500;border:1px solid #E8D48A;background:#FEF9E7;border-radius:4px;padding:5px 10px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600'>Editar</button></div>"
+      ? "<div style='background:#FEF9E7;border:1px solid #E8D48A;border-radius:10px;padding:18px 16px;margin-bottom:14px'><div style='display:flex;justify-content:space-between;align-items:flex-start;gap:10px'><div><div style='font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6B5500;margin-bottom:6px'>Saldo em aberto anterior</div><div style='font-size:28px;font-weight:700;color:#6B5500'>"+fval(saldoAntRestante)+"</div>"+(saldoAntRestante<saldoAntD?"<div style='font-size:11px;color:#8a7a3a;margin-top:3px'>de "+fval(saldoAntD)+" original</div>":"")+"</div><button onclick='editarSaldoAnt()' style='font-size:11px;color:#6B5500;border:1px solid #E8D48A;background:#fff;border-radius:4px;padding:6px 12px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;white-space:nowrap'>Editar</button></div></div>"
       : "<div style='background:#F5F5F5;border:1px solid #E8E8E8;border-radius:8px;padding:12px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center'><div style='font-size:12px;color:#6B6B6B'>Nenhum saldo anterior</div><button onclick='editarSaldoAnt()' style='font-size:11px;color:#0A0A0A;border:1px solid #E8E8E8;background:#fff;border-radius:4px;padding:5px 10px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600'>+ Adicionar</button></div>";
     var pgHTML = pags.length
       ? "<div class='pgl'>"+pags.map(function(p){ return "<div class='pgi'><div><div class='pgv'>+ "+fval(p.valor)+"</div><div class='pgd'>"+(p.data||"")+(p.observacao?" · "+p.observacao:"")+"</div></div><button data-id='"+p.id+"' onclick='excluirPag(this)' style='font-size:11px;color:#B8B8B8;border:none;background:none;cursor:pointer'>✕</button></div>"; }).join("")+"</div>"
       : "<div class='pgl'><div style='padding:16px;font-size:13px;color:#6B6B6B'>Nenhum pagamento registrado.</div></div>";
     document.getElementById("fp-f").innerHTML =
       saldoAntHTML+
-      "<div class='rp' style='margin-bottom:10px'><div class='rpl'>Desconto final</div><div class='rpw' style='align-items:center'><label style='display:flex;align-items:center;gap:6px;font-size:13px;flex:1'><input type='checkbox' id='fin-desc-on' "+(descOnPrev?"checked":"")+" onchange='renderFinanceiro()'> Aplicar desconto</label><input type='number' id='fin-desc-val' value='"+descValPrev+"' min='0' max='100' step='0.1' placeholder='%' style='width:70px;padding:10px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px' onchange='renderFinanceiro()'></div></div>"+"<div class='sbox'><div class='si'><div class='sn'>"+fval(totPD)+"</div><div class='sl'>Total c/ saldo ant.</div></div><div class='si'><div class='sn' style='color:#2E5E2E'>"+fval(totPg)+"</div><div class='sl'>Pago</div></div><div class='si'><div class='sn' style='color:"+cor+"'>"+fval(saldo)+"</div><div class='sl'>Saldo</div></div></div>"+
+      "<div class='rp' style='margin-bottom:10px;padding:8px 10px'><div class='rpw' style='align-items:center;gap:8px'><label style='display:flex;align-items:center;gap:5px;font-size:11px;color:#6B6B6B;flex:1'><input type='checkbox' id='fin-desc-on' "+(descOnPrev?"checked":"")+" onchange='renderFinanceiro()'> Desconto</label><input type='number' id='fin-desc-val' value='"+descValPrev+"' min='0' max='100' step='0.1' placeholder='%' style='width:52px;padding:6px 8px;border:1px solid #E8E8E8;border-radius:5px;font-size:12px' onchange='renderFinanceiro()'></div></div>"+"<div class='sbox'><div class='si'><div class='sn'>"+fval(totPD)+"</div><div class='sl'>Total c/ saldo ant.</div></div><div class='si'><div class='sn' style='color:#2E5E2E'>"+fval(totPg)+"</div><div class='sl'>Pago</div></div><div class='si'><div class='sn' style='color:"+cor+"'>"+fval(saldo)+"</div><div class='sl'>Valor a pagar</div></div></div>"+
+      "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:8px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px'><div style='flex:1'><div style='font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6B6B6B;margin-bottom:3px'>Chave Pix</div><div style='font-size:13px;color:#0A0A0A;word-break:break-all'>"+CHAVE_PIX_ATELIE+"</div></div><button onclick='copiarPixFin()' style='background:transparent;color:#0A0A0A;border:1px solid #E8E8E8;border-radius:5px;padding:8px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;white-space:nowrap'>Copiar</button></div>"+
       pgHTML+
-      "<div class='rp'><div class='rpl'>Registrar pagamento</div><div class='rpw'><div class='vw' style='flex:1'><span class='vp'>R$</span><input type='number' id='pv-inp' class='vi' placeholder='0,00' min='0' step='0.01' style='width:100%'></div><input id='po-inp' placeholder='Obs.' style='flex:1;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;font-family:DM Sans,sans-serif'><button onclick='regPag()' style='padding:0 14px;background:#0A0A0A;color:#fff;border:none;border-radius:6px;font-size:18px;cursor:pointer'>✓</button></div></div>";
-  } catch(e){
+      "<div class='rp'><div class='rpl'>Registrar pagamento</div><div class='rpw'><div class='vw' style='flex:1'><span class='vp'>R$</span><input type='number' id='pv-inp' class='vi' placeholder='0,00' min='0' step='0.01' style='width:100%'></div><input id='po-inp' placeholder='Obs.' style='flex:1;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;font-family:DM Sans,sans-serif'><button onclick='regPag()' style='padding:0 14px;background:#0A0A0A;color:#fff;border:none;border-radius:6px;font-size:18px;cursor:pointer'>✓</button></div></div>"; } catch(e){
     document.getElementById("fp-f").innerHTML = "<div class='vz'>Erro: "+e.message+"</div>";
   }
+}
+function copiarPixFin(){
+  navigator.clipboard.writeText(CHAVE_PIX_ATELIE).then(function(){
+    showToast("Chave Pix copiada!");
+  }).catch(function(){
+    showToast("Não foi possível copiar.");
+  });
 }
 async function editarSaldoAnt(){
   var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
