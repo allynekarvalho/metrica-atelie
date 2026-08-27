@@ -376,7 +376,7 @@ function comprimirImagem(file, maxDim, qualidade) {
       ctx.drawImage(img, 0, 0, w, h);
       canvas.toBlob(function(blob){
         if(!blob){ resolve(file); return; }
-        var nomeBase = (file.name || "foto").replace(/.[^.]+$/, "");
+        var nomeBase = (file.name || "foto").replace(/\.[^.]+$/, "");
         resolve(new File([blob], nomeBase + ".jpg", { type: "image/jpeg" }));
       }, "image/jpeg", qualidade);
     };
