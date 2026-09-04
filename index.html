@@ -248,7 +248,7 @@ input:focus,select:focus{border-color:#0A0A0A}
       <div class="fg"><label>Costureira</label><select id="np-cos"><option value="">Selecionar...</option><option>Ana</option><option>Maria</option><option>Lucia</option><option>Allyne (eu)</option></select></div>
       <div class="fg"><label>Prazo</label><input type="date" id="np-prazo"></div>
     </div>
-    <div class="fg"><label>Prioridade</label><select id="np-prio"><option value="aguardando">Normal</option><option value="urgente">🔴 Urgente</option></select></div>
+ 
     <div class="fg">
       <label>📸 Foto da peça</label>
       <input type="file" id="np-cam" accept="image/*" style="display:none" onchange="fotoSelecionada(this)">
@@ -391,7 +391,7 @@ function showToast(msg) {
   t.style.display = "block";
   setTimeout(function(){ t.style.display = "none"; }, 3000);
 }
-function slbl(s){ return {urgente:"Urgente",aguardando:"Aguardando","em-andamento":"Em andamento",pronto:"Pronto",entregue:"Entregue"}[s]||s; }
+function slbl(s){ return {urgente:"Urgente",aguardando:"Aguardando","em-andamento":"Em andamento",pronto:"Pronto",entregue:"Entregue"}[s]||s; } function isUrgente(p){ if(!p||!p.prazo) return false; if(p.status==="pronto"||p.status==="entregue") return false; var lim=new Date(); lim.setDate(lim.getDate()+1); var limStr=lim.toISOString().split("T")[0]; return p.prazo<=limStr; }
 function fdata(d){ if(!d)return""; return new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}); }
 function fval(v){ if(!v&&v!==0)return"—"; return "R$ "+Number(v).toFixed(2).replace(".",","); }
 var PECAS_DIC = {
@@ -627,7 +627,7 @@ async function renderLista(){
   try {
     var res0 = await Promise.all([
       supa("clientes?select=*&order=nome"),
-      supa("pecas?select=cliente_id,status")
+      supa("pecas?select=cliente_id,status,prazo")
     ]);
     var clientes = res0[0];
     var todasPecas = res0[1];
@@ -645,13 +645,13 @@ async function renderLista(){
     }
     if(FILTRO!=="todos"){
       clientes = clientes.filter(function(c){
-        return c.pecas && c.pecas.some(function(p){ return p.status===FILTRO; });
+        return c.pecas && c.pecas.some(function(p){ return FILTRO==="urgente"?isUrgente(p):p.status===FILTRO; });
       });
     }
     cont.innerHTML = clientes.map(function(c){
       var total = c.pecas ? c.pecas.length : 0;
       var ativas = c.pecas ? c.pecas.filter(function(p){ return p.status!=="entregue"; }).length : 0;
-      var temUrg = c.pecas && c.pecas.some(function(p){ return p.status==="urgente"; });
+      var temUrg = c.pecas && c.pecas.some(isUrgente);
       return "<div class='cli-item' data-id='"+c.id+"' data-nome='"+c.nome.replace(/'/g,"&#39;")+"' onclick='abrirPerfil(this.dataset.id,this.dataset.nome)'>" +
         "<div><div class='cli-nome'>"+(temUrg?"🔴 ":"")+c.nome+"</div><div class='cli-meta'>"+ativas+" ativa"+(ativas!==1?"s":"")+" · "+total+" total</div></div>" +
         "<div style='display:flex;gap:6px;align-items:center'><button class='bm' data-id='"+c.id+"' data-nome='"+c.nome.replace(/'/g,"&#39;")+"' data-tel='"+(c.telefone||"").replace(/'/g,"&#39;")+"' data-end='"+(c.endereco||"").replace(/'/g,"&#39;")+"' onclick='event.stopPropagation();editarCliente(this)' style='font-size:11px'>✏️</button><button class='bm' data-id='"+c.id+"' onclick='event.stopPropagation();excluirCliente(this)' style='font-size:11px;color:#B8B8B8'>🗑️</button><span class='cli-arrow'>›</span></div></div>";
@@ -725,14 +725,14 @@ pp.map(function(p){ return mkPecaHTML(p, comAcoes); }).join("")+
 }
 function mkPecaHTML(p, comAcoes){
   var fotoHTML = p.foto_url ? "<img src='"+p.foto_url+"' class='pfoto' loading='lazy' decoding='async' data-url='"+p.foto_url+"' onclick='verFoto(this.dataset.url)'>" : "";
-  var html = "<div class='pi'><div class='pin'>"+fotoHTML+"<div class='pn' style='text-transform:uppercase'>"+p.peca+"</div>"+(p.observacao?"<div class='ps' style='font-style:italic;color:#8B8B8B'>"+p.observacao+"</div>":"")+(p.marca?"<div class='ps' style='text-transform:uppercase;font-weight:700;color:#6B6B6B'>"+p.marca+"</div>":"")+(p.servico?p.servico.split(" + ").map(function(sv){ return "<div class='ps'>• "+sv+"</div>"; }).join(""):"<div class='ps'>—</div>")+(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+Number(p.valor).toFixed(2).replace('.',',')+"</div>":"")+"<div class='pc'>"+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div></div><div class='pd'><span class='badge "+p.status+"'>"+slbl(p.status)+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
+  var html = "<div class='pi'><div class='pin'>"+fotoHTML+"<div class='pn' style='text-transform:uppercase'>"+p.peca+"</div>"+(p.observacao?"<div class='ps' style='font-style:italic;color:#8B8B8B'>"+p.observacao+"</div>":"")+(p.marca?"<div class='ps' style='text-transform:uppercase;font-weight:700;color:#6B6B6B'>"+p.marca+"</div>":"")+(p.servico?p.servico.split(" + ").map(function(sv){ return "<div class='ps'>• "+sv+"</div>"; }).join(""):"<div class='ps'>—</div>")+(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+Number(p.valor).toFixed(2).replace('.',',')+"</div>":"")+"<div class='pc'>"+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div></div><div class='pd'><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
   if(comAcoes){
     var id = p.id;
     var acoes = "<button class='bm' data-id='"+id+"' data-peca='"+p.peca+"' data-serv='"+(p.servico||"")+"' onclick='abrirSt(this)'>Status</button>";
       acoes += "<button class='bm' data-id='"+id+"' onclick='imprimirComanda(this.dataset.id)'>🖨️ Comanda</button>";
       acoes += "<button class='bm' data-id='"+id+"' onclick='abrirEditar(this.dataset.id)'>✏️ Editar</button>";
-    if(p.status==="urgente") acoes += "<button class='bm' data-id='"+id+"' onclick='togUrg(this)' style='background:#FDE8E8;color:#8B0000'>✕ Urgente</button>";
-    else acoes += "<button class='bm' data-id='"+id+"' onclick='togUrg(this)'>🔴 Urgente</button>";
+
+ 
     if(p.status==="pronto") acoes += "<button class='bm vd' data-id='"+id+"' data-val='"+p.valor+"' onclick='abrirWpp(this)'>Avisar</button>";
     acoes += "<button class='bm' data-id='"+id+"' onclick='excluirPeca(this)' style='color:#B8B8B8'>Excluir</button>";
     html += "<div class='pac'>"+acoes+"</div>";
@@ -833,7 +833,7 @@ function abrirNovaPeca(){
   document.getElementById("npeca-cli-nome").textContent = CLI_ATIVA;
   ["np-peca","np-marca","np-serv","np-val","np-com","np-prazo","np-obs"].forEach(function(id){ document.getElementById(id).value=""; });
   document.getElementById("np-cos").innerHTML=optsCostureiras("");
-  document.getElementById("np-prio").value="aguardando";
+
   document.getElementById("np-prev").style.display="none";
   document.getElementById("np-foto-status").style.display="none";
   document.getElementById("np-dinfo").style.display="none";
@@ -852,7 +852,7 @@ async function salvarPeca(){
     var val = parseFloat(document.getElementById("np-val").value)||0;
     var com = parseFloat(document.getElementById("np-com").value)||0;
     var prazo = document.getElementById("np-prazo").value||null;
-    var prio = document.getElementById("np-prio").value;
+    var prio = "aguardando";
     var hoje = new Date().toISOString().split("T")[0];
     var marca = document.getElementById("np-marca").value.trim(); var obs = document.getElementById("np-obs").value.trim();
 if(marca) registrarMarca(marca);
@@ -934,7 +934,7 @@ async function renderRes(){
     ]);
     var pecas = res2[0], pags = res2[1];
     var at = pecas.filter(function(p){ return p.status!=="entregue"; });
-    var urg = at.filter(function(p){ return p.status==="urgente"; }).length;
+    var urg = at.filter(isUrgente).length;
     var and = at.filter(function(p){ return p.status==="em-andamento"; }).length;
     var prt = at.filter(function(p){ return p.status==="pronto"; }).length;
     var tg = pecas.reduce(function(s,p){ return s+(p.valor||0); },0);
@@ -949,7 +949,7 @@ async function renderRes(){
       "<div class='rc'><div class='rn' style='font-size:20px;color:#2E5E2E'>"+fval(tp)+"</div><div class='rl'>Recebido</div></div>"+
       "<div class='rc'><div class='rn' style='font-size:20px;color:#8B0000'>"+fval(sd)+"</div><div class='rl'>A receber</div></div>";
     var cos=COSTUREIRAS;
-    var h=cos.map(function(c){ var pp=at.filter(function(p){ return p.costureira===c; }); if(!pp.length)return""; return "<div class='cb'><div class='ct'>🪡 "+c+" · "+pp.length+" peça"+(pp.length>1?"s":"")+"</div>"+pp.map(function(p){ return "<div class='cp'><span>"+p.cliente_nome+" · "+p.peca+"</span><span class='badge "+p.status+"'>"+slbl(p.status)+"</span></div>"; }).join("")+"</div>"; }).join("");
+    var h=cos.map(function(c){ var pp=at.filter(function(p){ return p.costureira===c; }); if(!pp.length)return""; return "<div class='cb'><div class='ct'>🪡 "+c+" · "+pp.length+" peça"+(pp.length>1?"s":"")+"</div>"+pp.map(function(p){ return "<div class='cp'><span>"+p.cliente_nome+" · "+p.peca+"</span><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span></div>"; }).join("")+"</div>"; }).join("");
     document.getElementById("res-c").innerHTML=h||"<div class='vz'><span class='vi2'>🎉</span>Tudo em dia!</div>";
   } catch(e){
     document.getElementById("res-n").innerHTML = "<div style='grid-column:1/-1;padding:20px;color:red'>Erro: "+e.message+"</div>";
@@ -1022,7 +1022,7 @@ document.getElementById("ed-com").value = p.comissao||"";
 document.getElementById("ed-cos").innerHTML = optsCostureiras(p.costureira||""); document.getElementById("ed-obs").value = p.observacao||"";
 document.getElementById("ed-prazo").value = p.prazo||"";
 document.getElementById("ed-data").value = p.data_entrada||"";
-document.getElementById("ed-prio").value = p.status==="urgente"?"urgente":"aguardando";
+
 FOTO_FILE_EDIT = null;
 var edPrev = document.getElementById("ed-prev");
 var edSt = document.getElementById("ed-foto-status");
@@ -1050,7 +1050,7 @@ servico: document.getElementById("ed-serv").value.trim(),
 costureira: document.getElementById("ed-cos").value, observacao: document.getElementById("ed-obs").value.trim(),
 prazo: document.getElementById("ed-prazo").value||null,
 data_entrada: document.getElementById("ed-data").value||null,
-status: document.getElementById("ed-prio").value,
+status: (ED_STATUS_ORIG==="entregue"||ED_STATUS_ORIG==="pronto")?"aguardando":(ED_STATUS_ORIG==="urgente"?"aguardando":ED_STATUS_ORIG),
 valor: val,
 comissao: com, data_retorno: (ED_STATUS_ORIG==="entregue"?hoje:undefined)
 };
@@ -1101,7 +1101,7 @@ async function gerarPDFCliente(){
     "<div class='cli'>"+CLI_ATIVA+"</div>"+
     "<div class='sub'>Atualizado em "+new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"})+"</div>"+
     pecas.filter(function(p){ return p.status!=="entregue"; }).map(function(p){
-      var sl = {urgente:"🔴 Urgente",aguardando:"⏳ Aguardando","em-andamento":"🪡 Em andamento",pronto:"✅ Pronto para retirar",entregue:"🎁 Entregue"}[p.status]||p.status;
+      var sl = {urgente:"🔴 Urgente",aguardando:"⏳ Aguardando","em-andamento":"🪡 Em andamento",pronto:"✅ Pronto para retirar",entregue:"🎁 Entregue"}[isUrgente(p)?"urgente":p.status]||p.status;
       return "<div class='pcard'><div class='pnome'>"+p.peca+(p.marca?" · "+p.marca:"")+"</div>"+(p.servico?"<div class='pserv'>"+p.servico+"</div>":"")+"<div class='badge'>"+sl+"</div></div>";
     }).join("")+
     "<div class='rodape'>Métrica Ateliê · Allyne Carvalho</div></body></html>";
@@ -1177,7 +1177,7 @@ renderLista();
       <img id="ed-prev" class="foto-preview">
       <p id="ed-foto-status" style="font-size:11px;color:#6B6B6B;margin-top:5px;display:none"></p>
     </div>
-    <div class="fg"><label>Prioridade</label><select id="ed-prio"><option value="aguardando">Normal</option><option value="urgente">🔴 Urgente</option></select></div>
+ 
     <button class="btn-p" onclick="salvarEdicao()">Salvar alterações</button>
     <button class="btn-s" onclick="closeMod('mod-editar')">Cancelar</button>
   </div>
