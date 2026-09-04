@@ -291,7 +291,7 @@ var CHAVE_PIX_ATELIE = "65996885868";
 var FILTRO = "todos";
 var CLI_ATIVA = null;
 var CLI_ATIVA_ID = null;
-var PECA_ATIVA = null;
+var PECA_ATIVA = null; var ED_STATUS_ORIG = null;
 var SEL = [];
 var FOTO_FILE = null;
 var FOTO_FILE_EDIT = null;
@@ -879,7 +879,7 @@ function abrirSt(btn){
   document.getElementById("mod-st").classList.add("open");
 }
 async function setStatus(s){
-  await supa("pecas?id=eq."+PECA_ATIVA, {method:"PATCH", body:{status:s}});
+  var hoje = new Date().toISOString().split("T")[0]; await supa("pecas?id=eq."+PECA_ATIVA, {method:"PATCH", body:(s==="entregue"?{status:s, data_entrega:hoje}:{status:s})});
   closeMod("mod-st");
   showToast("Status atualizado!");
   renderPerfil();
@@ -1013,7 +1013,7 @@ async function abrirEditar(id) {
 var p = await supa("pecas?id=eq."+id);
 if(!p||!p[0]) return;
 p = p[0];
-document.getElementById("ed-id").value = p.id;
+document.getElementById("ed-id").value = p.id; ED_STATUS_ORIG = p.status;
 document.getElementById("ed-peca").value = p.peca||"";
 document.getElementById("ed-marca").value = p.marca||"";
 document.getElementById("ed-serv").value = p.servico||"";
@@ -1042,7 +1042,7 @@ async function salvarEdicao() {
 var id = document.getElementById("ed-id").value;
 var val = parseFloat(document.getElementById("ed-val").value)||0;
 var com = parseFloat(document.getElementById("ed-com").value)||0;
-var marcaEd = document.getElementById("ed-marca").value.trim();
+var marcaEd = document.getElementById("ed-marca").value.trim(); var hoje = new Date().toISOString().split("T")[0];
 var body = {
 peca: document.getElementById("ed-peca").value.trim(),
 marca: marcaEd,
@@ -1052,7 +1052,7 @@ prazo: document.getElementById("ed-prazo").value||null,
 data_entrada: document.getElementById("ed-data").value||null,
 status: document.getElementById("ed-prio").value,
 valor: val,
-comissao: com
+comissao: com, data_retorno: (ED_STATUS_ORIG==="entregue"?hoje:undefined)
 };
 if(marcaEd) registrarMarca(marcaEd);
 await supa("pecas?id=eq."+id, {method:"PATCH", body:body});
