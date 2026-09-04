@@ -225,7 +225,7 @@ input:focus,select:focus{border-color:#0A0A0A}
     <div class="mh"></div>
     <h2>Nova peça</h2>
     <p class="msub" id="npeca-cli-nome"></p>
-    <div class="fg"><label>Peça</label><input id="np-peca" placeholder="Ex: Calça social preta" style="text-transform:uppercase" oninput="corrigirCampoPeca(this)" onblur="corrigirUltimaPalavra(this)"></div><div class="fg"><label>Observação (opcional)</label><textarea id="np-obs" placeholder="Detalhes, observações..." style="height:60px;resize:none;width:100%;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-family:DM Sans,sans-serif;font-size:14px"></textarea></div>
+    <div class="fg"><label>Peça</label><input id="np-peca" placeholder="Ex: Calça social preta" style="text-transform:uppercase" oninput="corrigirCampoPeca(this)" onblur="corrigirUltimaPalavra(this)"></div><div class="fg"><label>Observação (opcional)</label><textarea id="np-obs" placeholder="Detalhes, observações..." style="height:60px;resize:none;width:100%;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-family:DM Sans,sans-serif;font-size:14px;text-transform:uppercase;color:royalblue" oninput="this.value=this.value.toUpperCase()"></textarea></div>
     <div class="fg"><label>Marca (opcional)</label><input id="np-marca" list="marcas-dl" placeholder="Ex: Zara, Farm, Louis Vuitton..." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
     <div class="fg">
       <label>Serviço</label>
@@ -732,7 +732,7 @@ function mkPecaHTML(p, comAcoes){
       acoes += "<button class='bm' data-id='"+id+"' onclick='imprimirComanda(this.dataset.id)'>🖨️ Comanda</button>";
       acoes += "<button class='bm' data-id='"+id+"' onclick='abrirEditar(this.dataset.id)'>✏️ Editar</button>";
     if(p.status==="urgente") acoes += "<button class='bm' data-id='"+id+"' onclick='togUrg(this)' style='background:#FDE8E8;color:#8B0000'>✕ Urgente</button>";
-    else acoes += "<button class='bm vm' data-id='"+id+"' onclick='togUrg(this)'>🔴 Urgente</button>";
+    else acoes += "<button class='bm' data-id='"+id+"' onclick='togUrg(this)'>🔴 Urgente</button>";
     if(p.status==="pronto") acoes += "<button class='bm vd' data-id='"+id+"' data-val='"+p.valor+"' onclick='abrirWpp(this)'>Avisar</button>";
     acoes += "<button class='bm' data-id='"+id+"' onclick='excluirPeca(this)' style='color:#B8B8B8'>Excluir</button>";
     html += "<div class='pac'>"+acoes+"</div>";
@@ -1158,7 +1158,7 @@ renderLista();
     <div class="mh"></div>
     <h2>Editar peça</h2>
     <input type="hidden" id="ed-id">
-    <div class="fg"><label>Peça</label><input id="ed-peca" placeholder="Nome da peça" style="text-transform:uppercase" oninput="corrigirCampoPeca(this)" onblur="corrigirUltimaPalavra(this)"></div><div class="fg"><label>Observação (opcional)</label><textarea id="ed-obs" placeholder="Detalhes, observações..." style="height:60px;resize:none;width:100%;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-family:DM Sans,sans-serif;font-size:14px"></textarea></div>
+    <div class="fg"><label>Peça</label><input id="ed-peca" placeholder="Nome da peça" style="text-transform:uppercase" oninput="corrigirCampoPeca(this)" onblur="corrigirUltimaPalavra(this)"></div><div class="fg"><label>Observação (opcional)</label><textarea id="ed-obs" placeholder="Detalhes, observações..." style="height:60px;resize:none;width:100%;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-family:DM Sans,sans-serif;font-size:14px;text-transform:uppercase;color:royalblue" oninput="this.value=this.value.toUpperCase()"></textarea></div>
     <div class="fg"><label>Marca (opcional)</label><input id="ed-marca" list="marcas-dl" placeholder="Ex: Zara, Farm..." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
     <div class="fg"><label>Serviço</label><textarea id="ed-serv" style="height:80px;resize:none;width:100%;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-family:DM Sans,sans-serif;font-size:14px" placeholder="Descrição do serviço"></textarea></div>
     <div class="fr">
