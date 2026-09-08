@@ -269,12 +269,12 @@ input:focus,select:focus{border-color:#0A0A0A}
       <button class="sb" onclick="setStatus('aguardando')"><span class="ico">⏳</span>Aguardando</button>
       <button class="sb" onclick="setStatus('em-andamento')"><span class="ico">🪡</span>Em andamento</button>
       <button class="sb" onclick="setStatus('pronto')"><span class="ico">✅</span>Pronto</button>
-      <button class="sb" onclick="setStatus('entregue')"><span class="ico">🎁</span>Entregue</button>
+      <button class="sb" onclick="abrirDataEntrega()"><span class="ico">🎁</span>Entregue</button>
     </div>
     <button class="btn-s" onclick="closeMod('mod-st')">Cancelar</button>
   </div>
 </div>
-<!-- MODAL WHATSAPP -->
+<!-- MODAL DATA ENTREGA --><div class="mov" id="mod-ent-data"><div class="mo"><div class="mh"></div><h2>Data de entrega</h2><div class="fg"><label>Data</label><input type="date" id="ent-data"></div><button class="btn-p" onclick="confirmarEntrega()">Confirmar entrega</button><button class="btn-s" onclick="closeMod('mod-ent-data')">Cancelar</button></div></div><!-- MODAL RETORNO --><div class="mov" id="mod-retorno"><div class="mo"><div class="mh"></div><h2>Retorno para reajuste</h2><div class="fg"><label>Motivo do retorno</label><select id="ret-motivo" onchange="toggleRetNovo()"><option value="refazer">Refazer o que foi feito</option><option value="novo">Novo serviço</option></select></div><div class="fg" id="ret-novo-wrap" style="display:none"><label>Novo serviço</label><input id="ret-novo" placeholder="Ex: Ajuste na barra"></div><div class="fg"><label>Data do retorno</label><input type="date" id="ret-data"></div><button class="btn-p" onclick="confirmarRetorno()">Continuar</button><button class="btn-s" onclick="closeMod('mod-retorno')">Cancelar</button></div></div><!-- MODAL WHATSAPP -->
 <div class="mov" id="mod-wpp">
   <div class="mo">
     <div class="mh"></div>
@@ -291,7 +291,7 @@ var CHAVE_PIX_ATELIE = "65996885868";
 var FILTRO = "todos";
 var CLI_ATIVA = null;
 var CLI_ATIVA_ID = null;
-var PECA_ATIVA = null; var ED_STATUS_ORIG = null;
+var PECA_ATIVA = null; var ED_STATUS_ORIG = null; var RETORNO_PECA = null; var DATA_RETORNO_ESCOLHIDA = null;
 var SEL = [];
 var FOTO_FILE = null;
 var FOTO_FILE_EDIT = null;
@@ -879,12 +879,12 @@ function abrirSt(btn){
   document.getElementById("mod-st").classList.add("open");
 }
 async function setStatus(s){
-  var hoje = new Date().toISOString().split("T")[0]; await supa("pecas?id=eq."+PECA_ATIVA, {method:"PATCH", body:(s==="entregue"?{status:s, data_entrega:hoje}:{status:s})});
+  await supa("pecas?id=eq."+PECA_ATIVA, {method:"PATCH", body:{status:s}});
   closeMod("mod-st");
   showToast("Status atualizado!");
   renderPerfil();
 }
-async function togUrg(btn){
+function abrirDataEntrega(){closeMod("mod-st");document.getElementById("ent-data").value=new Date().toISOString().split("T")[0];document.getElementById("mod-ent-data").classList.add("open");}async function confirmarEntrega(){var data=document.getElementById("ent-data").value||new Date().toISOString().split("T")[0];await supa("pecas?id=eq."+PECA_ATIVA,{method:"PATCH",body:{status:"entregue",data_entrega:data}});closeMod("mod-ent-data");showToast("Peça entregue!");renderPerfil();}function abrirRetorno(p){RETORNO_PECA=p;document.getElementById("ret-motivo").value="refazer";document.getElementById("ret-novo").value="";document.getElementById("ret-novo-wrap").style.display="none";document.getElementById("ret-data").value=new Date().toISOString().split("T")[0];document.getElementById("mod-retorno").classList.add("open");}function toggleRetNovo(){document.getElementById("ret-novo-wrap").style.display=(document.getElementById("ret-motivo").value==="novo")?"block":"none";}function confirmarRetorno(){var p=RETORNO_PECA;var motivo=document.getElementById("ret-motivo").value;var dataRet=document.getElementById("ret-data").value||new Date().toISOString().split("T")[0];DATA_RETORNO_ESCOLHIDA=dataRet;closeMod("mod-retorno");abrirEditarForm(p);if(motivo==="novo"){var novoServ=document.getElementById("ret-novo").value.trim();if(novoServ){var atual=document.getElementById("ed-serv").value.trim();document.getElementById("ed-serv").value=atual?(atual+" + "+novoServ):novoServ;}}}async function togUrg(btn){
   var id = btn.dataset.id;
   var p = await supa("pecas?id=eq."+id);
   var novo = p[0].status==="urgente"?"aguardando":"urgente";
@@ -1013,7 +1013,7 @@ async function abrirEditar(id) {
 var p = await supa("pecas?id=eq."+id);
 if(!p||!p[0]) return;
 p = p[0];
-document.getElementById("ed-id").value = p.id; ED_STATUS_ORIG = p.status;
+if(p.status==="entregue"){ abrirRetorno(p); return; } DATA_RETORNO_ESCOLHIDA = null; } function abrirEditarForm(p) { document.getElementById("ed-id").value = p.id; ED_STATUS_ORIG = p.status;
 document.getElementById("ed-peca").value = p.peca||"";
 document.getElementById("ed-marca").value = p.marca||"";
 document.getElementById("ed-serv").value = p.servico||"";
@@ -1052,7 +1052,7 @@ prazo: document.getElementById("ed-prazo").value||null,
 data_entrada: document.getElementById("ed-data").value||null,
 status: (ED_STATUS_ORIG==="entregue"||ED_STATUS_ORIG==="pronto")?"aguardando":(ED_STATUS_ORIG==="urgente"?"aguardando":ED_STATUS_ORIG),
 valor: val,
-comissao: com, data_retorno: (ED_STATUS_ORIG==="entregue"?hoje:undefined)
+comissao: com, data_retorno: (ED_STATUS_ORIG==="entregue"?(DATA_RETORNO_ESCOLHIDA||hoje):undefined)
 };
 if(marcaEd) registrarMarca(marcaEd);
 await supa("pecas?id=eq."+id, {method:"PATCH", body:body});
