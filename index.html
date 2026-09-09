@@ -773,15 +773,16 @@ async function renderFinanceiro(){
     var pgParaAnterior = Math.min(totPg, saldoAntD);
     var saldoAntRestante = Math.max(0, +(saldoAntD-pgParaAnterior).toFixed(2));
     var pecasRestante = Math.max(0, +(pecasD-(totPg-pgParaAnterior)).toFixed(2));
+    var subtotalD = +(saldoAntD+pecasD).toFixed(2);
+    var linha = function(lbl, val, opts){ opts=opts||{}; return "<div style='display:flex;justify-content:space-between;align-items:center;padding:"+(opts.pad||"7px")+" 0'><div style='font-size:"+(opts.fs||"13px")+";color:"+(opts.lc||"#6B6B6B")+";font-weight:"+(opts.lw||"400")+"'>"+lbl+"</div><div style='font-size:"+(opts.fs||"13px")+";font-weight:"+(opts.vw||"600")+";color:"+(opts.vc||"#0A0A0A")+"'>"+val+"</div></div>"; };
     var resumoHTML = "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:18px 16px;margin-bottom:12px'>"+
-      (saldoAnt>0
-        ? "<div style='display:flex;justify-content:space-between;align-items:center;padding:3px 0'><div style='font-size:12px;color:#6B6B6B'>Peças atuais em aberto</div><div style='font-size:14px;font-weight:600;color:#0A0A0A'>"+fval(pecasRestante)+"</div></div>"+
-          "<div style='display:flex;justify-content:space-between;align-items:center;padding:3px 0'><div style='font-size:12px;color:#6B6B6B'>Saldo anterior em aberto</div><div style='font-size:14px;font-weight:600;color:#0A0A0A'>"+fval(saldoAntRestante)+"</div></div>"+
-          (saldoAntRestante<saldoAntD?"<div style='font-size:10px;color:#B8B8B8;text-align:right;margin-top:-2px'>de "+fval(saldoAntD)+" original</div>":"")+
-          "<div style='border-top:1px solid #F0F0F0;margin:10px 0'></div>"
-        : "")+
-      "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:13px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total a pagar</div><div style='font-size:26px;font-weight:700;color:"+cor+"'>"+fval(saldo)+"</div></div>"+
-      "<div style='display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid #F5F5F5'><div style='font-size:11px;color:#6B6B6B'>Já pago</div><div style='font-size:13px;font-weight:600;color:#2E5E2E'>"+fval(totPg)+"</div></div>"+
+      linha("Saldo anterior", fval(saldoAntD))+
+      linha("Saldo", fval(pecasD))+
+      "<div style='border-top:1px solid #F0F0F0;margin:8px 0'></div>"+
+      linha("Subtotal", fval(subtotalD), {lc:"#0A0A0A",lw:"600"})+
+      linha("Total pago", "− "+fval(totPg), {vc:"#8B0000"})+
+      "<div style='border-top:2px solid #0A0A0A;margin:10px 0'></div>"+
+      "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total a pagar</div><div style='font-size:26px;font-weight:700;color:"+cor+"'>"+fval(saldo)+"</div></div>"+
       "</div>"+
       "<div style='text-align:right;margin:-6px 0 12px'><button onclick='editarSaldoAnt()' style='font-size:11px;color:#6B6B6B;border:none;background:none;cursor:pointer;text-decoration:underline;font-family:DM Sans,sans-serif'>"+(saldoAnt>0?"Editar saldo anterior":"+ Adicionar saldo anterior")+"</button></div>";
     var pgHTML = pags.length
@@ -1183,13 +1184,9 @@ async function enviarSaldo(){
     var totP = pecasSumWpp+saldoAnt;
     var totPg = pags.reduce(function(s,p){ return s+p.valor; },0);
     var saldo = totP-totPg;
-    var pgParaAnteriorWpp = Math.min(totPg, saldoAnt);
-    var saldoAntRestanteWpp = Math.max(0, +(saldoAnt-pgParaAnteriorWpp).toFixed(2));
-    var pecasRestanteWpp = Math.max(0, +(pecasSumWpp-(totPg-pgParaAnteriorWpp)).toFixed(2));
+    var subtotalWpp = +(saldoAnt+pecasSumWpp).toFixed(2);
     var chave = CHAVE_PIX_ATELIE;
-    var breakdown = saldoAnt>0
-      ? "🧵 Peças atuais: *"+fval(pecasRestanteWpp)+"*\n📌 Saldo anterior: *"+fval(saldoAntRestanteWpp)+"*\n➖➖➖➖➖➖\n💰 Total a pagar: *"+fval(saldo)+"*"
-      : "💰 Seu saldo em aberto: *"+fval(saldo)+"*";
+    var breakdown = "📌 Saldo anterior: *"+fval(saldoAnt)+"*\n🧵 Saldo: *"+fval(pecasSumWpp)+"*\n➖➖➖➖➖➖\nSubtotal: *"+fval(subtotalWpp)+"*\n💵 Total pago: *− "+fval(totPg)+"*\n➖➖➖➖➖➖\n💰 *TOTAL A PAGAR: "+fval(saldo)+"*";
     var msg = "😉 *Métrica Ateliê | ALLYNE CARVALHO*\nOlá, "+CLI_ATIVA+"!\n\n"+breakdown+
       "\n\n📋 Chave Pix:\n"+chave+
       "\n\nApós o pagamento, por favor envie o comprovante aqui no WhatsApp. 🙏";
