@@ -163,14 +163,16 @@ if(!pecas.length) {
       });
     }
         var corP = saldo>0?"#8B0000":"#2E5E2E";
+    var subtotalP = saldoAnt+pecasSum;
+    var linhaP = function(lbl, val, opts){ opts=opts||{}; return "<div style='display:flex;justify-content:space-between;align-items:center;padding:"+(opts.pad||"7px")+" 0'><div style='font-size:"+(opts.fs||"13px")+";color:"+(opts.lc||"#6B6B6B")+";font-weight:"+(opts.lw||"400")+"'>"+lbl+"</div><div style='font-size:"+(opts.fs||"13px")+";font-weight:"+(opts.vw||"600")+";color:"+(opts.vc||"#0A0A0A")+"'>"+val+"</div></div>"; };
     var resumoHTML = "<div style='background:#fff;border-radius:10px;padding:18px 16px;margin-bottom:12px'>"+
-      (saldoAnt>0
-        ? "<div style='display:flex;justify-content:space-between;align-items:center;padding:3px 0'><div style='font-size:12px;color:#6B6B6B'>Peças atuais em aberto</div><div style='font-size:14px;font-weight:600;color:#0A0A0A'>R$ "+pecasRestante.toFixed(2).replace(".",",")+"</div></div>"+
-          "<div style='display:flex;justify-content:space-between;align-items:center;padding:3px 0'><div style='font-size:12px;color:#6B6B6B'>Saldo anterior em aberto</div><div style='font-size:14px;font-weight:600;color:#0A0A0A'>R$ "+saldoAntRestante.toFixed(2).replace(".",",")+"</div></div>"+
-          "<div style='border-top:1px solid #F0F0F0;margin:10px 0'></div>"
-        : "")+
-      "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:13px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total a pagar</div><div style='font-size:24px;font-weight:700;color:"+corP+"'>R$ "+saldo.toFixed(2).replace(".",",")+"</div></div>"+
-      "<div style='display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid #F5F5F5'><div style='font-size:11px;color:#6B6B6B'>Já pago</div><div style='font-size:13px;font-weight:600;color:#2E5E2E'>R$ "+totPg.toFixed(2).replace(".",",")+"</div></div>"+
+      linhaP("Saldo anterior", fval(saldoAnt)||"R$ 0,00")+
+      linhaP("Saldo", fval(pecasSum)||"R$ 0,00")+
+      "<div style='border-top:1px solid #F0F0F0;margin:8px 0'></div>"+
+      linhaP("Subtotal", fval(subtotalP)||"R$ 0,00", {lc:"#0A0A0A",lw:"600"})+
+      linhaP("Total pago", "− "+(fval(totPg)||"R$ 0,00"), {vc:"#8B0000"})+
+      "<div style='border-top:2px solid #0A0A0A;margin:10px 0'></div>"+
+      "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total a pagar</div><div style='font-size:24px;font-weight:700;color:"+corP+"'>R$ "+saldo.toFixed(2).replace(".",",")+"</div></div>"+
       "</div>";
     html += "<div class='saldo-box'>"+
       resumoHTML+
