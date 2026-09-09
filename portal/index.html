@@ -163,16 +163,17 @@ if(!pecas.length) {
       });
     }
         var corP = saldo>0?"#8B0000":"#2E5E2E";
-    var saldoAntHTML = saldoAntRestante>0
-      ? "<div style='background:#FEF9E7;border:1px solid #E8D48A;border-radius:10px;padding:18px 16px;margin-bottom:14px'><div style='font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6B5500;margin-bottom:6px'>Saldo em aberto anterior</div><div style='font-size:28px;font-weight:700;color:#6B5500'>R$ "+saldoAntRestante.toFixed(2).replace(".",",")+"</div></div>"
-      : "";
+    var resumoHTML = "<div style='background:#fff;border-radius:10px;padding:18px 16px;margin-bottom:12px'>"+
+      (saldoAnt>0
+        ? "<div style='display:flex;justify-content:space-between;align-items:center;padding:3px 0'><div style='font-size:12px;color:#6B6B6B'>Peças atuais em aberto</div><div style='font-size:14px;font-weight:600;color:#0A0A0A'>R$ "+pecasRestante.toFixed(2).replace(".",",")+"</div></div>"+
+          "<div style='display:flex;justify-content:space-between;align-items:center;padding:3px 0'><div style='font-size:12px;color:#6B6B6B'>Saldo anterior em aberto</div><div style='font-size:14px;font-weight:600;color:#0A0A0A'>R$ "+saldoAntRestante.toFixed(2).replace(".",",")+"</div></div>"+
+          "<div style='border-top:1px solid #F0F0F0;margin:10px 0'></div>"
+        : "")+
+      "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:13px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total a pagar</div><div style='font-size:24px;font-weight:700;color:"+corP+"'>R$ "+saldo.toFixed(2).replace(".",",")+"</div></div>"+
+      "<div style='display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid #F5F5F5'><div style='font-size:11px;color:#6B6B6B'>Já pago</div><div style='font-size:13px;font-weight:600;color:#2E5E2E'>R$ "+totPg.toFixed(2).replace(".",",")+"</div></div>"+
+      "</div>";
     html += "<div class='saldo-box'>"+
-      saldoAntHTML+
-      "<div style='display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid #E8E8E8;border-radius:8px;overflow:hidden;margin-bottom:12px;background:#fff'>"+
-        "<div style='padding:14px 8px;text-align:center;border-right:1px solid #E8E8E8'><div style='font-size:18px;font-weight:700;color:#0A0A0A;margin-bottom:3px'>R$ "+totP.toFixed(2).replace(".",",")+"</div><div style='font-size:9px;color:#6B6B6B;text-transform:uppercase;letter-spacing:.5px'>Total c/ saldo ant.</div></div>"+
-        "<div style='padding:14px 8px;text-align:center;border-right:1px solid #E8E8E8'><div style='font-size:18px;font-weight:700;color:#2E5E2E;margin-bottom:3px'>R$ "+totPg.toFixed(2).replace(".",",")+"</div><div style='font-size:9px;color:#6B6B6B;text-transform:uppercase;letter-spacing:.5px'>Pago</div></div>"+
-        "<div style='padding:14px 8px;text-align:center'><div style='font-size:18px;font-weight:700;color:"+corP+";margin-bottom:3px'>R$ "+saldo.toFixed(2).replace(".",",")+"</div><div style='font-size:9px;color:#6B6B6B;text-transform:uppercase;letter-spacing:.5px'>Valor a pagar</div></div>"+
-      "</div>"+
+      resumoHTML+
       "<div class='pix-row'><div class='pix-chave' id='pix-chave'>"+CHAVE_PIX_ATELIE+"</div><button class='btn-pix' onclick='copiarPix()'>Copiar chave Pix</button></div>"+
       (saldo>0?"<div class='saldo-msg'>Após o pagamento, envie o comprovante aqui pelo WhatsApp para darmos baixa no seu saldo. 🙏</div>":"<div class='saldo-msg' style='color:#2E5E2E'>Tudo em dia por aqui! 🎉</div>")+
       "</div>";
