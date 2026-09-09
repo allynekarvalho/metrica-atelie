@@ -151,7 +151,9 @@ if(!pecas.length) {
       });
     }
     if(entregues.length) {
+      var totalEntregue = entregues.reduce(function(s,p){ return s+(p.valor||0); },0);
       html += "<div class='secao-titulo' style='margin-top:24px'>Peças entregues</div>";
+      html += "<div style='background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center'><div style='font-size:12px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total entregue</div><div style='font-size:16px;font-weight:700;color:#0A0A0A'>"+fval(totalEntregue)+"</div></div>";
       entregues.forEach(function(p){
         html += "<div class='pcard'>";
         if(p.foto_url) html += "<img src='"+p.foto_url+"' class='pfoto' loading='lazy' decoding='async'>";
@@ -170,7 +172,7 @@ if(!pecas.length) {
       linhaP("Saldo", fval(pecasSum)||"R$ 0,00")+
       "<div style='border-top:1px solid #F0F0F0;margin:8px 0'></div>"+
       linhaP("Subtotal", fval(subtotalP)||"R$ 0,00", {lc:"#0A0A0A",lw:"600"})+
-      linhaP("Total pago", "− "+(fval(totPg)||"R$ 0,00"), {vc:"#8B0000"})+
+      linhaP("Total pago", "− "+(fval(totPg)||"R$ 0,00"), {vc:"#2E5E2E"})+
       "<div style='border-top:2px solid #0A0A0A;margin:10px 0'></div>"+
       "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total a pagar</div><div style='font-size:24px;font-weight:700;color:"+corP+"'>R$ "+saldo.toFixed(2).replace(".",",")+"</div></div>"+
       "</div>";
