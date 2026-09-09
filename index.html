@@ -975,7 +975,8 @@ function quinzenaAtual(){
   function f(d){ return d.toISOString().split("T")[0]; }
   return {ini:f(ini), fim:f(fim)};
 }
-function renderComissoes(pecas){
+async function renderComissoes(pecas){
+  if(!pecas) pecas = await supa("pecas?select=*");
   var elDe = document.getElementById("com-de"), elAte = document.getElementById("com-ate");
   if(!elDe.value && !elAte.value){ var q = quinzenaAtual(); elDe.value = q.ini; elAte.value = q.fim; }
   var de = elDe.value, ate = elAte.value;
