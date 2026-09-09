@@ -768,13 +768,10 @@ async function renderFinanceiro(){
     var pecasSum = pecas.reduce(function(s,p){ return s+(p.valor||0); },0);
     var totP = pecasSum + saldoAnt;
     var totPg = pags.reduce(function(s,p){ return s+p.valor; },0);
-    var descOnPrev = document.getElementById("fin-desc-on")?document.getElementById("fin-desc-on").checked:false; var descValPrev = document.getElementById("fin-desc-val")?document.getElementById("fin-desc-val").value:""; var descPerc = descOnPrev?(parseFloat(descValPrev)||0):0; var totPD = +(totP*(1-descPerc/100)).toFixed(2); var saldo = totPD-totPg;
+    var saldo = totP-totPg;
     var cor = saldo>0?"#8B0000":"#2E5E2E";
-    var saldoAntD = +(saldoAnt*(1-descPerc/100)).toFixed(2);
-    var pecasD = +(totPD-saldoAntD).toFixed(2);
-    var pgParaAnterior = Math.min(totPg, saldoAntD);
-    var saldoAntRestante = Math.max(0, +(saldoAntD-pgParaAnterior).toFixed(2));
-    var pecasRestante = Math.max(0, +(pecasD-(totPg-pgParaAnterior)).toFixed(2));
+    var saldoAntD = saldoAnt;
+    var pecasD = pecasSum;
     var subtotalD = +(saldoAntD+pecasD).toFixed(2);
     var linha = function(lbl, val, opts){ opts=opts||{}; return "<div style='display:flex;justify-content:space-between;align-items:center;padding:"+(opts.pad||"7px")+" 0'><div style='font-size:"+(opts.fs||"13px")+";color:"+(opts.lc||"#6B6B6B")+";font-weight:"+(opts.lw||"400")+"'>"+lbl+"</div><div style='font-size:"+(opts.fs||"13px")+";font-weight:"+(opts.vw||"600")+";color:"+(opts.vc||"#0A0A0A")+"'>"+val+"</div></div>"; };
     var resumoHTML = "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:18px 16px;margin-bottom:12px'>"+
@@ -782,7 +779,7 @@ async function renderFinanceiro(){
       linha("Saldo", fval(pecasD))+
       "<div style='border-top:1px solid #F0F0F0;margin:8px 0'></div>"+
       linha("Subtotal", fval(subtotalD), {lc:"#0A0A0A",lw:"600"})+
-      linha("Total pago", "− "+fval(totPg), {vc:"#8B0000"})+
+      linha("Total pago", "− "+fval(totPg), {vc:"#2E5E2E"})+
       "<div style='border-top:2px solid #0A0A0A;margin:10px 0'></div>"+
       "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total a pagar</div><div style='font-size:26px;font-weight:700;color:"+cor+"'>"+fval(saldo)+"</div></div>"+
       "</div>"+
@@ -791,7 +788,6 @@ async function renderFinanceiro(){
       ? "<div class='pgl'>"+pags.map(function(p){ return "<div class='pgi'><div><div class='pgv'>+ "+fval(p.valor)+"</div><div class='pgd'>"+(p.data||"")+(p.observacao?" · "+p.observacao:"")+"</div></div><button data-id='"+p.id+"' onclick='excluirPag(this)' style='font-size:11px;color:#B8B8B8;border:none;background:none;cursor:pointer'>✕</button></div>"; }).join("")+"</div>"
       : "<div class='pgl'><div style='padding:16px;font-size:13px;color:#6B6B6B'>Nenhum pagamento registrado.</div></div>";
     document.getElementById("fp-f").innerHTML =
-      "<div class='rp' style='margin-bottom:10px;padding:8px 10px'><div class='rpw' style='align-items:center;gap:8px'><label style='display:flex;align-items:center;gap:5px;font-size:11px;color:#6B6B6B;flex:1'><input type='checkbox' id='fin-desc-on' "+(descOnPrev?"checked":"")+" onchange='renderFinanceiro()'> Desconto</label><input type='number' id='fin-desc-val' value='"+descValPrev+"' min='0' max='100' step='0.1' placeholder='%' style='width:52px;padding:6px 8px;border:1px solid #E8E8E8;border-radius:5px;font-size:12px' onchange='renderFinanceiro()'></div></div>"+
       resumoHTML+
       "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:8px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px'><div style='flex:1'><div style='font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6B6B6B;margin-bottom:3px'>Chave Pix</div><div style='font-size:13px;color:#0A0A0A;word-break:break-all'>"+CHAVE_PIX_ATELIE+"</div></div><button onclick='copiarPixFin()' style='background:transparent;color:#0A0A0A;border:1px solid #E8E8E8;border-radius:5px;padding:8px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;white-space:nowrap'>Copiar</button></div>"+
       pgHTML+
