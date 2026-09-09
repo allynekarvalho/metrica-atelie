@@ -996,7 +996,7 @@ function renderComissoes(pecas){
   var nomes = Object.keys(porCost);
   var html = nomes.length ? nomes.map(function(c){
     var d = porCost[c];
-    return "<div class='cb'><div class='ct'>🪡 "+c+" · "+d.n+" peça"+(d.n>1?"s":"")+"</div><div class='cp'><span>Total de comissão</span><span style='font-weight:600'>"+fval(d.total)+"</span></div></div>";
+    return "<div class='cb'><div class='ct'>🪡 "+c+" · "+d.n+" peça"+(d.n>1?"s":"")+"</div><div class='cp'><span style='color:#2E2E2E'>Total de comissão</span><span style='font-weight:600;color:#2E5E2E'>"+fval(d.total)+"</span></div></div>";
   }).join("") : "<div class='vz'>Nenhuma comissão lançada no período.</div>";
   document.getElementById("res-com").innerHTML = html;
 }
