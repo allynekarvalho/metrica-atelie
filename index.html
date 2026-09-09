@@ -1064,7 +1064,7 @@ async function abrirEditar(id) {
 var p = await supa("pecas?id=eq."+id);
 if(!p||!p[0]) return;
 p = p[0];
-if(p.status==="entregue"){ abrirRetorno(p); return; } DATA_RETORNO_ESCOLHIDA = null; } function abrirEditarForm(p) { document.getElementById("ed-id").value = p.id; ED_STATUS_ORIG = p.status;
+if(p.status==="entregue"){ abrirRetorno(p); return; } DATA_RETORNO_ESCOLHIDA = null; abrirEditarForm(p); } function abrirEditarForm(p) { document.getElementById("ed-id").value = p.id; ED_STATUS_ORIG = p.status;
 document.getElementById("ed-peca").value = p.peca||"";
 document.getElementById("ed-marca").value = p.marca||"";
 document.getElementById("ed-serv").value = p.servico||"";
