@@ -707,7 +707,9 @@ async function renderPerfil(){
     var entregues = pecas.filter(function(p){ return p.status==="entregue"; });
     document.getElementById("p-meta").textContent = ativas.length+" peça"+(ativas.length!==1?"s":"")+" ativa"+(ativas.length!==1?"s":"")+" · "+pecas.length+" total";
     document.getElementById("fp-p").innerHTML = mkEntradasHTML(ativas, true) || "<div class='vz'><span class='vi2'>✅</span>Tudo entregue!</div>";
-    document.getElementById("fp-e").innerHTML = mkEntradasHTML(entregues, false) || "<div class='vz'><span class='vi2'>📦</span>Nenhuma entregue.</div>";
+    var totalEntregue = entregues.reduce(function(s,p){ return s+(p.valor||0); },0);
+    var totEntregueHTML = entregues.length ? "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:14px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center'><div style='font-size:12px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total entregue</div><div style='font-size:18px;font-weight:700;color:#0A0A0A'>"+fval(totalEntregue)+"</div></div>" : "";
+    document.getElementById("fp-e").innerHTML = totEntregueHTML + (mkEntradasHTML(entregues, false) || "<div class='vz'><span class='vi2'>📦</span>Nenhuma entregue.</div>");
   } catch(e) {
     document.getElementById("fp-p").innerHTML = "<div class='vz'>Erro: "+e.message+"</div>";
   }
