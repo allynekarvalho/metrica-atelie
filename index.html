@@ -790,11 +790,12 @@ async function renderFinanceiro(){
     var pgHTML = pags.length
       ? "<div class='pgl'>"+pags.map(function(p){ return "<div class='pgi'><div><div class='pgv'>+ "+fval(p.valor)+"</div><div class='pgd'>"+(p.data||"")+(p.observacao?" · "+p.observacao:"")+"</div></div><button data-id='"+p.id+"' onclick='excluirPag(this)' style='font-size:11px;color:#B8B8B8;border:none;background:none;cursor:pointer'>✕</button></div>"; }).join("")+"</div>"
       : "<div class='pgl'><div style='padding:16px;font-size:13px;color:#6B6B6B'>Nenhum pagamento registrado.</div></div>";
+    var hojeStr = new Date().toISOString().split("T")[0];
     document.getElementById("fp-f").innerHTML =
       resumoHTML+
       "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:8px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px'><div style='flex:1'><div style='font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6B6B6B;margin-bottom:3px'>Chave Pix</div><div style='font-size:13px;color:#0A0A0A;word-break:break-all'>"+CHAVE_PIX_ATELIE+"</div></div><button onclick='copiarPixFin()' style='background:transparent;color:#0A0A0A;border:1px solid #E8E8E8;border-radius:5px;padding:8px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;white-space:nowrap'>Copiar</button></div>"+
       pgHTML+
-      "<div class='rp'><div class='rpl'>Registrar pagamento</div><div class='rpw'><div class='vw' style='flex:1'><span class='vp'>R$</span><input type='number' id='pv-inp' class='vi' placeholder='0,00' min='0' step='0.01' style='width:100%'></div><input id='po-inp' placeholder='Obs.' style='flex:1;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;font-family:DM Sans,sans-serif'><button onclick='regPag()' style='padding:0 14px;background:#0A0A0A;color:#fff;border:none;border-radius:6px;font-size:18px;cursor:pointer'>✓</button></div></div>"; } catch(e){
+      "<div class='rp'><div class='rpl'>Registrar pagamento</div><div class='rpw' style='margin-bottom:8px'><div class='vw' style='flex:1'><span class='vp'>R$</span><input type='number' id='pv-inp' class='vi' placeholder='0,00' min='0' step='0.01' style='width:100%'></div><input type='date' id='pd-inp' value='"+hojeStr+"' style='flex:1;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;font-family:DM Sans,sans-serif;color:#0A0A0A'></div><div class='rpw'><input id='po-inp' placeholder='Obs.' style='flex:1;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;font-family:DM Sans,sans-serif'><button onclick='regPag()' style='padding:0 14px;background:#0A0A0A;color:#fff;border:none;border-radius:6px;font-size:18px;cursor:pointer'>✓</button></div></div>"; } catch(e){
     document.getElementById("fp-f").innerHTML = "<div class='vz'>Erro: "+e.message+"</div>";
   }
 }
@@ -870,7 +871,9 @@ async function regPag(){
   var obs = document.getElementById("po-inp").value.trim();
   if(!val){ alert("Digite o valor."); return; }
   var hoje = new Date().toISOString().split("T")[0];
-  await supa("pagamentos", {method:"POST", body:{cliente_id:CLI_ATIVA_ID, cliente_nome:CLI_ATIVA, valor:val, observacao:obs, data:hoje}});
+  var dataInp = document.getElementById("pd-inp");
+  var data = (dataInp && dataInp.value) ? dataInp.value : hoje;
+  await supa("pagamentos", {method:"POST", body:{cliente_id:CLI_ATIVA_ID, cliente_nome:CLI_ATIVA, valor:val, observacao:obs, data:data}});
   showToast("Pagamento registrado!");
   renderFinanceiro();
 }
