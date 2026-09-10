@@ -176,10 +176,12 @@ input:focus,select:focus{border-color:#0A0A0A}
     <button class="ftab active" id="ft-p" onclick="mudarFt('p')">Peças</button>
     <button class="ftab" id="ft-e" onclick="mudarFt('e')">Entregues</button>
     <button class="ftab" id="ft-f" onclick="mudarFt('f')">💰 Saldo</button>
+    <button class="ftab" id="ft-m" onclick="mudarFt('m')">📏 Medidas</button>
   </div>
   <div class="fpanel active" id="fp-p"></div>
   <div class="fpanel" id="fp-e"></div>
   <div class="fpanel" id="fp-f"></div>
+  <div class="fpanel" id="fp-m"></div>
 </div>
 <div class="sc" id="tela-resumo">
   <p class="stitle" style="color:#fff;border-bottom:1px solid rgba(255,255,255,0.2)">Resumo</p>
@@ -690,13 +692,14 @@ function voltarClientes(){
   goTab("clientes", document.querySelector(".tab"));
 }
 function mudarFt(tab){
-  ["p","e","f"].forEach(function(t){
+  ["p","e","f","m"].forEach(function(t){
     document.getElementById("fp-"+t).classList.remove("active");
     document.getElementById("ft-"+t).classList.remove("active");
   });
   document.getElementById("fp-"+tab).classList.add("active");
   document.getElementById("ft-"+tab).classList.add("active");
   if(tab==="f") renderFinanceiro();
+  if(tab==="m") renderMedidas();
 }
 async function renderPerfil(){
   document.getElementById("fp-p").innerHTML = "<div class='loading'>Carregando...</div>";
@@ -801,6 +804,57 @@ function copiarPixFin(){
   }).catch(function(){
     showToast("Não foi possível copiar.");
   });
+}
+async function renderMedidas(){
+  document.getElementById("fp-m").innerHTML = "<div class='loading'>Carregando...</div>";
+  try {
+    var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
+    var c = cli[0]||{};
+    function campo(id, label, val){
+      return "<div class='fg' style='flex:1'><label>"+label+"</label><input type='number' step='0.1' inputmode='decimal' id='"+id+"' value='"+(val==null?"":val)+"'></div>";
+    }
+    var html = "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:18px 16px 6px'>"+
+      "<div style='display:flex;gap:10px'>"+campo("med-ombro1","Ombro 1",c.med_ombro1)+campo("med-ombro2","Ombro 2",c.med_ombro2)+"</div>"+
+      campo("med-busto","Busto",c.med_busto)+
+      campo("med-cintura","Cintura",c.med_cintura)+
+      campo("med-cint-baixa","Cint. Baixa",c.med_cint_baixa)+
+      campo("med-quadril","Quadril",c.med_quadril)+
+      campo("med-comp-corpo","Comp. Corpo",c.med_comp_corpo)+
+      campo("med-corpo-costas","Corpo Costas",c.med_corpo_costas)+
+      campo("med-comp-blusa","Comp. Blusa",c.med_comp_blusa)+
+      campo("med-comp-calca","Comp. Calça",c.med_comp_calca)+
+      "<div style='display:flex;gap:10px'>"+campo("med-comp-vestido1","Comp. Vestido 1",c.med_comp_vestido1)+campo("med-comp-vestido2","Comp. Vestido 2",c.med_comp_vestido2)+"</div>"+
+      campo("med-comp-manga","Comp. Manga",c.med_comp_manga)+
+      "</div>"+
+      "<button onclick='salvarMedidas()' style='width:100%;padding:14px;background:#0A0A0A;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;margin-top:12px;font-family:DM Sans,sans-serif'>Salvar medidas</button>";
+    document.getElementById("fp-m").innerHTML = html;
+  } catch(e){
+    document.getElementById("fp-m").innerHTML = "<div class='vz'>Erro: "+e.message+"</div>";
+  }
+}
+async function salvarMedidas(){
+  function num(id){ var v = document.getElementById(id).value; return v===""?null:parseFloat(v); }
+  var body = {
+    med_ombro1: num("med-ombro1"),
+    med_ombro2: num("med-ombro2"),
+    med_busto: num("med-busto"),
+    med_cintura: num("med-cintura"),
+    med_cint_baixa: num("med-cint-baixa"),
+    med_quadril: num("med-quadril"),
+    med_comp_corpo: num("med-comp-corpo"),
+    med_corpo_costas: num("med-corpo-costas"),
+    med_comp_blusa: num("med-comp-blusa"),
+    med_comp_calca: num("med-comp-calca"),
+    med_comp_vestido1: num("med-comp-vestido1"),
+    med_comp_vestido2: num("med-comp-vestido2"),
+    med_comp_manga: num("med-comp-manga")
+  };
+  try {
+    await supa("clientes?id=eq."+CLI_ATIVA_ID, {method:"PATCH", body:body});
+    showToast("Medidas salvas!");
+  } catch(e){
+    showToast("Erro ao salvar medidas.");
+  }
 }
 async function editarSaldoAnt(){
   var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
