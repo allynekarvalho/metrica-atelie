@@ -732,7 +732,7 @@ var tot = pp.reduce(function(s,p){ return s+(p.valor||0); },0);
 var df = new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
 return "<div class='eg'><div class='ehdr'><span class='edata'>📅 "+df+"</span><span class='eres'>"+pp.length+" peça"+(pp.length>1?"s":"")+"</span></div>"+
 pp.map(function(p){ return mkPecaHTML(p, comAcoes); }).join("")+
-(comAcoes&&tot>0?"<div class='etot' style='flex-direction:column;align-items:stretch;gap:4px'><div style='display:flex;justify-content:space-between'><span>Total entrada</span><span>"+fval(tot)+"</span></div><div style='display:flex;justify-content:space-between;font-size:10px;font-weight:500;color:#B8B8B8'><span>Quantidade de peças</span><span>"+pp.length+"</span></div></div>":"")+
+(tot>0?"<div class='etot' style='flex-direction:column;align-items:stretch;gap:4px'><div style='display:flex;justify-content:space-between'><span>Total do dia</span><span>"+fval(tot)+"</span></div><div style='display:flex;justify-content:space-between;font-size:10px;font-weight:500;color:#B8B8B8'><span>Quantidade de peças</span><span>"+pp.length+"</span></div></div>":"")+
 (comAcoes?"<div class='eprint'><button class='bm' style='width:100%' data-id='"+pp[0].id+"' onclick='imprimirComanda(this.dataset.id)'>🖨️ Imprimir todas as peças do dia</button></div>":"")+
 "</div>";
 }).join("");
@@ -768,10 +768,11 @@ async function renderFinanceiro(){
     ]);
     var cli = res1[0], pecas = res1[1], pags = res1[2];
         var saldoAnt = (cli[0]&&cli[0].saldo_anterior)||0;
+    var desconto = (cli[0]&&cli[0].desconto)||0;
     var pecasSum = pecas.reduce(function(s,p){ return s+(p.valor||0); },0);
     var totP = pecasSum + saldoAnt;
     var totPg = pags.reduce(function(s,p){ return s+p.valor; },0);
-    var saldo = totP-totPg;
+    var saldo = totP-totPg-desconto;
     var cor = saldo>0?"#8B0000":"#2E5E2E";
     var saldoAntD = saldoAnt;
     var pecasD = pecasSum;
@@ -783,10 +784,11 @@ async function renderFinanceiro(){
       "<div style='border-top:1px solid #F0F0F0;margin:8px 0'></div>"+
       linha("Subtotal", fval(subtotalD), {lc:"#0A0A0A",lw:"600"})+
       linha("Total pago", "− "+fval(totPg), {vc:"#2E5E2E"})+
+      (desconto>0?linha("Desconto", "− "+fval(desconto), {vc:"#2E5E2E"}):"")+
       "<div style='border-top:2px solid #0A0A0A;margin:10px 0'></div>"+
       "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total a pagar</div><div style='font-size:26px;font-weight:700;color:"+cor+"'>"+fval(saldo)+"</div></div>"+
       "</div>"+
-      "<div style='text-align:right;margin:-6px 0 12px'><button onclick='editarSaldoAnt()' style='font-size:11px;color:#6B6B6B;border:none;background:none;cursor:pointer;text-decoration:underline;font-family:DM Sans,sans-serif'>"+(saldoAnt>0?"Editar saldo anterior":"+ Adicionar saldo anterior")+"</button></div>";
+      "<div style='text-align:right;margin:-6px 0 12px;display:flex;justify-content:flex-end;gap:14px'><button onclick='editarSaldoAnt()' style='font-size:11px;color:#6B6B6B;border:none;background:none;cursor:pointer;text-decoration:underline;font-family:DM Sans,sans-serif'>"+(saldoAnt>0?"Editar saldo anterior":"+ Adicionar saldo anterior")+"</button><button onclick='editarDesconto()' style='font-size:11px;color:#6B6B6B;border:none;background:none;cursor:pointer;text-decoration:underline;font-family:DM Sans,sans-serif'>"+(desconto>0?"Editar desconto":"+ Adicionar desconto")+"</button></div>";
     var pgHTML = pags.length
       ? "<div class='pgl'>"+pags.map(function(p){ return "<div class='pgi'><div><div class='pgv'>+ "+fval(p.valor)+"</div><div class='pgd'>"+(p.data||"")+(p.observacao?" · "+p.observacao:"")+"</div></div><button data-id='"+p.id+"' onclick='excluirPag(this)' style='font-size:11px;color:#B8B8B8;border:none;background:none;cursor:pointer'>✕</button></div>"; }).join("")+"</div>"
       : "<div class='pgl'><div style='padding:16px;font-size:13px;color:#6B6B6B'>Nenhum pagamento registrado.</div></div>";
@@ -864,6 +866,15 @@ async function editarSaldoAnt(){
   if(val===null) return;
   var num = parseFloat(val)||0;
   await supa("clientes?id=eq."+CLI_ATIVA_ID, {method:"PATCH", body:{saldo_anterior:num}});
+  renderFinanceiro();
+}
+async function editarDesconto(){
+  var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
+  var atual = (cli[0]&&cli[0].desconto)||0;
+  var val = prompt("Desconto de "+CLI_ATIVA+":", atual);
+  if(val===null) return;
+  var num = parseFloat(val)||0;
+  await supa("clientes?id=eq."+CLI_ATIVA_ID, {method:"PATCH", body:{desconto:num}});
   renderFinanceiro();
 }
 async function regPag(){
@@ -1235,13 +1246,14 @@ async function enviarSaldo(){
     var pecas = await supa("pecas?cliente_id=eq."+CLI_ATIVA_ID);
     var pags = await supa("pagamentos?cliente_id=eq."+CLI_ATIVA_ID);
     var saldoAnt = (cli[0]&&cli[0].saldo_anterior)||0;
+    var desconto = (cli[0]&&cli[0].desconto)||0;
     var pecasSumWpp = pecas.reduce(function(s,p){ return s+(p.valor||0); },0);
     var totP = pecasSumWpp+saldoAnt;
     var totPg = pags.reduce(function(s,p){ return s+p.valor; },0);
-    var saldo = totP-totPg;
+    var saldo = totP-totPg-desconto;
     var subtotalWpp = +(saldoAnt+pecasSumWpp).toFixed(2);
     var chave = CHAVE_PIX_ATELIE;
-    var breakdown = "📌 Saldo anterior: *"+fval(saldoAnt)+"*\n🧵 Saldo: *"+fval(pecasSumWpp)+"*\n➖➖➖➖➖➖\nSubtotal: *"+fval(subtotalWpp)+"*\n💵 Total pago: *− "+fval(totPg)+"*\n➖➖➖➖➖➖\n💰 *TOTAL A PAGAR: "+fval(saldo)+"*";
+    var breakdown = "📌 Saldo anterior: *"+fval(saldoAnt)+"*\n🧵 Saldo: *"+fval(pecasSumWpp)+"*\n➖➖➖➖➖➖\nSubtotal: *"+fval(subtotalWpp)+"*\n💵 Total pago: *− "+fval(totPg)+"*"+(desconto>0?"\n🏷️ Desconto: *− "+fval(desconto)+"*":"")+"\n➖➖➖➖➖➖\n💰 *TOTAL A PAGAR: "+fval(saldo)+"*";
     var msg = "😉 *Métrica Ateliê | ALLYNE CARVALHO*\nOlá, "+CLI_ATIVA+"!\n\n"+breakdown+
       "\n\n📋 Chave Pix:\n"+chave+
       "\n\nApós o pagamento, por favor envie o comprovante aqui no WhatsApp. 🙏";
