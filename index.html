@@ -402,7 +402,7 @@ function showToast(msg) {
   t.style.display = "block";
   setTimeout(function(){ t.style.display = "none"; }, 3000);
 }
-function slbl(s){ return {urgente:"Urgente",aguardando:"Aguardando","em-andamento":"Em andamento",pronto:"Pronto",entregue:"Entregue"}[s]||s; } function isUrgente(p){ if(!p||!p.prazo) return false; if(p.status==="pronto"||p.status==="entregue") return false; var lim=new Date(); lim.setDate(lim.getDate()+1); var limStr=lim.toISOString().split("T")[0]; return p.prazo<=limStr; }
+function slbl(s){ return {urgente:"Urgente",aguardando:"Aguardando","em-andamento":"Em andamento",pronto:"Pronto",entregue:"Entregue"}[s]||s; } function prazoVencido(p){ if(!p||!p.prazo) return false; if(p.status==="pronto"||p.status==="entregue") return false; var lim=new Date(); lim.setDate(lim.getDate()+1); var limStr=lim.toISOString().split("T")[0]; return p.prazo<=limStr; } function isUrgente(p){ if(p&&p.ignorar_urgente) return false; return prazoVencido(p); }
 function fdata(d){ if(!d)return""; return new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}); }
 function fval(v){ if(!v&&v!==0)return"—"; return "R$ "+Number(v).toFixed(2).replace(".",","); }
 var PECAS_DIC = {
@@ -746,7 +746,10 @@ function mkPecaHTML(p, comAcoes){
       acoes += "<button class='bm' data-id='"+id+"' onclick='imprimirComanda(this.dataset.id)'>🖨️ Comanda</button>";
       acoes += "<button class='bm' data-id='"+id+"' onclick='abrirEditar(this.dataset.id)'>✏️ Editar</button>";
 
- 
+
+    if(prazoVencido(p)) acoes += p.ignorar_urgente
+      ? "<button class='bm' data-id='"+id+"' onclick='toggleIgnorarUrgencia(this)' style='color:#8B0000'>🔴 Reativar urgência</button>"
+      : "<button class='bm' data-id='"+id+"' onclick='toggleIgnorarUrgencia(this)'>🔕 Tirar da urgência</button>";
     if(p.status==="pronto") acoes += "<button class='bm vd' data-id='"+id+"' data-val='"+p.valor+"' onclick='abrirWpp(this)'>Avisar</button>";
     acoes += "<button class='bm' data-id='"+id+"' onclick='excluirPeca(this)' style='color:#B8B8B8'>Excluir</button>";
     html += "<div class='pac'>"+acoes+"</div>";
@@ -962,6 +965,14 @@ function abrirSt(btn){
   document.getElementById("mst-cli").textContent = CLI_ATIVA;
   document.getElementById("mst-peca").textContent = btn.dataset.peca+(btn.dataset.serv?" · "+btn.dataset.serv:"");
   document.getElementById("mod-st").classList.add("open");
+}
+async function toggleIgnorarUrgencia(btn){
+  var id = btn.dataset.id;
+  var p = await supa("pecas?id=eq."+id);
+  var novo = !(p[0]&&p[0].ignorar_urgente);
+  await supa("pecas?id=eq."+id, {method:"PATCH", body:{ignorar_urgente:novo}});
+  showToast(novo?"Peça tirada da urgência!":"Urgência reativada!");
+  renderPerfil();
 }
 async function setStatus(s){
   await supa("pecas?id=eq."+PECA_ATIVA, {method:"PATCH", body:{status:s}});
