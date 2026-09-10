@@ -153,7 +153,7 @@ input:focus,select:focus{border-color:#0A0A0A}
     <button class="filtro" onclick="filtrar('pronto',this)">Prontos</button>
     <button class="filtro" onclick="filtrar('entregue',this)">Entregues</button>
   </div>
-  <input id="busca-cli" placeholder="🔍 Buscar cliente..." oninput="renderLista()" style="width:100%;padding:12px 14px;border:1px solid #2E2E2E;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:15px;color:#fff;background:#1C1C1C;outline:none;margin-bottom:14px">
+  <input id="busca-cli" placeholder="🔍 Buscar cliente ou nº da comanda..." oninput="renderLista()" style="width:100%;padding:12px 14px;border:1px solid #2E2E2E;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:15px;color:#fff;background:#1C1C1C;outline:none;margin-bottom:14px">
   <div id="lista-cli"></div>
 </div>
 <div class="sc" id="tela-perfil">
@@ -638,7 +638,7 @@ async function renderLista(){
   try {
     var res0 = await Promise.all([
       supa("clientes?select=*"),
-      supa("pecas?select=cliente_id,status,prazo,data_entrada")
+      supa("pecas?select=cliente_id,status,prazo,data_entrada,numero_comanda")
     ]);
     var clientes = res0[0];
     var todasPecas = res0[1];
@@ -652,7 +652,13 @@ async function renderLista(){
     });
     clientes.sort(function(a,b){ var da=(a.pecas&&a.pecas.length)?a.pecas.reduce(function(m,p){ return (p.data_entrada&&p.data_entrada>m)?p.data_entrada:m; },""):""; var db=(b.pecas&&b.pecas.length)?b.pecas.reduce(function(m,p){ return (p.data_entrada&&p.data_entrada>m)?p.data_entrada:m; },""):""; if(da===db) return a.nome.localeCompare(b.nome); return db.localeCompare(da); }); var busca = (document.getElementById("busca-cli")||{}).value||"";
     if(busca){
-      clientes = clientes.filter(function(c){ return c.nome.toLowerCase().includes(busca.toLowerCase()); });
+      var buscaNum = busca.trim();
+      var isNumBusca = /^\d+$/.test(buscaNum);
+      clientes = clientes.filter(function(c){
+        if(c.nome.toLowerCase().includes(busca.toLowerCase())) return true;
+        if(isNumBusca && c.pecas && c.pecas.some(function(p){ return String(p.numero_comanda)===buscaNum; })) return true;
+        return false;
+      });
     }
     if(FILTRO!=="todos"){
       clientes = clientes.filter(function(c){
@@ -739,7 +745,7 @@ pp.map(function(p){ return mkPecaHTML(p, comAcoes); }).join("")+
 }
 function mkPecaHTML(p, comAcoes){
   var fotoHTML = p.foto_url ? "<img src='"+p.foto_url+"' class='pfoto' loading='lazy' decoding='async' data-url='"+p.foto_url+"' onclick='verFoto(this.dataset.url)'>" : "";
-  var html = "<div class='pi'><div class='pin'>"+fotoHTML+"<div class='pn' style='text-transform:uppercase'>"+p.peca+"</div>"+(p.observacao?"<div class='ps' style='font-style:italic;color:royalblue'>"+p.observacao+"</div>":"")+(p.marca?"<div class='ps' style='text-transform:uppercase;font-weight:700;color:#6B6B6B'>"+p.marca+"</div>":"")+(p.servico?p.servico.split(" + ").map(function(sv){ return "<div class='ps'>• "+sv+"</div>"; }).join(""):"<div class='ps'>—</div>")+(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+Number(p.valor).toFixed(2).replace('.',',')+"</div>":"")+"<div class='pc'>"+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div></div><div class='pd'><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
+  var html = "<div class='pi'><div class='pin'>"+fotoHTML+"<div class='pn' style='text-transform:uppercase'>"+p.peca+"</div>"+(p.observacao?"<div class='ps' style='font-style:italic;color:royalblue'>"+p.observacao+"</div>":"")+(p.marca?"<div class='ps' style='text-transform:uppercase;font-weight:700;color:#6B6B6B'>"+p.marca+"</div>":"")+(p.servico?p.servico.split(" + ").map(function(sv){ return "<div class='ps'>• "+sv+"</div>"; }).join(""):"<div class='ps'>—</div>")+(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+Number(p.valor).toFixed(2).replace('.',',')+"</div>":"")+"<div class='pc'>"+(p.numero_comanda?"🎫 Nº "+String(p.numero_comanda).padStart(4,"0")+" · ":"")+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div></div><div class='pd'><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
   if(comAcoes){
     var id = p.id;
     var acoes = "<button class='bm' data-id='"+id+"' data-peca='"+p.peca+"' data-serv='"+(p.servico||"")+"' onclick='abrirSt(this)'>Status</button>";
@@ -1093,6 +1099,13 @@ if(!p||!p[0]) return;
 p = p[0];
 var pecasDia = p.data_entrada ? await supa("pecas?cliente_id=eq."+p.cliente_id+"&data_entrada=eq."+p.data_entrada+"&order=criado_em") : [p];
 if(!pecasDia||!pecasDia.length) pecasDia = [p];
+var numeroComanda = pecasDia.reduce(function(n,pc){ return pc.numero_comanda||n; }, null);
+if(!numeroComanda){
+  var ultimo = await supa("pecas?numero_comanda=not.is.null&order=numero_comanda.desc&limit=1");
+  numeroComanda = ((ultimo&&ultimo[0]&&ultimo[0].numero_comanda)||0) + 1;
+  await Promise.all(pecasDia.map(function(pc){ return supa("pecas?id=eq."+pc.id, {method:"PATCH", body:{numero_comanda:numeroComanda}}); }));
+  pecasDia.forEach(function(pc){ pc.numero_comanda = numeroComanda; });
+}
 var data = p.data_entrada ? new Date(p.data_entrada+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"}) : new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
 var itensHTML = pecasDia.map(function(pc){
 return "<div class='item-peca'>"+
@@ -1106,9 +1119,9 @@ return "<div class='item-peca'>"+
 "</div>";
 }).join("<hr class='sep'>");
 var corpo = "<div class='via'>"+
-"<div class='header'><h1>MÉTRICA ATELIÊ</h1><p>Allyne Carvalho · Ordem de Serviço</p><div class='os-num'>"+pecasDia.length+" peça"+(pecasDia.length>1?"s":"")+"</div></div>"+
+"<div class='header'><h1>MÉTRICA ATELIÊ</h1><p>Allyne Carvalho · Ordem de Serviço</p><div class='os-num'>Nº "+String(numeroComanda).padStart(4,"0")+" · "+pecasDia.length+" peça"+(pecasDia.length>1?"s":"")+"</div></div>"+
 "<div class='row'>"+
-"<div class='campo' style='flex:2'><div class='label'>Cliente</div><div class='valor'>"+p.cliente_nome+"</div></div>"+
+"<div class='campo' style='flex:2'><div class='label'>Cliente</div><div class='valor' style='font-size:11px;font-weight:600'>"+p.cliente_nome+"</div></div>"+
 "<div class='campo' style='flex:1'><div class='label'>Data</div><div class='valor'>"+data+"</div></div>"+
 "</div>"+
 itensHTML+
@@ -1123,7 +1136,7 @@ var html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><meta name='viewpor
 ".header{text-align:center;border-bottom:1px solid #000;padding-bottom:6px;margin-bottom:8px}"+
 ".header h1{font-size:14px;margin:0;letter-spacing:1px}"+
 ".header p{font-size:9px;color:#666;margin:2px 0 0}"+
-".os-num{font-size:9px;color:#999;margin-top:2px}"+
+".os-num{font-size:10px;font-weight:700;color:#333;margin-top:2px}"+
 ".campo{margin-bottom:6px}"+
 ".label{font-size:8px;font-weight:bold;text-transform:uppercase;letter-spacing:.5px;color:#666;margin-bottom:1px}"+
 ".valor{font-size:12px;font-weight:bold;border-bottom:1px solid #ccc;padding-bottom:2px}"+
