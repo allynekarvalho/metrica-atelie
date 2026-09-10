@@ -115,10 +115,11 @@ async function init() {
     var ativas = pecas.filter(function(p){ return p.status !== "entregue"; });
     var entregues = pecas.filter(function(p){ return p.status === "entregue"; });
         var saldoAnt = cli.saldo_anterior || 0;
+    var desconto = cli.desconto || 0;
     var pecasSum = pecas.reduce(function(s,p){ return s+(p.valor||0); },0);
     var totP = pecasSum + saldoAnt;
     var totPg = pagamentos.reduce(function(s,p){ return s+(p.valor||0); },0);
-    var saldo = totP - totPg;
+    var saldo = totP - totPg - desconto;
     var pgParaAnterior = Math.min(totPg, saldoAnt);
     var saldoAntRestante = Math.max(0, saldoAnt-pgParaAnterior);
     var pecasRestante = Math.max(0, (totP-saldoAnt)-(totPg-pgParaAnterior));
@@ -137,6 +138,7 @@ if(!pecas.length) {
       });
       var datas = Object.keys(porData).sort(function(a,b){ return b.localeCompare(a); });
       datas.forEach(function(d){
+        var totDia = porData[d].reduce(function(s,p){ return s+(p.valor||0); },0);
         html += "<div class='eg'><div class='ehdr'>📅 Entrada em "+fdata(d)+"</div>";
         porData[d].forEach(function(p){
           html += "<div class='pcard'>";
@@ -147,6 +149,7 @@ if(!pecas.length) {
           if(p.valor) html += "<div style='margin-top:8px;font-size:14px;font-weight:600;color:#fff'>"+fval(p.valor)+"</div>";
           html += "</div></div>";
         });
+        if(totDia>0) html += "<div style='display:flex;justify-content:space-between;padding:8px 2px 2px;font-size:12px;font-weight:600;color:#fff'><span>Total do dia</span><span>"+fval(totDia)+"</span></div>";
         html += "</div>";
       });
     }
@@ -154,14 +157,27 @@ if(!pecas.length) {
       var totalEntregue = entregues.reduce(function(s,p){ return s+(p.valor||0); },0);
       html += "<div class='secao-titulo' style='margin-top:24px'>Peças entregues</div>";
       html += "<div style='background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center'><div style='font-size:12px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total entregue</div><div style='font-size:16px;font-weight:700;color:#0A0A0A'>"+fval(totalEntregue)+"</div></div>";
+      var porDataEnt = {};
       entregues.forEach(function(p){
-        html += "<div class='pcard'>";
-        if(p.foto_url) html += "<img src='"+p.foto_url+"' class='pfoto' loading='lazy' decoding='async'>";
-        html += "<div class='pinfo'><div class='pnome'>"+p.peca+"</div>";
-        if(p.servico) html += "<div class='pserv'>"+p.servico+"</div>";
-        html += "<span class='badge entregue'>"+slbl("entregue")+"</span>";
-        if(p.valor) html += "<div style='margin-top:8px;font-size:14px;font-weight:600;color:#fff'>"+fval(p.valor)+"</div>";
-        html += "</div></div>";
+        var d = p.data_entrada || "—";
+        if(!porDataEnt[d]) porDataEnt[d]=[];
+        porDataEnt[d].push(p);
+      });
+      var datasEnt = Object.keys(porDataEnt).sort(function(a,b){ return b.localeCompare(a); });
+      datasEnt.forEach(function(d){
+        var totDia = porDataEnt[d].reduce(function(s,p){ return s+(p.valor||0); },0);
+        html += "<div class='eg'><div class='ehdr'>📅 Entrada em "+fdata(d)+"</div>";
+        porDataEnt[d].forEach(function(p){
+          html += "<div class='pcard'>";
+          if(p.foto_url) html += "<img src='"+p.foto_url+"' class='pfoto' loading='lazy' decoding='async'>";
+          html += "<div class='pinfo'><div class='pnome'>"+p.peca+"</div>";
+          if(p.servico) html += "<div class='pserv'>"+p.servico+"</div>";
+          html += "<span class='badge entregue'>"+slbl("entregue")+"</span>";
+          if(p.valor) html += "<div style='margin-top:8px;font-size:14px;font-weight:600;color:#fff'>"+fval(p.valor)+"</div>";
+          html += "</div></div>";
+        });
+        if(totDia>0) html += "<div style='display:flex;justify-content:space-between;padding:8px 2px 2px;font-size:12px;font-weight:600;color:#fff'><span>Total do dia</span><span>"+fval(totDia)+"</span></div>";
+        html += "</div>";
       });
     }
         var corP = saldo>0?"#8B0000":"#2E5E2E";
@@ -173,6 +189,7 @@ if(!pecas.length) {
       "<div style='border-top:1px solid #F0F0F0;margin:8px 0'></div>"+
       linhaP("Subtotal", fval(subtotalP)||"R$ 0,00", {lc:"#0A0A0A",lw:"600"})+
       linhaP("Total pago", "− "+(fval(totPg)||"R$ 0,00"), {vc:"#2E5E2E"})+
+      (desconto>0?linhaP("Desconto", "− "+fval(desconto), {vc:"#2E5E2E"}):"")+
       "<div style='border-top:2px solid #0A0A0A;margin:10px 0'></div>"+
       "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total a pagar</div><div style='font-size:24px;font-weight:700;color:"+corP+"'>R$ "+saldo.toFixed(2).replace(".",",")+"</div></div>"+
       "</div>";
