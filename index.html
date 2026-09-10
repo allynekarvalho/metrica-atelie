@@ -1309,7 +1309,7 @@ renderLista();
       <div class="fg"><label>Comissão 45%</label><div class="vw"><span class="vp">R$</span><input type="number" id="ed-com" class="vi" placeholder="0,00" readonly style="background:#F5F5F5;color:#B8B8B8"></div></div>
       <div class="fg"><label>Costureira</label><select id="ed-cos"><option value="">Selecionar...</option><option>Ana</option><option>Maria</option><option>Lucia</option><option>Allyne (eu)</option></select></div>
     </div>
-    <div class="fg"><label>Prazo</label><input type="date" id="ed-prazo"></div>
+    <div class="fg"><label>Prazo</label><div style="display:flex;gap:8px"><input type="date" id="ed-prazo" style="flex:1"><button type="button" class="bm" onclick="document.getElementById('ed-prazo').value=''" style="white-space:nowrap">🗑️ Limpar</button></div></div>
     <div class="fg"><label>Data de entrada</label><input type="date" id="ed-data"></div>
     <div class="fg">
       <label>📸 Foto da peça</label>
