@@ -276,6 +276,7 @@ input:focus,select:focus{border-color:#0A0A0A}
   <div class="mo">
     <div class="mh"></div>
     <h2 id="mst-cli"></h2><p class="msub" id="mst-peca"></p>
+    <div class="fg"><label>Costureira</label><select id="mst-cos"></select></div>
     <div class="sg">
       <button class="sb" onclick="setStatus('aguardando')"><span class="ico">⏳</span>Aguardando</button>
       <button class="sb" onclick="setStatus('em-andamento')"><span class="ico">🪡</span>Em andamento</button>
@@ -748,7 +749,7 @@ function mkPecaHTML(p, comAcoes){
   var html = "<div class='pi'><div class='pin'>"+fotoHTML+"<div class='pn' style='text-transform:uppercase'>"+p.peca+"</div>"+(p.observacao?"<div class='ps' style='font-style:italic;color:royalblue'>"+p.observacao+"</div>":"")+(p.marca?"<div class='ps' style='text-transform:uppercase;font-weight:700;color:#6B6B6B'>"+p.marca+"</div>":"")+(p.servico?p.servico.split(" + ").map(function(sv){ return "<div class='ps'>• "+sv+"</div>"; }).join(""):"<div class='ps'>—</div>")+(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+Number(p.valor).toFixed(2).replace('.',',')+"</div>":"")+"<div class='pc'>"+(p.numero_comanda?"🎫 Nº "+String(p.numero_comanda).padStart(4,"0")+" · ":"")+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div></div><div class='pd'><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
   if(comAcoes){
     var id = p.id;
-    var acoes = "<button class='bm' data-id='"+id+"' data-peca='"+p.peca+"' data-serv='"+(p.servico||"")+"' onclick='abrirSt(this)'>Status</button>";
+    var acoes = "<button class='bm' data-id='"+id+"' data-peca='"+p.peca+"' data-serv='"+(p.servico||"")+"' data-cos='"+(p.costureira||"").replace(/'/g,"&#39;")+"' onclick='abrirSt(this)'>Status</button>";
       acoes += "<button class='bm' data-id='"+id+"' onclick='imprimirComanda(this.dataset.id,true)'>🖨️ Comanda</button>";
       acoes += "<button class='bm' data-id='"+id+"' onclick='abrirEditar(this.dataset.id)'>✏️ Editar</button>";
 
@@ -970,6 +971,7 @@ function abrirSt(btn){
   PECA_ATIVA = btn.dataset.id;
   document.getElementById("mst-cli").textContent = CLI_ATIVA;
   document.getElementById("mst-peca").textContent = btn.dataset.peca+(btn.dataset.serv?" · "+btn.dataset.serv:"");
+  document.getElementById("mst-cos").innerHTML = optsCostureiras(btn.dataset.cos||"");
   document.getElementById("mod-st").classList.add("open");
 }
 async function toggleIgnorarUrgencia(btn){
@@ -981,7 +983,10 @@ async function toggleIgnorarUrgencia(btn){
   renderPerfil();
 }
 async function setStatus(s){
-  await supa("pecas?id=eq."+PECA_ATIVA, {method:"PATCH", body:{status:s}});
+  var cosSel = document.getElementById("mst-cos");
+  var body = {status:s};
+  if(cosSel && cosSel.value) body.costureira = cosSel.value;
+  await supa("pecas?id=eq."+PECA_ATIVA, {method:"PATCH", body:body});
   closeMod("mod-st");
   showToast("Status atualizado!");
   renderPerfil();
