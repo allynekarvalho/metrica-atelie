@@ -174,11 +174,13 @@ input:focus,select:focus{border-color:#0A0A0A}
   </div>
   <div class="ftabs">
     <button class="ftab active" id="ft-p" onclick="mudarFt('p')">Peças</button>
+    <button class="ftab" id="ft-pr" onclick="mudarFt('pr')">✅ Prontos</button>
     <button class="ftab" id="ft-e" onclick="mudarFt('e')">Entregues</button>
     <button class="ftab" id="ft-f" onclick="mudarFt('f')">💰 Saldo</button>
     <button class="ftab" id="ft-m" onclick="mudarFt('m')">📏 Medidas</button>
   </div>
   <div class="fpanel active" id="fp-p"></div>
+  <div class="fpanel" id="fp-pr"></div>
   <div class="fpanel" id="fp-e"></div>
   <div class="fpanel" id="fp-f"></div>
   <div class="fpanel" id="fp-m"></div>
@@ -699,7 +701,7 @@ function voltarClientes(){
   goTab("clientes", document.querySelector(".tab"));
 }
 function mudarFt(tab){
-  ["p","e","f","m"].forEach(function(t){
+  ["p","pr","e","f","m"].forEach(function(t){
     document.getElementById("fp-"+t).classList.remove("active");
     document.getElementById("ft-"+t).classList.remove("active");
   });
@@ -710,13 +712,18 @@ function mudarFt(tab){
 }
 async function renderPerfil(){
   document.getElementById("fp-p").innerHTML = "<div class='loading'>Carregando...</div>";
+  document.getElementById("fp-pr").innerHTML = "<div class='loading'>Carregando...</div>";
   document.getElementById("fp-e").innerHTML = "<div class='loading'>Carregando...</div>";
   try {
     var pecas = await supa("pecas?cliente_id=eq."+CLI_ATIVA_ID+"&order=data_entrada.desc,criado_em.desc");
     var ativas = pecas.filter(function(p){ return p.status!=="entregue"; });
+    var emAndamento = ativas.filter(function(p){ return p.status!=="pronto"; });
+    var prontos = ativas.filter(function(p){ return p.status==="pronto"; });
     var entregues = pecas.filter(function(p){ return p.status==="entregue"; });
     document.getElementById("p-meta").textContent = ativas.length+" peça"+(ativas.length!==1?"s":"")+" ativa"+(ativas.length!==1?"s":"")+" · "+pecas.length+" total";
-    document.getElementById("fp-p").innerHTML = mkEntradasHTML(ativas, true) || "<div class='vz'><span class='vi2'>✅</span>Tudo entregue!</div>";
+    document.getElementById("ft-pr").textContent = "✅ Prontos"+(prontos.length?" ("+prontos.length+")":"");
+    document.getElementById("fp-p").innerHTML = mkEntradasHTML(emAndamento, true) || "<div class='vz'><span class='vi2'>🧵</span>Nenhuma peça em andamento.</div>";
+    document.getElementById("fp-pr").innerHTML = mkEntradasHTML(prontos, true) || "<div class='vz'><span class='vi2'>✅</span>Nenhuma peça pronta.</div>";
     var totalEntregue = entregues.reduce(function(s,p){ return s+(p.valor||0); },0);
     var totEntregueHTML = entregues.length ? "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:14px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center'><div style='font-size:12px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total entregue</div><div style='font-size:18px;font-weight:700;color:#0A0A0A'>"+fval(totalEntregue)+"</div></div>" : "";
     document.getElementById("fp-e").innerHTML = totEntregueHTML + (mkEntradasHTML(entregues, false) || "<div class='vz'><span class='vi2'>📦</span>Nenhuma entregue.</div>");
