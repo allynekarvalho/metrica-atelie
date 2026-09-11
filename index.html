@@ -288,7 +288,7 @@ input:focus,select:focus{border-color:#0A0A0A}
     <button class="btn-s" onclick="closeMod('mod-st')">Cancelar</button>
   </div>
 </div>
-<!-- MODAL DATA ENTREGA --><div class="mov" id="mod-ent-data"><div class="mo"><div class="mh"></div><h2>Data de entrega</h2><div class="fg"><label>Data</label><input type="date" id="ent-data"></div><button class="btn-p" onclick="confirmarEntrega()">Confirmar entrega</button><button class="btn-s" onclick="closeMod('mod-ent-data')">Cancelar</button></div></div><!-- MODAL RETORNO --><div class="mov" id="mod-retorno"><div class="mo"><div class="mh"></div><h2>Retorno para reajuste</h2><div class="fg"><label>Motivo do retorno</label><select id="ret-motivo" onchange="toggleRetNovo()"><option value="refazer">Refazer o que foi feito</option><option value="novo">Novo serviço</option></select></div><div class="fg" id="ret-novo-wrap" style="display:none"><label>Novo serviço</label><input id="ret-novo" placeholder="Ex: Ajuste na barra"></div><div class="fg"><label>Data do retorno</label><input type="date" id="ret-data"></div><button class="btn-p" onclick="confirmarRetorno()">Continuar</button><button class="btn-s" onclick="closeMod('mod-retorno')">Cancelar</button></div></div><!-- MODAL WHATSAPP -->
+<!-- MODAL DATA ENTREGA --><div class="mov" id="mod-ent-data"><div class="mo"><div class="mh"></div><h2>Data de entrega</h2><div class="fg"><label>Data</label><input type="date" id="ent-data"></div><button class="btn-p" onclick="confirmarEntrega()">Confirmar entrega</button><button class="btn-s" onclick="closeMod('mod-ent-data')">Cancelar</button></div></div><!-- MODAL RETORNO --><div class="mov" id="mod-retorno"><div class="mo"><div class="mh"></div><h2>Retorno para reajuste</h2><div class="fg"><label>Motivo do retorno</label><select id="ret-motivo" onchange="toggleRetNovo()"><option value="refazer">Refazer o que foi feito</option><option value="novo">Novo serviço</option></select></div><div class="fg" id="ret-novo-wrap" style="display:none"><label>Novo serviço</label><input id="ret-novo" placeholder="Ex: Ajuste na barra"></div><div id="ret-refazer-wrap"><div class="fg"><label>Quem vai refazer</label><select id="ret-cos"></select></div><div class="fr"><div class="fg"><label>Valor costureira (retrabalho)</label><div class="vw"><span class="vp">R$</span><input type="number" id="ret-valcos" class="vi" placeholder="0,00" min="0" step="0.01" oninput="calcComRet()"></div></div><div class="fg"><label>Comissão 45%</label><div class="vw"><span class="vp">R$</span><input type="number" id="ret-com" class="vi" placeholder="0,00" readonly style="background:#F5F5F5;color:#B8B8B8"></div></div></div><p style="font-size:11px;color:#6B6B6B;margin:-6px 0 4px">A costureira original e a comissão da peça continuam registradas como estavam.</p></div><div class="fg"><label>Data do retorno</label><input type="date" id="ret-data"></div><button class="btn-p" onclick="confirmarRetorno()">Continuar</button><button class="btn-s" onclick="closeMod('mod-retorno')">Cancelar</button></div></div><!-- MODAL WHATSAPP -->
 <div class="mov" id="mod-wpp">
   <div class="mo">
     <div class="mh"></div>
@@ -306,6 +306,7 @@ var FILTRO = "todos";
 var CLI_ATIVA = null;
 var CLI_ATIVA_ID = null;
 var PECA_ATIVA = null; var ED_STATUS_ORIG = null; var RETORNO_PECA = null; var DATA_RETORNO_ESCOLHIDA = null;
+var RETRABALHO_COSTUREIRA = null; var RETRABALHO_VALOR = null; var RETRABALHO_COMISSAO = null;
 var SEL = [];
 var FOTO_FILE = null;
 var FOTO_FILE_EDIT = null;
@@ -753,7 +754,7 @@ pp.map(function(p){ return mkPecaHTML(p, comAcoes); }).join("")+
 }
 function mkPecaHTML(p, comAcoes){
   var fotoHTML = p.foto_url ? "<img src='"+p.foto_url+"' class='pfoto' loading='lazy' decoding='async' data-url='"+p.foto_url+"' onclick='verFoto(this.dataset.url)'>" : "";
-  var html = "<div class='pi'><div class='pin'>"+fotoHTML+"<div class='pn' style='text-transform:uppercase'>"+p.peca+"</div>"+(p.observacao?"<div class='ps' style='font-style:italic;color:royalblue'>"+p.observacao+"</div>":"")+(p.marca?"<div class='ps' style='text-transform:uppercase;font-weight:700;color:#6B6B6B'>"+p.marca+"</div>":"")+(p.servico?p.servico.split(" + ").map(function(sv){ return "<div class='ps'>• "+sv+"</div>"; }).join(""):"<div class='ps'>—</div>")+(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+Number(p.valor).toFixed(2).replace('.',',')+"</div>":"")+"<div class='pc'>"+(p.numero_comanda?"🎫 Nº "+String(p.numero_comanda).padStart(4,"0")+" · ":"")+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div></div><div class='pd'><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
+  var html = "<div class='pi'><div class='pin'>"+fotoHTML+"<div class='pn' style='text-transform:uppercase'>"+p.peca+"</div>"+(p.observacao?"<div class='ps' style='font-style:italic;color:royalblue'>"+p.observacao+"</div>":"")+(p.marca?"<div class='ps' style='text-transform:uppercase;font-weight:700;color:#6B6B6B'>"+p.marca+"</div>":"")+(p.servico?p.servico.split(" + ").map(function(sv){ return "<div class='ps'>• "+sv+"</div>"; }).join(""):"<div class='ps'>—</div>")+(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+Number(p.valor).toFixed(2).replace('.',',')+"</div>":"")+"<div class='pc'>"+(p.numero_comanda?"🎫 Nº "+String(p.numero_comanda).padStart(4,"0")+" · ":"")+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div>"+(p.retrabalho_costureira?"<div class='ps' style='color:#B8860B;font-weight:600'>🔁 Retrabalho: "+p.retrabalho_costureira+(p.retrabalho_valor_costureira?" · R$ "+Number(p.retrabalho_valor_costureira).toFixed(2).replace('.',','):"")+"</div>":"")+"</div><div class='pd'><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
   if(comAcoes){
     var id = p.id;
     var acoes = "<button class='bm' data-id='"+id+"' data-peca='"+p.peca+"' data-serv='"+(p.servico||"")+"' data-cos='"+(p.costureira||"").replace(/'/g,"&#39;")+"' onclick='abrirSt(this)'>Status</button>";
@@ -998,7 +999,7 @@ async function setStatus(s){
   showToast("Status atualizado!");
   renderPerfil();
 }
-function abrirDataEntrega(){closeMod("mod-st");document.getElementById("ent-data").value=new Date().toISOString().split("T")[0];document.getElementById("mod-ent-data").classList.add("open");}async function confirmarEntrega(){var data=document.getElementById("ent-data").value||new Date().toISOString().split("T")[0];await supa("pecas?id=eq."+PECA_ATIVA,{method:"PATCH",body:{status:"entregue",data_entrega:data}});closeMod("mod-ent-data");showToast("Peça entregue!");renderPerfil();}function abrirRetorno(p){RETORNO_PECA=p;document.getElementById("ret-motivo").value="refazer";document.getElementById("ret-novo").value="";document.getElementById("ret-novo-wrap").style.display="none";document.getElementById("ret-data").value=new Date().toISOString().split("T")[0];document.getElementById("mod-retorno").classList.add("open");}function toggleRetNovo(){document.getElementById("ret-novo-wrap").style.display=(document.getElementById("ret-motivo").value==="novo")?"block":"none";}function confirmarRetorno(){var p=RETORNO_PECA;var motivo=document.getElementById("ret-motivo").value;var dataRet=document.getElementById("ret-data").value||new Date().toISOString().split("T")[0];DATA_RETORNO_ESCOLHIDA=dataRet;closeMod("mod-retorno");abrirEditarForm(p);if(motivo==="novo"){var novoServ=document.getElementById("ret-novo").value.trim();if(novoServ){var atual=document.getElementById("ed-serv").value.trim();document.getElementById("ed-serv").value=atual?(atual+" + "+novoServ):novoServ;}}}async function togUrg(btn){
+function abrirDataEntrega(){closeMod("mod-st");document.getElementById("ent-data").value=new Date().toISOString().split("T")[0];document.getElementById("mod-ent-data").classList.add("open");}async function confirmarEntrega(){var data=document.getElementById("ent-data").value||new Date().toISOString().split("T")[0];await supa("pecas?id=eq."+PECA_ATIVA,{method:"PATCH",body:{status:"entregue",data_entrega:data}});closeMod("mod-ent-data");showToast("Peça entregue!");renderPerfil();}function abrirRetorno(p){RETORNO_PECA=p;document.getElementById("ret-motivo").value="refazer";document.getElementById("ret-novo").value="";document.getElementById("ret-novo-wrap").style.display="none";document.getElementById("ret-refazer-wrap").style.display="block";document.getElementById("ret-cos").innerHTML=optsCostureiras("");document.getElementById("ret-valcos").value="";document.getElementById("ret-com").value="";document.getElementById("ret-data").value=new Date().toISOString().split("T")[0];document.getElementById("mod-retorno").classList.add("open");}function toggleRetNovo(){var isNovo=document.getElementById("ret-motivo").value==="novo";document.getElementById("ret-novo-wrap").style.display=isNovo?"block":"none";document.getElementById("ret-refazer-wrap").style.display=isNovo?"none":"block";}function calcComRet(){var v=parseFloat(document.getElementById("ret-valcos").value)||0;document.getElementById("ret-com").value=(v*0.45).toFixed(2);}function confirmarRetorno(){var p=RETORNO_PECA;var motivo=document.getElementById("ret-motivo").value;var dataRet=document.getElementById("ret-data").value||new Date().toISOString().split("T")[0];DATA_RETORNO_ESCOLHIDA=dataRet;if(motivo==="refazer"){var cosRet=document.getElementById("ret-cos").value;RETRABALHO_COSTUREIRA=cosRet||null;RETRABALHO_VALOR=parseFloat(document.getElementById("ret-valcos").value)||0;RETRABALHO_COMISSAO=parseFloat(document.getElementById("ret-com").value)||0;}else{RETRABALHO_COSTUREIRA=null;RETRABALHO_VALOR=null;RETRABALHO_COMISSAO=null;}closeMod("mod-retorno");abrirEditarForm(p);if(motivo==="novo"){var novoServ=document.getElementById("ret-novo").value.trim();if(novoServ){var atual=document.getElementById("ed-serv").value.trim();document.getElementById("ed-serv").value=atual?(atual+" + "+novoServ):novoServ;}}}async function togUrg(btn){
   var id = btn.dataset.id;
   var p = await supa("pecas?id=eq."+id);
   var novo = p[0].status==="urgente"?"aguardando":"urgente";
@@ -1084,19 +1085,21 @@ async function renderComissoes(pecas){
   var elDe = document.getElementById("com-de"), elAte = document.getElementById("com-ate");
   if(!elDe.value && !elAte.value){ var q = quinzenaAtual(); elDe.value = q.ini; elAte.value = q.fim; }
   var de = elDe.value, ate = elAte.value;
-  var filtradas = pecas.filter(function(p){
-    if(!p.comissao) return false;
-    var d = p.data_entrada;
-    if(de && d<de) return false;
-    if(ate && d>ate) return false;
-    return true;
-  });
+  function noPeriodo(d){ if(de && d<de) return false; if(ate && d>ate) return false; return true; }
   var porCost = {};
-  filtradas.forEach(function(p){
-    var c = p.costureira||"—";
-    if(!porCost[c]) porCost[c] = {total:0, n:0};
-    porCost[c].total += (p.comissao||0);
-    porCost[c].n++;
+  pecas.forEach(function(p){
+    if(p.comissao && noPeriodo(p.data_entrada)){
+      var c = p.costureira||"—";
+      if(!porCost[c]) porCost[c] = {total:0, n:0};
+      porCost[c].total += (p.comissao||0);
+      porCost[c].n++;
+    }
+    if(p.retrabalho_comissao && p.retrabalho_costureira && noPeriodo(p.retrabalho_data||p.data_entrada)){
+      var cr = p.retrabalho_costureira;
+      if(!porCost[cr]) porCost[cr] = {total:0, n:0};
+      porCost[cr].total += (p.retrabalho_comissao||0);
+      porCost[cr].n++;
+    }
   });
   var nomes = Object.keys(porCost);
   var html = nomes.length ? nomes.map(function(c){
@@ -1172,7 +1175,7 @@ async function abrirEditar(id) {
 var p = await supa("pecas?id=eq."+id);
 if(!p||!p[0]) return;
 p = p[0];
-if(p.status==="entregue"){ abrirRetorno(p); return; } DATA_RETORNO_ESCOLHIDA = null; abrirEditarForm(p); } function abrirEditarForm(p) { document.getElementById("ed-id").value = p.id; ED_STATUS_ORIG = p.status;
+if(p.status==="entregue"){ abrirRetorno(p); return; } DATA_RETORNO_ESCOLHIDA = null; RETRABALHO_COSTUREIRA = null; RETRABALHO_VALOR = null; RETRABALHO_COMISSAO = null; abrirEditarForm(p); } function abrirEditarForm(p) { document.getElementById("ed-id").value = p.id; ED_STATUS_ORIG = p.status;
 document.getElementById("ed-peca").value = p.peca||"";
 document.getElementById("ed-marca").value = p.marca||"";
 document.getElementById("ed-serv").value = p.servico||"";
@@ -1216,8 +1219,15 @@ valor: val,
 valor_costureira: valCos,
 comissao: com, data_retorno: (ED_STATUS_ORIG==="entregue"?(DATA_RETORNO_ESCOLHIDA||hoje):undefined)
 };
+if(RETRABALHO_COSTUREIRA){
+body.retrabalho_costureira = RETRABALHO_COSTUREIRA;
+body.retrabalho_valor_costureira = RETRABALHO_VALOR||0;
+body.retrabalho_comissao = RETRABALHO_COMISSAO||0;
+body.retrabalho_data = DATA_RETORNO_ESCOLHIDA||hoje;
+}
 if(marcaEd) registrarMarca(marcaEd);
 await supa("pecas?id=eq."+id, {method:"PATCH", body:body});
+RETRABALHO_COSTUREIRA = null; RETRABALHO_VALOR = null; RETRABALHO_COMISSAO = null;
 if(FOTO_FILE_EDIT){
 try {
 var fotoUrlEd = await uploadFoto(FOTO_FILE_EDIT, id);
