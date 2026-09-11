@@ -749,7 +749,7 @@ function mkPecaHTML(p, comAcoes){
   if(comAcoes){
     var id = p.id;
     var acoes = "<button class='bm' data-id='"+id+"' data-peca='"+p.peca+"' data-serv='"+(p.servico||"")+"' onclick='abrirSt(this)'>Status</button>";
-      acoes += "<button class='bm' data-id='"+id+"' onclick='imprimirComanda(this.dataset.id)'>🖨️ Comanda</button>";
+      acoes += "<button class='bm' data-id='"+id+"' onclick='imprimirComanda(this.dataset.id,true)'>🖨️ Comanda</button>";
       acoes += "<button class='bm' data-id='"+id+"' onclick='abrirEditar(this.dataset.id)'>✏️ Editar</button>";
 
 
@@ -1093,7 +1093,7 @@ async function renderComissoes(pecas){
   }).join("") : "<div class='vz'>Nenhuma comissão lançada no período.</div>";
   document.getElementById("res-com").innerHTML = html;
 }
-async function imprimirComanda(id) {
+async function imprimirComanda(id, apenasEsta) {
 var p = await supa("pecas?id=eq."+id);
 if(!p||!p[0]) return;
 p = p[0];
@@ -1106,8 +1106,9 @@ if(!numeroComanda){
   await Promise.all(pecasDia.map(function(pc){ return supa("pecas?id=eq."+pc.id, {method:"PATCH", body:{numero_comanda:numeroComanda}}); }));
   pecasDia.forEach(function(pc){ pc.numero_comanda = numeroComanda; });
 }
+var pecasImprimir = apenasEsta ? [p] : pecasDia;
 var data = p.data_entrada ? new Date(p.data_entrada+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"}) : new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
-var itensHTML = pecasDia.map(function(pc){
+var itensHTML = pecasImprimir.map(function(pc){
 return "<div class='item-peca'>"+
 "<div class='row'>"+
 "<div class='campo' style='flex:2'><div class='label'>Peça</div><div class='valor'>"+pc.peca+"</div></div>"+
@@ -1119,7 +1120,7 @@ return "<div class='item-peca'>"+
 "</div>";
 }).join("<hr class='sep'>");
 var corpo = "<div class='via'>"+
-"<div class='header'><h1>MÉTRICA ATELIÊ</h1><p>Allyne Carvalho · Ordem de Serviço</p><div class='os-num'>Nº "+String(numeroComanda).padStart(4,"0")+" · "+pecasDia.length+" peça"+(pecasDia.length>1?"s":"")+"</div></div>"+
+"<div class='header'><h1>MÉTRICA ATELIÊ</h1><p>Allyne Carvalho · Ordem de Serviço</p><div class='os-num'>Nº "+String(numeroComanda).padStart(4,"0")+" · "+pecasImprimir.length+" peça"+(pecasImprimir.length>1?"s":"")+"</div></div>"+
 "<div class='row'>"+
 "<div class='campo' style='flex:2'><div class='label'>Cliente</div><div class='valor' style='font-size:11px;font-weight:600'>"+p.cliente_nome+"</div></div>"+
 "<div class='campo' style='flex:1'><div class='label'>Data</div><div class='valor'>"+data+"</div></div>"+
