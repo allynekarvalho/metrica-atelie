@@ -656,7 +656,7 @@ async function renderLista(){
       var isNumBusca = /^\d+$/.test(buscaNum);
       clientes = clientes.filter(function(c){
         if(c.nome.toLowerCase().includes(busca.toLowerCase())) return true;
-        if(isNumBusca && c.pecas && c.pecas.some(function(p){ return String(p.numero_comanda)===buscaNum; })) return true;
+        if(isNumBusca && c.pecas && c.pecas.some(function(p){ return p.numero_comanda!=null && Number(p.numero_comanda)===Number(buscaNum); })) return true;
         return false;
       });
     }
