@@ -8,18 +8,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:"DM Sans",sans-serif;background:#0A0A0A;color:#fff;min-height:100vh}
-.header{background:#0A0A0A;padding:24px 20px 20px;border-bottom:1px solid #2E2E2E}
+.header{background:#0A0A0A;padding:24px 20px 0;border-bottom:1px solid #2E2E2E}
 .logo-row{display:flex;align-items:center;gap:12px;margin-bottom:16px}
 .logo-row img{height:36px}
 .logo-txt h1{font-family:"Cormorant Garamond",serif;font-size:16px;font-weight:300;letter-spacing:3px;text-transform:uppercase;color:#fff}
 .logo-txt p{font-size:9px;color:#B8B8B8;letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
 .cli-nome{font-family:"Cormorant Garamond",serif;font-size:28px;font-weight:300;letter-spacing:1px;color:#fff}
-.cli-sub{font-size:11px;color:#B8B8B8;margin-top:4px;letter-spacing:.5px}
+.cli-sub{font-size:11px;color:#B8B8B8;margin-top:4px;margin-bottom:16px;letter-spacing:.5px}
+.tabs{display:flex}
+.tab{flex:1;padding:12px 2px;background:transparent;border:none;color:#6B6B6B;font-family:"DM Sans",sans-serif;font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tab .tcount{display:block;font-size:13px;font-weight:700;margin-top:3px}
+.tab.active{color:#fff;border-bottom-color:#fff}
 .body{padding:20px}
+.painel{display:none}
+.painel.active{display:block}
 .secao-titulo{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#6B6B6B;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #2E2E2E}
 .eg{margin-bottom:20px}
 .ehdr{font-size:11px;font-weight:600;color:#B8B8B8;letter-spacing:.5px;margin-bottom:10px}
 .pcard{background:#1C1C1C;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid #2E2E2E}
+.pcard.prioridade{border-color:#FFD700}
 .pfoto{width:100%;height:280px;object-fit:contain;background:#111}
 .pinfo{padding:14px}
 .pnome{font-size:15px;font-weight:500;color:#fff;margin-bottom:4px}
@@ -30,13 +37,19 @@ body{font-family:"DM Sans",sans-serif;background:#0A0A0A;color:#fff;min-height:1
 .badge.em-andamento{background:#3D3000;color:#FFD700}
 .badge.pronto{background:#003D00;color:#6BFF6B}
 .badge.entregue{background:#2E2E2E;color:#6B6B6B}
+.btn-toggle{width:100%;margin-top:10px;padding:9px;background:transparent;border:1px solid #3A3A3A;border-radius:6px;color:#B8B8B8;font-family:"DM Sans",sans-serif;font-size:12px;font-weight:600;cursor:pointer}
+.btn-toggle.ativo{background:#332400;border-color:#FFD700;color:#FFD700}
+.confirmado-txt{margin-top:10px;font-size:12px;font-weight:600;color:#6BFF6B}
 .empty{text-align:center;padding:60px 20px;color:#6B6B6B}
 .empty-ico{font-size:40px;display:block;margin-bottom:12px;opacity:.4}
 .footer{text-align:center;padding:30px 20px;border-top:1px solid #2E2E2E;margin-top:20px}
 .footer p{font-size:11px;color:#6B6B6B;letter-spacing:1px;text-transform:uppercase}
 .loading{text-align:center;padding:60px 20px;color:#6B6B6B;font-size:14px}
 .erro{text-align:center;padding:60px 20px;color:#FF6B6B;font-size:14px}
-.saldo-box{border-top:1px solid #2E2E2E;padding-top:14px;margin-top:28px}
+.total-box{background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.total-box .tl{font-size:12px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px}
+.total-box .tv{font-size:16px;font-weight:700;color:#0A0A0A}
+.saldo-box{padding-top:2px}
 .saldo-lbl{font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#6B6B6B;margin-bottom:4px}
 .saldo-val{font-size:13px;font-weight:600;color:#B8B8B8;margin-bottom:8px}
 .pix-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
@@ -53,6 +66,12 @@ body{font-family:"DM Sans",sans-serif;background:#0A0A0A;color:#fff;min-height:1
   </div>
   <div class="cli-nome" id="cli-nome">Carregando...</div>
   <div class="cli-sub" id="cli-sub"></div>
+  <div class="tabs" id="tabs" style="display:none">
+    <button class="tab" data-tab="pecas" onclick="mudarAba('pecas')">Peças<span class="tcount" id="ct-pecas"></span></button>
+    <button class="tab" data-tab="prontos" onclick="mudarAba('prontos')">Prontos<span class="tcount" id="ct-prontos"></span></button>
+    <button class="tab" data-tab="entregues" onclick="mudarAba('entregues')">Entregues<span class="tcount" id="ct-entregues"></span></button>
+    <button class="tab" data-tab="saldo" onclick="mudarAba('saldo')">Saldo<span class="tcount" id="ct-saldo"></span></button>
+  </div>
 </div>
 <div class="body" id="body">
   <div class="loading">Buscando suas peças...</div>
@@ -71,6 +90,18 @@ async function supa(path) {
   });
   var text = await res.text();
   return text ? JSON.parse(text) : [];
+}
+async function supaPatch(path, body) {
+  return fetch(SUPA_URL + "/rest/v1/" + path, {
+    method: "PATCH",
+    headers: {
+      "apikey": SUPA_KEY,
+      "Authorization": "Bearer " + SUPA_KEY,
+      "Content-Type": "application/json",
+      "Prefer": "return=minimal"
+    },
+    body: JSON.stringify(body)
+  });
 }
 function fval(v) {
   if(!v) return "";
@@ -95,6 +126,123 @@ function copiarPix() {
     if(btn){ var t = btn.textContent; btn.textContent = "Copiado!"; setTimeout(function(){ btn.textContent = t; },1500); }
   });
 }
+var ABA_ATUAL = null;
+var TODAS_PECAS = [];
+function mudarAba(nome) {
+  ABA_ATUAL = nome;
+  document.querySelectorAll(".tab").forEach(function(t){ t.classList.toggle("active", t.dataset.tab===nome); });
+  document.querySelectorAll(".painel").forEach(function(p){ p.classList.toggle("active", p.id==="painel-"+nome); });
+}
+function renderPeca(p, tipo) {
+  var html = "<div class='pcard"+(tipo==="pecas"&&p.prioridade_cliente?" prioridade":"")+"'>";
+  if(p.foto_url) html += "<img src='"+p.foto_url+"' class='pfoto' loading='lazy' decoding='async'>";
+  html += "<div class='pinfo'><div class='pnome'>"+p.peca+"</div>";
+  if(p.servico) html += "<div class='pserv'>"+p.servico+"</div>";
+  html += "<span class='badge "+p.status+"'>"+slbl(p.status)+"</span>";
+  if(p.valor) html += "<div style='margin-top:8px;font-size:14px;font-weight:600;color:#fff'>"+fval(p.valor)+"</div>";
+  if(tipo==="pecas") {
+    html += "<button class='btn-toggle"+(p.prioridade_cliente?" ativo":"")+"' onclick=\"togglePeca('"+p.id+"','prioridade_cliente')\">"+(p.prioridade_cliente?"⭐ Prioridade":"☆ Marcar como prioridade")+"</button>";
+  }
+  if(tipo==="entregues") {
+    if(p.confirmado_cliente_em) {
+      html += "<div class='confirmado-txt'>✓ Recebimento confirmado em "+fdata(p.confirmado_cliente_em.split("T")[0])+"</div>";
+    } else {
+      html += "<button class='btn-toggle' onclick=\"togglePeca('"+p.id+"','confirmado_cliente_em')\">Confirmar recebimento</button>";
+    }
+  }
+  html += "</div></div>";
+  return html;
+}
+function renderLista(lista, vazioMsg, tipo) {
+  if(!lista.length) return "<div class='empty'><span class='empty-ico'>🧵</span>"+vazioMsg+"</div>";
+  var html = "";
+  var porData = {};
+  lista.forEach(function(p){
+    var d = p.data_entrada || "—";
+    if(!porData[d]) porData[d]=[];
+    porData[d].push(p);
+  });
+  var datas = Object.keys(porData).sort(function(a,b){ return b.localeCompare(a); });
+  datas.forEach(function(d){
+    var totDia = porData[d].reduce(function(s,p){ return s+(p.valor||0); },0);
+    html += "<div class='eg'><div class='ehdr'>📅 Entrada em "+fdata(d)+"</div>";
+    porData[d].forEach(function(p){ html += renderPeca(p, tipo); });
+    if(totDia>0) html += "<div style='display:flex;justify-content:space-between;padding:8px 2px 2px;font-size:12px;font-weight:600;color:#fff'><span>Total do dia</span><span>"+fval(totDia)+"</span></div>";
+    html += "</div>";
+  });
+  return html;
+}
+function renderComTotal(lista, tituloTotal, vazioMsg, tipo) {
+  if(!lista.length) return renderLista(lista, vazioMsg, tipo);
+  var total = lista.reduce(function(s,p){ return s+(p.valor||0); },0);
+  var box = "<div class='total-box'><div class='tl'>"+tituloTotal+"</div><div class='tv'>"+fval(total)+"</div></div>";
+  return box + renderLista(lista, vazioMsg, tipo);
+}
+async function togglePeca(id, campo) {
+  var p = TODAS_PECAS.find(function(x){ return String(x.id)===String(id); });
+  if(!p) return;
+  var body = {};
+  if(campo==="prioridade_cliente") {
+    p.prioridade_cliente = !p.prioridade_cliente;
+    body.prioridade_cliente = p.prioridade_cliente;
+  } else if(campo==="confirmado_cliente_em") {
+    p.confirmado_cliente_em = p.confirmado_cliente_em ? null : new Date().toISOString();
+    body.confirmado_cliente_em = p.confirmado_cliente_em;
+  }
+  renderTudo();
+  try {
+    var res = await supaPatch("pecas?id=eq."+id, body);
+    if(!res.ok) throw new Error("patch falhou");
+  } catch(e) {
+    if(campo==="prioridade_cliente") p.prioridade_cliente = !p.prioridade_cliente;
+    if(campo==="confirmado_cliente_em") p.confirmado_cliente_em = p.confirmado_cliente_em ? null : new Date().toISOString();
+    renderTudo();
+  }
+}
+var CLI = null;
+var PAGAMENTOS = [];
+function renderTudo() {
+  var pecas = TODAS_PECAS;
+  var emAndamento = pecas.filter(function(p){ return p.status !== "entregue" && p.status !== "pronto"; });
+  var prontos = pecas.filter(function(p){ return p.status === "pronto"; });
+  var entregues = pecas.filter(function(p){ return p.status === "entregue"; });
+  var saldoAnt = CLI.saldo_anterior || 0;
+  var desconto = CLI.desconto || 0;
+  var pecasSum = pecas.reduce(function(s,p){ return s+(p.valor||0); },0);
+  var totP = pecasSum + saldoAnt;
+  var totPg = PAGAMENTOS.reduce(function(s,p){ return s+(p.valor||0); },0);
+  var saldo = totP - totPg - desconto;
+  var corP = saldo>0?"#8B0000":"#2E5E2E";
+  var subtotalP = saldoAnt+pecasSum;
+  var linhaP = function(lbl, val, opts){ opts=opts||{}; return "<div style='display:flex;justify-content:space-between;align-items:center;padding:"+(opts.pad||"7px")+" 0'><div style='font-size:"+(opts.fs||"13px")+";color:"+(opts.lc||"#6B6B6B")+";font-weight:"+(opts.lw||"400")+"'>"+lbl+"</div><div style='font-size:"+(opts.fs||"13px")+";font-weight:"+(opts.vw||"600")+";color:"+(opts.vc||"#0A0A0A")+"'>"+val+"</div></div>"; };
+  var resumoHTML = "<div style='background:#fff;border-radius:10px;padding:18px 16px;margin-bottom:12px'>"+
+    linhaP("Saldo anterior", fval(saldoAnt)||"R$ 0,00")+
+    linhaP("Peças", fval(pecasSum)||"R$ 0,00")+
+    "<div style='border-top:1px solid #F0F0F0;margin:8px 0'></div>"+
+    linhaP("Subtotal", fval(subtotalP)||"R$ 0,00", {lc:"#0A0A0A",lw:"600"})+
+    linhaP("Total pago", "− "+(fval(totPg)||"R$ 0,00"), {vc:"#2E5E2E"})+
+    (desconto>0?linhaP("Desconto", "− "+fval(desconto), {vc:"#2E5E2E"}):"")+
+    "<div style='border-top:2px solid #0A0A0A;margin:10px 0'></div>"+
+    "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total a pagar</div><div style='font-size:24px;font-weight:700;color:"+corP+"'>R$ "+saldo.toFixed(2).replace(".",",")+"</div></div>"+
+    "</div>";
+  var saldoHTML = "<div class='saldo-box'>"+
+    resumoHTML+
+    "<div class='pix-row'><div class='pix-chave' id='pix-chave'>"+CHAVE_PIX_ATELIE+"</div><button class='btn-pix' onclick='copiarPix()'>Copiar chave Pix</button></div>"+
+    (saldo>0?"<div class='saldo-msg'>Após o pagamento, envie o comprovante aqui pelo WhatsApp para darmos baixa no seu saldo. 🙏</div>":"<div class='saldo-msg' style='color:#2E5E2E'>Tudo em dia por aqui! 🎉</div>")+
+    "</div>";
+  document.getElementById("ct-pecas").textContent = emAndamento.length;
+  document.getElementById("ct-prontos").textContent = prontos.length;
+  document.getElementById("ct-entregues").textContent = entregues.length;
+  document.getElementById("ct-saldo").textContent = saldo>0?fval(saldo):"";
+  var html = "<div class='painel' id='painel-pecas'>"+renderComTotal(emAndamento,"Total em andamento","Nenhuma peça em andamento no momento.","pecas")+"</div>"+
+    "<div class='painel' id='painel-prontos'>"+renderComTotal(prontos,"Total pronto para retirar","Nenhuma peça pronta para retirar no momento.","prontos")+"</div>"+
+    "<div class='painel' id='painel-entregues'>"+renderComTotal(entregues,"Total entregue","Nenhuma peça entregue ainda.","entregues")+"</div>"+
+    "<div class='painel' id='painel-saldo'>"+saldoHTML+"</div>";
+  document.getElementById("body").innerHTML = html;
+  document.getElementById("tabs").style.display = "flex";
+  var primeira = ABA_ATUAL || (emAndamento.length?"pecas":prontos.length?"prontos":entregues.length?"entregues":"saldo");
+  mudarAba(primeira);
+}
 async function init() {
   var token = new URLSearchParams(window.location.search).get('token');
   if(!token) {
@@ -107,98 +255,16 @@ async function init() {
       document.getElementById("body").innerHTML = "<div class='erro'>Cliente não encontrado.</div>";
       return;
     }
-    var cli = clientes[0];
-    document.getElementById("cli-nome").textContent = cli.nome;
+    CLI = clientes[0];
+    document.getElementById("cli-nome").textContent = CLI.nome;
     document.getElementById("cli-sub").textContent = "Acompanhamento das suas peças";
-    var pecas = await supa("pecas?cliente_id=eq."+cli.id+"&order=data_entrada.desc,criado_em.desc");
-    var pagamentos = await supa("pagamentos?cliente_id=eq."+cli.id);
-    var ativas = pecas.filter(function(p){ return p.status !== "entregue"; });
-    var entregues = pecas.filter(function(p){ return p.status === "entregue"; });
-        var saldoAnt = cli.saldo_anterior || 0;
-    var desconto = cli.desconto || 0;
-    var pecasSum = pecas.reduce(function(s,p){ return s+(p.valor||0); },0);
-    var totP = pecasSum + saldoAnt;
-    var totPg = pagamentos.reduce(function(s,p){ return s+(p.valor||0); },0);
-    var saldo = totP - totPg - desconto;
-    var pgParaAnterior = Math.min(totPg, saldoAnt);
-    var saldoAntRestante = Math.max(0, saldoAnt-pgParaAnterior);
-    var pecasRestante = Math.max(0, (totP-saldoAnt)-(totPg-pgParaAnterior));
-if(!pecas.length) {
+    TODAS_PECAS = await supa("pecas?cliente_id=eq."+CLI.id+"&order=data_entrada.desc,criado_em.desc");
+    PAGAMENTOS = await supa("pagamentos?cliente_id=eq."+CLI.id);
+    if(!TODAS_PECAS.length) {
       document.getElementById("body").innerHTML = "<div class='empty'><span class='empty-ico'>🧵</span>Nenhuma peça no momento.</div>";
       return;
     }
-    var html = "";
-    if(ativas.length) {
-      html += "<div class='secao-titulo'>Peças em andamento</div>";
-      var porData = {};
-      ativas.forEach(function(p){
-        var d = p.data_entrada || "—";
-        if(!porData[d]) porData[d]=[];
-        porData[d].push(p);
-      });
-      var datas = Object.keys(porData).sort(function(a,b){ return b.localeCompare(a); });
-      datas.forEach(function(d){
-        var totDia = porData[d].reduce(function(s,p){ return s+(p.valor||0); },0);
-        html += "<div class='eg'><div class='ehdr'>📅 Entrada em "+fdata(d)+"</div>";
-        porData[d].forEach(function(p){
-          html += "<div class='pcard'>";
-          if(p.foto_url) html += "<img src='"+p.foto_url+"' class='pfoto' loading='lazy' decoding='async'>";
-          html += "<div class='pinfo'><div class='pnome'>"+p.peca+"</div>";
-          if(p.servico) html += "<div class='pserv'>"+p.servico+"</div>";
-          html += "<span class='badge "+p.status+"'>"+slbl(p.status)+"</span>";
-          if(p.valor) html += "<div style='margin-top:8px;font-size:14px;font-weight:600;color:#fff'>"+fval(p.valor)+"</div>";
-          html += "</div></div>";
-        });
-        if(totDia>0) html += "<div style='display:flex;justify-content:space-between;padding:8px 2px 2px;font-size:12px;font-weight:600;color:#fff'><span>Total do dia</span><span>"+fval(totDia)+"</span></div>";
-        html += "</div>";
-      });
-    }
-    if(entregues.length) {
-      var totalEntregue = entregues.reduce(function(s,p){ return s+(p.valor||0); },0);
-      html += "<div class='secao-titulo' style='margin-top:24px'>Peças entregues</div>";
-      html += "<div style='background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center'><div style='font-size:12px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total entregue</div><div style='font-size:16px;font-weight:700;color:#0A0A0A'>"+fval(totalEntregue)+"</div></div>";
-      var porDataEnt = {};
-      entregues.forEach(function(p){
-        var d = p.data_entrada || "—";
-        if(!porDataEnt[d]) porDataEnt[d]=[];
-        porDataEnt[d].push(p);
-      });
-      var datasEnt = Object.keys(porDataEnt).sort(function(a,b){ return b.localeCompare(a); });
-      datasEnt.forEach(function(d){
-        var totDia = porDataEnt[d].reduce(function(s,p){ return s+(p.valor||0); },0);
-        html += "<div class='eg'><div class='ehdr'>📅 Entrada em "+fdata(d)+"</div>";
-        porDataEnt[d].forEach(function(p){
-          html += "<div class='pcard'>";
-          if(p.foto_url) html += "<img src='"+p.foto_url+"' class='pfoto' loading='lazy' decoding='async'>";
-          html += "<div class='pinfo'><div class='pnome'>"+p.peca+"</div>";
-          if(p.servico) html += "<div class='pserv'>"+p.servico+"</div>";
-          html += "<span class='badge entregue'>"+slbl("entregue")+"</span>";
-          if(p.valor) html += "<div style='margin-top:8px;font-size:14px;font-weight:600;color:#fff'>"+fval(p.valor)+"</div>";
-          html += "</div></div>";
-        });
-        if(totDia>0) html += "<div style='display:flex;justify-content:space-between;padding:8px 2px 2px;font-size:12px;font-weight:600;color:#fff'><span>Total do dia</span><span>"+fval(totDia)+"</span></div>";
-        html += "</div>";
-      });
-    }
-        var corP = saldo>0?"#8B0000":"#2E5E2E";
-    var subtotalP = saldoAnt+pecasSum;
-    var linhaP = function(lbl, val, opts){ opts=opts||{}; return "<div style='display:flex;justify-content:space-between;align-items:center;padding:"+(opts.pad||"7px")+" 0'><div style='font-size:"+(opts.fs||"13px")+";color:"+(opts.lc||"#6B6B6B")+";font-weight:"+(opts.lw||"400")+"'>"+lbl+"</div><div style='font-size:"+(opts.fs||"13px")+";font-weight:"+(opts.vw||"600")+";color:"+(opts.vc||"#0A0A0A")+"'>"+val+"</div></div>"; };
-    var resumoHTML = "<div style='background:#fff;border-radius:10px;padding:18px 16px;margin-bottom:12px'>"+
-      linhaP("Saldo anterior", fval(saldoAnt)||"R$ 0,00")+
-      linhaP("Saldo", fval(pecasSum)||"R$ 0,00")+
-      "<div style='border-top:1px solid #F0F0F0;margin:8px 0'></div>"+
-      linhaP("Subtotal", fval(subtotalP)||"R$ 0,00", {lc:"#0A0A0A",lw:"600"})+
-      linhaP("Total pago", "− "+(fval(totPg)||"R$ 0,00"), {vc:"#2E5E2E"})+
-      (desconto>0?linhaP("Desconto", "− "+fval(desconto), {vc:"#2E5E2E"}):"")+
-      "<div style='border-top:2px solid #0A0A0A;margin:10px 0'></div>"+
-      "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total a pagar</div><div style='font-size:24px;font-weight:700;color:"+corP+"'>R$ "+saldo.toFixed(2).replace(".",",")+"</div></div>"+
-      "</div>";
-    html += "<div class='saldo-box'>"+
-      resumoHTML+
-      "<div class='pix-row'><div class='pix-chave' id='pix-chave'>"+CHAVE_PIX_ATELIE+"</div><button class='btn-pix' onclick='copiarPix()'>Copiar chave Pix</button></div>"+
-      (saldo>0?"<div class='saldo-msg'>Após o pagamento, envie o comprovante aqui pelo WhatsApp para darmos baixa no seu saldo. 🙏</div>":"<div class='saldo-msg' style='color:#2E5E2E'>Tudo em dia por aqui! 🎉</div>")+
-      "</div>";
-document.getElementById("body").innerHTML = html;
+    renderTudo();
   } catch(e) {
     document.getElementById("body").innerHTML = "<div class='erro'>Erro ao carregar: "+e.message+"</div>";
   }
