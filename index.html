@@ -134,7 +134,7 @@ input:focus,select:focus{border-color:#0A0A0A}
   <div class="tabs">
     <button class="tab active" onclick="goTab('clientes',this)">Clientes</button>
     <button class="tab" onclick="goTab('resumo',this)">Resumo</button>
-  
+
   <button class="tab" onclick="goTab('config',this)">Config</button>
 </div>
 </header>
@@ -148,6 +148,7 @@ input:focus,select:focus{border-color:#0A0A0A}
   <div class="filtros">
     <button class="filtro ativo" onclick="filtrar('todos',this)">Todos</button>
     <button class="filtro" onclick="filtrar('urgente',this)">🔴 Urgentes</button>
+    <button class="filtro" onclick="filtrar('prioridade',this)">⭐ Prioridade cliente</button>
     <button class="filtro" onclick="filtrar('aguardando',this)">Aguardando</button>
     <button class="filtro" onclick="filtrar('em-andamento',this)">Em andamento</button>
     <button class="filtro" onclick="filtrar('pronto',this)">Prontos</button>
@@ -261,7 +262,7 @@ input:focus,select:focus{border-color:#0A0A0A}
       <div class="fg"><label>Costureira</label><select id="np-cos"><option value="">Selecionar...</option><option>Ana</option><option>Maria</option><option>Lucia</option><option>Allyne (eu)</option></select></div>
     </div>
     <div class="fg"><label>Prazo</label><input type="date" id="np-prazo"></div>
- 
+
     <div class="fg">
       <label>📸 Foto da peça</label>
       <input type="file" id="np-cam" accept="image/*" style="display:none" onchange="fotoSelecionada(this)">
@@ -440,7 +441,7 @@ var PECAS_DIC = {
 "lencol":"lençol","lencois":"lençóis","fronha":"fronha","fronhas":"fronhas",
 "toalha":"toalha","toalhas":"toalhas","almofada":"almofada","almofadas":"almofadas"
 };
-function normPal(w){ return w.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase(); }
+function normPal(w){ return w.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase(); }
 function corrigirPalavra(w){
   var m = w.match(/^(\W*)(\w+)(\W*)$/);
   if(!m) return w;
@@ -666,15 +667,16 @@ async function renderLista(){
     }
     if(FILTRO!=="todos"){
       clientes = clientes.filter(function(c){
-        return c.pecas && c.pecas.some(function(p){ return FILTRO==="urgente"?isUrgente(p):p.status===FILTRO; });
+        return c.pecas && c.pecas.some(function(p){ return FILTRO==="urgente"?isUrgente(p):FILTRO==="prioridade"?p.prioridade_cliente:p.status===FILTRO; });
       });
     }
     cont.innerHTML = clientes.map(function(c){
       var total = c.pecas ? c.pecas.length : 0;
       var ativas = c.pecas ? c.pecas.filter(function(p){ return p.status!=="entregue"; }).length : 0;
       var temUrg = c.pecas && c.pecas.some(isUrgente);
+      var temPrior = c.pecas && c.pecas.some(function(p){ return p.prioridade_cliente; });
       return "<div class='cli-item' data-id='"+c.id+"' data-nome='"+c.nome.replace(/'/g,"&#39;")+"' onclick='abrirPerfil(this.dataset.id,this.dataset.nome)'>" +
-        "<div><div class='cli-nome'>"+(temUrg?"🔴 ":"")+c.nome+"</div><div class='cli-meta'>"+ativas+" ativa"+(ativas!==1?"s":"")+" · "+total+" total</div></div>" +
+        "<div><div class='cli-nome'>"+(temUrg?"🔴 ":"")+(temPrior?"⭐ ":"")+c.nome+"</div><div class='cli-meta'>"+ativas+" ativa"+(ativas!==1?"s":"")+" · "+total+" total</div></div>" +
         "<div style='display:flex;gap:6px;align-items:center'><button class='bm' data-id='"+c.id+"' data-nome='"+c.nome.replace(/'/g,"&#39;")+"' data-tel='"+(c.telefone||"").replace(/'/g,"&#39;")+"' data-end='"+(c.endereco||"").replace(/'/g,"&#39;")+"' onclick='event.stopPropagation();editarCliente(this)' style='font-size:11px'>✏️</button><button class='bm' data-id='"+c.id+"' onclick='event.stopPropagation();excluirCliente(this)' style='font-size:11px;color:#B8B8B8'>🗑️</button><span class='cli-arrow'>›</span></div></div>";
     }).join("");
   } catch(e) {
@@ -754,7 +756,7 @@ pp.map(function(p){ return mkPecaHTML(p, comAcoes); }).join("")+
 }
 function mkPecaHTML(p, comAcoes){
   var fotoHTML = p.foto_url ? "<img src='"+p.foto_url+"' class='pfoto' loading='lazy' decoding='async' data-url='"+p.foto_url+"' onclick='verFoto(this.dataset.url)'>" : "";
-  var html = "<div class='pi'><div class='pin'>"+fotoHTML+"<div class='pn' style='text-transform:uppercase'>"+p.peca+"</div>"+(p.observacao?"<div class='ps' style='font-style:italic;color:royalblue'>"+p.observacao+"</div>":"")+(p.marca?"<div class='ps' style='text-transform:uppercase;font-weight:700;color:#6B6B6B'>"+p.marca+"</div>":"")+(p.servico?p.servico.split(" + ").map(function(sv){ return "<div class='ps'>• "+sv+"</div>"; }).join(""):"<div class='ps'>—</div>")+(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+Number(p.valor).toFixed(2).replace('.',',')+"</div>":"")+"<div class='pc'>"+(p.numero_comanda?"🎫 Nº "+String(p.numero_comanda).padStart(4,"0")+" · ":"")+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div>"+(p.retrabalho_costureira?"<div class='ps' style='color:#B8860B;font-weight:600'>🔁 Retrabalho: "+p.retrabalho_costureira+(p.retrabalho_valor_costureira?" · R$ "+Number(p.retrabalho_valor_costureira).toFixed(2).replace('.',','):"")+"</div>":"")+"</div><div class='pd'><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
+  var html = "<div class='pi'><div class='pin'>"+fotoHTML+"<div class='pn' style='text-transform:uppercase'>"+p.peca+"</div>"+(p.observacao?"<div class='ps' style='font-style:italic;color:royalblue'>"+p.observacao+"</div>":"")+(p.marca?"<div class='ps' style='text-transform:uppercase;font-weight:700;color:#6B6B6B'>"+p.marca+"</div>":"")+(p.servico?p.servico.split(" + ").map(function(sv){ return "<div class='ps'>• "+sv+"</div>"; }).join(""):"<div class='ps'>—</div>")+(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+Number(p.valor).toFixed(2).replace('.',',')+"</div>":"")+"<div class='pc'>"+(p.numero_comanda?"🎫 Nº "+String(p.numero_comanda).padStart(4,"0")+" · ":"")+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div>"+(p.retrabalho_costureira?"<div class='ps' style='color:#B8860B;font-weight:600'>🔁 Retrabalho: "+p.retrabalho_costureira+(p.retrabalho_valor_costureira?" · R$ "+Number(p.retrabalho_valor_costureira).toFixed(2).replace('.',','):"")+"</div>":"")+(p.prioridade_cliente?"<div class='ps' style='color:#B8860B;font-weight:700'>⭐ Cliente marcou como prioridade</div>":"")+(p.confirmado_cliente_em?"<div class='ps' style='color:#2E5E2E;font-weight:600'>✓ Cliente confirmou recebimento em "+fdata(p.confirmado_cliente_em.split("T")[0])+"</div>":"")+"</div><div class='pd'><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
   if(comAcoes){
     var id = p.id;
     var acoes = "<button class='bm' data-id='"+id+"' data-peca='"+p.peca+"' data-serv='"+(p.servico||"")+"' data-cos='"+(p.costureira||"").replace(/'/g,"&#39;")+"' onclick='abrirSt(this)'>Status</button>";
@@ -1354,7 +1356,7 @@ renderLista();
       <img id="ed-prev" class="foto-preview">
       <p id="ed-foto-status" style="font-size:11px;color:#6B6B6B;margin-top:5px;display:none"></p>
     </div>
- 
+
     <button class="btn-p" onclick="salvarEdicao()">Salvar alterações</button>
     <button class="btn-s" onclick="closeMod('mod-editar')">Cancelar</button>
   </div>
