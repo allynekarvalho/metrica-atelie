@@ -808,7 +808,7 @@ async function renderFinanceiro(){
       "<div style='border-top:2px solid #0A0A0A;margin:10px 0'></div>"+
       "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total a pagar</div><div style='font-size:26px;font-weight:700;color:"+cor+"'>"+fval(saldo)+"</div></div>"+
       "</div>"+
-      "<div style='text-align:right;margin:-6px 0 12px;display:flex;justify-content:flex-end;gap:14px'><button onclick='editarSaldoAnt()' style='font-size:11px;color:#6B6B6B;border:none;background:none;cursor:pointer;text-decoration:underline;font-family:DM Sans,sans-serif'>"+(saldoAnt>0?"Editar saldo anterior":"+ Adicionar saldo anterior")+"</button><button onclick='editarDesconto()' style='font-size:11px;color:#6B6B6B;border:none;background:none;cursor:pointer;text-decoration:underline;font-family:DM Sans,sans-serif'>"+(desconto>0?"Editar desconto":"+ Adicionar desconto")+"</button></div>";
+      "<div style='text-align:right;margin:-6px 0 12px;display:flex;justify-content:flex-end;gap:14px'><button onclick='editarSaldoAnt()' style='font-size:11px;color:#6B6B6B;border:none;background:none;cursor:pointer;text-decoration:underline;font-family:DM Sans,sans-serif'>"+(saldoAnt>0?"Editar saldo anterior":"+ Adicionar saldo anterior")+"</button><button onclick='editarDesconto("+subtotalD+")' style='font-size:11px;color:#6B6B6B;border:none;background:none;cursor:pointer;text-decoration:underline;font-family:DM Sans,sans-serif'>"+(desconto>0?"Editar desconto":"+ Adicionar desconto")+"</button></div>";
     var pgHTML = pags.length
       ? "<div class='pgl'>"+pags.map(function(p){ return "<div class='pgi'><div><div class='pgv'>+ "+fval(p.valor)+"</div><div class='pgd'>"+(p.data||"")+(p.observacao?" · "+p.observacao:"")+"</div></div><button data-id='"+p.id+"' onclick='excluirPag(this)' style='font-size:11px;color:#B8B8B8;border:none;background:none;cursor:pointer'>✕</button></div>"; }).join("")+"</div>"
       : "<div class='pgl'><div style='padding:16px;font-size:13px;color:#6B6B6B'>Nenhum pagamento registrado.</div></div>";
@@ -888,10 +888,10 @@ async function editarSaldoAnt(){
   await supa("clientes?id=eq."+CLI_ATIVA_ID, {method:"PATCH", body:{saldo_anterior:num}});
   renderFinanceiro();
 }
-async function editarDesconto(){
+async function editarDesconto(subtotal){
   var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
   var atual = (cli[0]&&cli[0].desconto)||0;
-  var val = prompt("Desconto de "+CLI_ATIVA+":", atual);
+  var val = prompt("Desconto de "+CLI_ATIVA+" — digite em R$ (ex: 15) ou em % (ex: 10%):", atual); if(val===null) return; val=val.trim(); var num; if(val.indexOf("%")>-1){ var pct=parseFloat(val.replace("%","").replace(",","."))||0; num=+(((subtotal)||0)*pct/100).toFixed(2); } else { num=parseFloat(val.replace(",","."))||0; } await supa("clientes?id=eq."+CLI_ATIVA_ID, {method:"PATCH", body:{desconto:num}}); renderFinanceiro(); } async function __descontoDead(){
   if(val===null) return;
   var num = parseFloat(val)||0;
   await supa("clientes?id=eq."+CLI_ATIVA_ID, {method:"PATCH", body:{desconto:num}});
