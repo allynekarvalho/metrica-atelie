@@ -154,7 +154,7 @@ input:focus,select:focus{border-color:#0A0A0A}
     <button class="filtro" onclick="filtrar('pronto',this)">Prontos</button>
     <button class="filtro" onclick="filtrar('entregue',this)">Entregues</button>
   </div>
-  <input id="busca-cli" placeholder="🔍 Buscar cliente ou nº da comanda..." oninput="renderLista()" style="width:100%;padding:12px 14px;border:1px solid #2E2E2E;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:15px;color:#fff;background:#1C1C1C;outline:none;margin-bottom:14px">
+  <div style="position:relative;margin-bottom:14px"><input id="busca-cli" placeholder="🔍 Buscar cliente ou nº da comanda..." oninput="renderLista();toggleClearBusca()" style="width:100%;padding:12px 34px 12px 14px;border:1px solid #2E2E2E;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:15px;color:#fff;background:#1C1C1C;outline:none"><button type="button" id="busca-cli-clear" onclick="limparBusca()" style="display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:#B8B8B8;font-size:20px;cursor:pointer;padding:4px 8px;line-height:1">✕</button></div>
   <div id="lista-cli"></div>
 </div>
 <div class="sc" id="tela-perfil">
@@ -637,7 +637,7 @@ if(t==="clientes") renderLista();
 if(t==="resumo") renderRes();
 if(t==="config") renderConfig();
 }
-async function renderLista(){
+function toggleClearBusca(){var inp=document.getElementById("busca-cli");var btn=document.getElementById("busca-cli-clear");if(btn)btn.style.display=(inp&&inp.value)?"block":"none";}function limparBusca(){var inp=document.getElementById("busca-cli");if(!inp)return;inp.value="";toggleClearBusca();renderLista();inp.focus();}async function renderLista(){
   var cont = document.getElementById("lista-cli");
   cont.innerHTML = "<div class='loading'>Carregando...</div>";
   try {
