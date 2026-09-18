@@ -123,6 +123,11 @@ input:focus,select:focus{border-color:#0A0A0A}
 .cfg-del{background:transparent;border:none;color:#B8B8B8;font-size:16px;cursor:pointer;padding:0 6px}
 .cfg-add{display:flex;gap:8px;margin-top:6px}
 .eprint{padding:10px 14px;border-top:1px solid #E8E8E8}
+.selw{flex:0 0 auto;position:relative;display:flex;align-items:flex-start;padding-top:2px;cursor:pointer}
+.selw input{position:absolute;opacity:0;width:0;height:0;padding:0;border:0}
+.selw span{width:26px;height:26px;border-radius:50%;border:2px solid #B8B8B8;background:#fff;display:block}
+.selw input:checked+span{background:#0A0A0A;border-color:#0A0A0A}
+.selw input:checked+span::after{content:"✓";color:#fff;font-size:15px;display:block;text-align:center;line-height:22px}
 </style>
 </head>
 <body>
@@ -140,6 +145,7 @@ input:focus,select:focus{border-color:#0A0A0A}
 <button class="tab" onclick="goTab('config',this)">Config</button>
 </div>
 </header>
+<div id="sel-bar" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:150;background:#0A0A0A;border-top:1px solid #2E2E2E;padding:10px 14px;gap:8px;align-items:center"><span id="sel-n" style="flex:1;font-size:13px;color:#fff;font-weight:600"></span><button class="bm" onclick="selTodas()">Todas</button><button class="bm" onclick="imprimirSel()">🖨️ Imprimir</button><button class="bm vd" onclick="selEnviar()">💬 Enviar</button><button class="bm" onclick="selLimpar()">✕</button></div>
 <div class="toast" id="toast"></div>
 <datalist id="marcas-dl"></datalist><datalist id="lojas-dl"></datalist>
 <div class="sc active" id="tela-clientes">
@@ -772,6 +778,44 @@ function agCalendario(id){
   document.body.appendChild(l); l.click(); document.body.removeChild(l);
   setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
 }
+function selIds(){ return Array.prototype.map.call(document.querySelectorAll("#tela-perfil .selp-cb:checked"), function(c){ return c.value; }); }
+function selAtualizar(){
+  var bar = document.getElementById("sel-bar"); if(!bar) return;
+  var perfil = document.getElementById("tela-perfil").classList.contains("active");
+  var n = perfil ? selIds().length : 0;
+  bar.style.display = n ? "flex" : "none";
+  document.getElementById("sel-n").textContent = n+" selecionada"+(n>1?"s":"");
+}
+function selTodas(){
+  var cbs = document.querySelectorAll("#tela-perfil .fpanel.active .selp-cb");
+  var todas = Array.prototype.every.call(cbs, function(c){ return c.checked; });
+  Array.prototype.forEach.call(cbs, function(c){ c.checked = !todas; });
+  selAtualizar();
+}
+function selLimpar(){ document.querySelectorAll("#tela-perfil .selp-cb").forEach(function(c){ c.checked = false; }); selAtualizar(); }
+function imprimirSel(){ var ids = selIds(); if(!ids.length) return; window.IMPR_IDS = ids; imprimirComanda(ids[0], false); }
+async function selEnviar(){
+  var ids = selIds(); if(!ids.length) return;
+  try {
+    var r = await Promise.all([ supa("pecas?id=in.("+ids.join(",")+")&select=peca,servico,valor,status"), supa("clientes?id=eq."+CLI_ATIVA_ID+"&select=telefone") ]);
+    var pp = r[0] || [];
+    var todasProntas = pp.every(function(p){ return p.status === "pronto"; });
+    var linhas = ["Olá, "+CLI_ATIVA+"! 😊", ""];
+    linhas.push(todasProntas ? (pp.length>1 ? "Suas peças estão prontas e passaram pela conferência final:" : "Sua peça está pronta e passou pela conferência final:") : "Segue a situação das suas peças:");
+    linhas.push("");
+    var total = 0;
+    pp.forEach(function(p){ total += (p.valor||0); linhas.push("👗 "+p.peca+(p.servico ? " — "+p.servico : "")+(todasProntas ? "" : " ("+slbl(p.status)+")")); });
+    if(total > 0) linhas.push("", "💰 Total: "+fval(total));
+    linhas.push("", todasProntas ? "Quando preferir vir retirar 🌸" : "Qualquer dúvida é só chamar 🌸", "", "— Métrica Ateliê");
+    var msg = linhas.join("\n");
+    var tel = ((r[1] && r[1][0] && r[1][0].telefone) || "").replace(/\D/g,"");
+    if(tel && tel.length <= 11) tel = "55"+tel;
+    document.getElementById("mw-cli").textContent = CLI_ATIVA;
+    document.getElementById("mw-txt").textContent = msg;
+    document.getElementById("wpp-open").href = "https://wa.me/"+tel+"?text="+encodeURIComponent(msg);
+    document.getElementById("mod-wpp").classList.add("open");
+  } catch(e){ showToast("Erro ao montar mensagem."); }
+}
 function calcComSt(){
   var v = parseFloat(document.getElementById("mst-valcos").value)||0;
   document.getElementById("mst-com").value = (v*0.45).toFixed(2);
@@ -826,6 +870,7 @@ if(t==="resumo") renderRes();
 if(t==="config") renderConfig();
 if(t==="relatorio") renderRelatorio();
 if(t==="agenda") renderAgenda();
+selAtualizar();
 }
 function toggleClearBusca(){var inp=document.getElementById("busca-cli");var btn=document.getElementById("busca-cli-clear");if(btn)btn.style.display=(inp&&inp.value)?"block":"none";}function limparBusca(){var inp=document.getElementById("busca-cli");if(!inp)return;inp.value="";toggleClearBusca();renderLista();inp.focus();}async function renderLista(){
   var cont = document.getElementById("lista-cli");
@@ -920,6 +965,7 @@ async function renderPerfil(){
     var totalEntregue = entregues.reduce(function(s,p){ return s+(p.valor||0); },0);
     var totEntregueHTML = entregues.length ? "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:14px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center'><div style='font-size:12px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total entregue</div><div style='font-size:18px;font-weight:700;color:#0A0A0A'>"+fval(totalEntregue)+"</div></div>" : "";
     document.getElementById("fp-e").innerHTML = totEntregueHTML + (mkEntradasHTML(entregues, false) || "<div class='vz'><span class='vi2'>📦</span>Nenhuma entregue.</div>");
+selAtualizar();
   } catch(e) {
     document.getElementById("fp-p").innerHTML = "<div class='vz'>Erro: "+e.message+"</div>";
   }
@@ -946,7 +992,7 @@ pp.map(function(p){ return mkPecaHTML(p, comAcoes); }).join("")+
 }
 function mkPecaHTML(p, comAcoes){
   var fotoHTML = p.foto_url ? "<img src='"+p.foto_url+"' class='pfoto' loading='lazy' decoding='async' data-url='"+p.foto_url+"' onclick='verFoto(this.dataset.url)'>" : "";
-  var html = "<div class='pi'><div class='pin'>"+fotoHTML+"<div class='pn' style='text-transform:uppercase'>"+p.peca+"</div>"+(p.observacao?"<div class='ps' style='font-style:italic;color:royalblue'>"+p.observacao+"</div>":"")+(p.marca?"<div class='ps' style='text-transform:uppercase;font-weight:700;color:#6B6B6B'>"+p.marca+"</div>":"")+(p.pago_por?"<div class='ps' style='color:#6B4FA0;font-weight:700'>🏬 "+p.pago_por+(p.loja_pago?" · pago":" · a receber")+"</div>":"")+(p.servico?p.servico.split(" + ").map(function(sv){ return "<div class='ps'>• "+sv+"</div>"; }).join(""):"<div class='ps'>—</div>")+(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+Number(p.valor).toFixed(2).replace('.',',')+"</div>":"")+"<div class='pc'>"+(p.numero_comanda?"🎫 Nº "+String(p.numero_comanda).padStart(4,"0")+" · ":"")+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div>"+(p.retrabalho_costureira?"<div class='ps' style='color:#B8860B;font-weight:600'>🔁 Retrabalho: "+p.retrabalho_costureira+(p.retrabalho_valor_costureira?" · R$ "+Number(p.retrabalho_valor_costureira).toFixed(2).replace('.',','):"")+"</div>":"")+(p.prioridade_cliente?"<div class='ps' style='color:#B8860B;font-weight:700'>⭐ Cliente marcou como prioridade</div>":"")+(p.confirmado_cliente_em?"<div class='ps' style='color:#2E5E2E;font-weight:600'>✓ Cliente confirmou recebimento em "+fdata(p.confirmado_cliente_em.split("T")[0])+"</div>":"")+"</div><div class='pd'><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
+  var html = "<div class='pi'>"+(comAcoes ? "<label class='selw'><input type='checkbox' class='selp-cb' value='"+p.id+"' onchange='selAtualizar()'><span></span></label>" : "")+"<div class='pin'>"+fotoHTML+"<div class='pn' style='text-transform:uppercase'>"+p.peca+"</div>"+(p.observacao?"<div class='ps' style='font-style:italic;color:royalblue'>"+p.observacao+"</div>":"")+(p.marca?"<div class='ps' style='text-transform:uppercase;font-weight:700;color:#6B6B6B'>"+p.marca+"</div>":"")+(p.pago_por?"<div class='ps' style='color:#6B4FA0;font-weight:700'>🏬 "+p.pago_por+(p.loja_pago?" · pago":" · a receber")+"</div>":"")+(p.servico?p.servico.split(" + ").map(function(sv){ return "<div class='ps'>• "+sv+"</div>"; }).join(""):"<div class='ps'>—</div>")+(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+Number(p.valor).toFixed(2).replace('.',',')+"</div>":"")+"<div class='pc'>"+(p.numero_comanda?"🎫 Nº "+String(p.numero_comanda).padStart(4,"0")+" · ":"")+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div>"+(p.retrabalho_costureira?"<div class='ps' style='color:#B8860B;font-weight:600'>🔁 Retrabalho: "+p.retrabalho_costureira+(p.retrabalho_valor_costureira?" · R$ "+Number(p.retrabalho_valor_costureira).toFixed(2).replace('.',','):"")+"</div>":"")+(p.prioridade_cliente?"<div class='ps' style='color:#B8860B;font-weight:700'>⭐ Cliente marcou como prioridade</div>":"")+(p.confirmado_cliente_em?"<div class='ps' style='color:#2E5E2E;font-weight:600'>✓ Cliente confirmou recebimento em "+fdata(p.confirmado_cliente_em.split("T")[0])+"</div>":"")+"</div><div class='pd'><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
   if(comAcoes){
     var id = p.id;
     var acoes = "<button class='bm' data-id='"+id+"' data-peca='"+p.peca+"' data-serv='"+(p.servico||"")+"' data-cos='"+(p.costureira||"").replace(/'/g,"&#39;")+"' onclick='abrirSt(this)'>Status</button>";
@@ -1327,6 +1373,7 @@ async function renderComissoes(pecas){
   document.getElementById("res-com").innerHTML = html;
 }
 function populateLojaSelect(){var sel=document.getElementById("fechloja-nome");if(!sel)return;var cur=sel.value;sel.innerHTML="<option value=''>Selecione a loja...</option>"+LOJAS.slice().sort().map(function(l){return "<option"+(l===cur?" selected":"")+">"+l+"</option>";}).join("");}async function renderFechamentoLoja(){populateLojaSelect();var loja=document.getElementById("fechloja-nome").value;var mesEl=document.getElementById("fechloja-mes");if(!mesEl.value){var hj=new Date();mesEl.value=hj.getFullYear()+"-"+String(hj.getMonth()+1).padStart(2,"0");}var mes=mesEl.value;var box=document.getElementById("res-fechloja");if(!loja){box.innerHTML="<div class='vz'>Selecione uma loja para ver o fechamento.</div>";return;}box.innerHTML="<div class='loading'>Carregando...</div>";var partes=mes.split("-");var ini=mes+"-01";var ultimoDia=new Date(parseInt(partes[0]),parseInt(partes[1]),0).getDate();var fim=mes+"-"+String(ultimoDia).padStart(2,"0");try{var pecasLoja=await supa("pecas?pago_por=eq."+encodeURIComponent(loja)+"&data_entrada=gte."+ini+"&data_entrada=lte."+fim+"&order=data_entrada");var pend=pecasLoja.filter(function(p){return !p.loja_pago;});var pagas=pecasLoja.filter(function(p){return p.loja_pago;});var totPend=pend.reduce(function(s,p){return s+(p.valor||0);},0);var totPagas=pagas.reduce(function(s,p){return s+(p.valor||0);},0);var linhaP=function(p){return "<div class='cp'><span style='color:#2E2E2E'>"+p.cliente_nome+" · "+p.peca+"</span><span style='font-weight:600;color:#8B0000'>"+fval(p.valor)+"</span></div>";};var html="<div class='cb'><div class='ct'>🏬 "+loja+" · "+pend.length+" pendente"+(pend.length!==1?"s":"")+"</div>"+(pend.length?pend.map(linhaP).join(""):"<div class='cp'><span style='color:#6B6B6B'>Nenhuma pendência neste mês.</span></div>")+"<div class='cp' style='border-top:1px solid #F0F0F0;margin-top:6px;padding-top:8px'><span style='font-weight:700'>Total a receber</span><span style='font-weight:700;color:#8B0000'>"+fval(totPend)+"</span></div></div>"+(pagas.length?("<div class='cb'><div class='ct'>✓ Já pagas neste mês · "+pagas.length+"</div><div class='cp'><span style='color:#2E2E2E'>Total recebido</span><span style='font-weight:600;color:#2E5E2E'>"+fval(totPagas)+"</span></div></div>"):"");if(pend.length){html+="<button class='btn-p' style='margin-top:10px' onclick='marcarFechamentoLojaPago("+JSON.stringify(loja)+","+JSON.stringify(ini)+","+JSON.stringify(fim)+")'>✓ Marcar mês como pago ("+fval(totPend)+")</button>";}box.innerHTML=html;}catch(e){box.innerHTML="<div style='padding:12px;color:red'>Erro: "+e.message+"</div>";}}async function marcarFechamentoLojaPago(loja,ini,fim){if(!confirm("Confirmar recebimento de "+loja+" para este período?"))return;await supa("pecas?pago_por=eq."+encodeURIComponent(loja)+"&data_entrada=gte."+ini+"&data_entrada=lte."+fim+"&loja_pago=eq.false",{method:"PATCH",body:{loja_pago:true}});showToast("Fechamento registrado!");renderFechamentoLoja();}async function imprimirComanda(id, apenasEsta) {
+var idsSel = window.IMPR_IDS || null; window.IMPR_IDS = null;
 var p = await supa("pecas?id=eq."+id);
 if(!p||!p[0]) return;
 p = p[0];
@@ -1339,7 +1386,8 @@ if(!numeroComanda){
   await Promise.all(pecasDia.map(function(pc){ return supa("pecas?id=eq."+pc.id, {method:"PATCH", body:{numero_comanda:numeroComanda}}); }));
   pecasDia.forEach(function(pc){ pc.numero_comanda = numeroComanda; });
 }
-var pecasImprimir = apenasEsta ? [p] : pecasDia;
+var pecasImprimir = idsSel ? (await supa("pecas?id=in.("+idsSel.join(",")+")&order=criado_em")) : (apenasEsta ? [p] : pecasDia);
+if(!pecasImprimir || !pecasImprimir.length) pecasImprimir = [p];
 var data = p.data_entrada ? new Date(p.data_entrada+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"}) : new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
 var itensHTML = pecasImprimir.map(function(pc){
 return "<div class='item-peca'>"+
