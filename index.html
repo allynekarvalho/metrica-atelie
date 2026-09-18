@@ -243,7 +243,7 @@ input:focus,select:focus{border-color:#0A0A0A}
     <div class="fg"><label>Marca (opcional)</label><input id="np-marca" list="marcas-dl" placeholder="Ex: Zara, Farm, Louis Vuitton..." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
     <div class="fg">
       <label>Serviço</label>
-      <input id="np-svc-busca" placeholder="🔍 Buscar serviço..." oninput="renderSvcTags(this.value)" style="margin-bottom:8px">
+      <div style="position:relative;margin-bottom:8px"><input id="np-svc-busca" placeholder="🔍 Buscar serviço..." oninput="renderSvcTags(this.value);toggleClearSvcBusca()" style="padding:12px 34px 12px 14px"><button type="button" id="np-svc-busca-clear" onclick="limparBuscaSvc()" style="display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:#B8B8B8;font-size:20px;cursor:pointer;padding:4px 8px;line-height:1">✕</button></div>
       <div class="stags" id="np-stags"></div>
       <p id="np-svc-vazio" style="display:none;font-size:12px;color:#B8B8B8;padding:8px 0">Nenhum serviço encontrado.</p>
       <input id="np-serv" placeholder="Serviços selecionados..." readonly style="margin-top:8px">
@@ -493,7 +493,10 @@ function initSvc(){
   var busca = document.getElementById("np-svc-busca");
   if(busca) busca.value = "";
   renderSvcTags("");
+  toggleClearSvcBusca();
 }
+  function toggleClearSvcBusca(){ var inp=document.getElementById("np-svc-busca"); var btn=document.getElementById("np-svc-busca-clear"); if(btn) btn.style.display=(inp&&inp.value)?"block":"none"; }
+  function limparBuscaSvc(){ var inp=document.getElementById("np-svc-busca"); if(!inp) return; inp.value=""; renderSvcTags(""); toggleClearSvcBusca(); inp.focus(); }
 function renderSvcTags(filtro){
   var c = document.getElementById("np-stags");
   var vazio = document.getElementById("np-svc-vazio");
