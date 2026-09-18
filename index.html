@@ -281,6 +281,7 @@ input:focus,select:focus{border-color:#0A0A0A}
     <div class="mh"></div>
     <h2 id="mst-cli"></h2><p class="msub" id="mst-peca"></p>
     <div class="fg"><label>Costureira</label><select id="mst-cos"></select></div>
+<div class="fr"><div class="fg"><label>Valor costureira (R$)</label><div class="vw"><span class="vp">R$</span><input type="number" id="mst-valcos" class="vi" placeholder="0,00" min="0" step="0.01" oninput="calcComSt()"></div></div><div class="fg"><label>Comissão 45%</label><div class="vw"><span class="vp">R$</span><input type="number" id="mst-com" class="vi" placeholder="0,00" readonly style="background:#F5F5F5;color:#B8B8B8"></div></div></div>
     <div class="sg">
       <button class="sb" onclick="setStatus('aguardando')"><span class="ico">⏳</span>Aguardando</button>
       <button class="sb" onclick="setStatus('em-andamento')"><span class="ico">🪡</span>Em andamento</button>
@@ -593,7 +594,11 @@ saveMarcas();
 renderConfig();
 populateMarcasDL();
 }
-function addCostureira(){ var n = document.getElementById("cfg-cs-nome").value.trim(); if(!n){ alert("Digite o nome da costureira."); return; } var existe = COSTUREIRAS.some(function(c){ return c.toLowerCase()===n.toLowerCase(); }); if(!existe){ COSTUREIRAS.push(n); saveCostureiras(); } document.getElementById("cfg-cs-nome").value=""; renderConfig(); } function updateCostureiraNome(i,val){ val = val.trim(); if(!val) return; COSTUREIRAS[i]=val; saveCostureiras(); } function delCostureira(i){ if(!confirm("Remover esta costureira?")) return; COSTUREIRAS.splice(i,1); saveCostureiras(); renderConfig(); } function calcCom(){
+function addCostureira(){ var n = document.getElementById("cfg-cs-nome").value.trim(); if(!n){ alert("Digite o nome da costureira."); return; } var existe = COSTUREIRAS.some(function(c){ return c.toLowerCase()===n.toLowerCase(); }); if(!existe){ COSTUREIRAS.push(n); saveCostureiras(); } document.getElementById("cfg-cs-nome").value=""; renderConfig(); } function updateCostureiraNome(i,val){ val = val.trim(); if(!val) return; COSTUREIRAS[i]=val; saveCostureiras(); } function delCostureira(i){ if(!confirm("Remover esta costureira?")) return; COSTUREIRAS.splice(i,1); saveCostureiras(); renderConfig(); } function calcComSt(){
+  var v = parseFloat(document.getElementById("mst-valcos").value)||0;
+  document.getElementById("mst-com").value = (v*0.45).toFixed(2);
+}
+function calcCom(){
   var v = parseFloat(document.getElementById("np-valcos").value)||0;
   document.getElementById("np-com").value = (v*0.45).toFixed(2);
 }
@@ -987,6 +992,8 @@ function abrirSt(btn){
   document.getElementById("mst-cli").textContent = CLI_ATIVA;
   document.getElementById("mst-peca").textContent = btn.dataset.peca+(btn.dataset.serv?" · "+btn.dataset.serv:"");
   document.getElementById("mst-cos").innerHTML = optsCostureiras(btn.dataset.cos||"");
+  document.getElementById("mst-valcos").value = ""; document.getElementById("mst-com").value = "";
+  supa("pecas?id=eq."+btn.dataset.id+"&select=valor_costureira,comissao").then(function(r){ if(r && r[0] && r[0].valor_costureira){ document.getElementById("mst-valcos").value = r[0].valor_costureira; document.getElementById("mst-com").value = Number(r[0].comissao||0).toFixed(2); } }).catch(function(){});
   document.getElementById("mod-st").classList.add("open");
 }
 async function toggleIgnorarUrgencia(btn){
@@ -1001,6 +1008,8 @@ async function setStatus(s){
   var cosSel = document.getElementById("mst-cos");
   var body = {status:s};
   if(cosSel && cosSel.value) body.costureira = cosSel.value;
+  var vcEl = document.getElementById("mst-valcos");
+  if(vcEl && vcEl.value !== ""){ var vc = parseFloat(vcEl.value)||0; body.valor_costureira = vc; body.comissao = +(vc*0.45).toFixed(2); }
   await supa("pecas?id=eq."+PECA_ATIVA, {method:"PATCH", body:body});
   closeMod("mod-st");
   showToast("Status atualizado!");
