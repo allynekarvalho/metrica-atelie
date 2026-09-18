@@ -317,6 +317,7 @@ var SVC_BASE_PADRAO = [
 {n:"Ajuste lateral vestido forrado",v:90},{n:"Alças",v:50}
 ];
 var SERVICOS = JSON.parse(localStorage.getItem("metrica_servicos") || "null");
+  var SVC_DESTAQUE = ["barra","ajuste cos","ajuste lateral"];
 if(!SERVICOS){ SERVICOS = SVC_BASE_PADRAO.slice(); localStorage.setItem("metrica_servicos", JSON.stringify(SERVICOS)); }
 var MARCAS = JSON.parse(localStorage.getItem("metrica_marcas") || "[]"); var COSTUREIRAS_PADRAO=["Ana","Maria","Lucia","Allyne (eu)"]; var COSTUREIRAS = JSON.parse(localStorage.getItem("metrica_costureiras") || "null"); if(!COSTUREIRAS){ COSTUREIRAS = COSTUREIRAS_PADRAO.slice(); localStorage.setItem("metrica_costureiras", JSON.stringify(COSTUREIRAS)); } var LOJAS = JSON.parse(localStorage.getItem("metrica_lojas") || "[]");
 function saveServicos(){ localStorage.setItem("metrica_servicos", JSON.stringify(SERVICOS)); }
@@ -497,7 +498,7 @@ function renderSvcTags(filtro){
   var vazio = document.getElementById("np-svc-vazio");
   var q = normPal((filtro||"").trim());
   var lista = allSvc().map(function(s,i){ return {s:s,i:i}; });
-  if(q){ lista = lista.filter(function(o){ return normPal(o.s.n).indexOf(q)>=0; }); }
+  if(q){ lista = lista.filter(function(o){ return normPal(o.s.n).indexOf(q)>=0; }); } else { lista = lista.filter(function(o){ return SVC_DESTAQUE.indexOf(normPal(o.s.n))>=0; }); }
   c.innerHTML = lista.map(function(o){
     var sel = SEL.some(function(x){ return x.n===o.s.n; });
     return "<button class='stag"+(sel?" sel":"")+"' data-i='"+o.i+"' onclick='togSvc("+o.i+")'>"+o.s.n+"</button>";
