@@ -190,6 +190,7 @@ input:focus,select:focus{border-color:#0A0A0A}
   <p class="stitle" style="color:#fff;border-bottom:1px solid rgba(255,255,255,0.2)">Resumo</p>
   <div class="rg" id="res-n"></div>
   <div id="res-c"></div>
+  <div class="cfg-sec" style="margin-top:16px"><div class="cfg-title">📅 Recebimentos por mês</div><div id="res-mes"></div></div>
   <div class="cfg-sec" style="margin-top:16px">
     <div class="cfg-title">💰 Comissões por costureira</div>
     <div class="fr" style="margin-bottom:10px">
@@ -1048,7 +1049,7 @@ async function renderRes(){
   try {
     var res2 = await Promise.all([
       supa("pecas?select=*"),
-      supa("pagamentos?select=valor")
+      supa("pagamentos?select=valor,data")
     ]);
     var pecas = res2[0], pags = res2[1];
     var at = pecas.filter(function(p){ return p.status!=="entregue"; });
@@ -1056,7 +1057,9 @@ async function renderRes(){
     var and = at.filter(function(p){ return p.status==="em-andamento"; }).length;
     var prt = at.filter(function(p){ return p.status==="pronto"; }).length;
     var tg = pecas.reduce(function(s,p){ return s+(p.valor||0); },0);
-    var tp = pags.reduce(function(s,p){ return s+p.valor; },0);
+    var tpCli = pags.reduce(function(s,p){ return s+p.valor; },0);
+    var tpLoja = pecas.reduce(function(s,p){ return s+(p.pago_por&&p.loja_pago?(p.valor||0):0); },0);
+    var tp = tpCli+tpLoja;
     var sd = tg-tp;
     document.getElementById("res-n").innerHTML =
       "<div class='rc'><div class='rn'>"+at.length+"</div><div class='rl'>Ativas</div></div>"+
@@ -1066,6 +1069,11 @@ async function renderRes(){
       "<div class='rc' style='grid-column:1/-1'><div class='rn' style='font-size:24px'>"+fval(tg)+"</div><div class='rl'>Total geral</div></div>"+
       "<div class='rc'><div class='rn' style='font-size:20px;color:#2E5E2E'>"+fval(tp)+"</div><div class='rl'>Recebido</div></div>"+
       "<div class='rc'><div class='rn' style='font-size:20px;color:#8B0000'>"+fval(sd)+"</div><div class='rl'>A receber</div></div>";
+    var porMes = {};
+    pags.forEach(function(p){ if(!p.data) return; var m=p.data.slice(0,7); porMes[m]=(porMes[m]||0)+(p.valor||0); });
+    var mesesOrd = Object.keys(porMes).sort().reverse();
+    var mesesHTML = mesesOrd.length ? mesesOrd.map(function(m){ var lbl = new Date(m+"-01T12:00:00").toLocaleDateString("pt-BR",{month:"long",year:"numeric"}); lbl = lbl.charAt(0).toUpperCase()+lbl.slice(1); return "<div class='pgi'><span class='pgd'>"+lbl+"</span><span class='pgv'>"+fval(porMes[m])+"</span></div>"; }).join("") : "<div class='vz'>Nenhum recebimento registrado.</div>";
+    document.getElementById("res-mes").innerHTML = "<div class='pgl'>"+mesesHTML+"</div>";
     var cos=COSTUREIRAS;
     var h=cos.map(function(c){ var pp=at.filter(function(p){ return p.costureira===c; }); if(!pp.length)return""; return "<div class='cb'><div class='ct'>🪡 "+c+" · "+pp.length+" peça"+(pp.length>1?"s":"")+"</div>"+pp.map(function(p){ return "<div class='cp'><span style='color:#2E2E2E'>"+p.cliente_nome+" · "+p.peca+"</span><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span></div>"; }).join("")+"</div>"; }).join("");
     document.getElementById("res-c").innerHTML=h||"<div class='vz'><span class='vi2'>🎉</span>Tudo em dia!</div>";
