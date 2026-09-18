@@ -18,7 +18,7 @@ header{background:#0A0A0A;padding:18px 20px 0;position:sticky;top:0;z-index:100}
 .ht h1{font-family:"Cormorant Garamond",serif;font-size:17px;font-weight:300;color:#fff;letter-spacing:3px;text-transform:uppercase}
 .ht p{font-size:10px;color:#B8B8B8;letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
 .tabs{display:flex}
-.tab{flex:1;padding:11px 4px;border:none;background:transparent;color:#6B6B6B;font-family:"DM Sans",sans-serif;font-size:11px;font-weight:500;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent}
+.tab{flex:1;padding:11px 4px;border:none;background:transparent;color:#6B6B6B;font-family:"DM Sans",sans-serif;font-size:10px;font-weight:500;letter-spacing:.3px;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent}
 .tab.active{color:#fff;border-bottom-color:#fff}
 .sc{display:none;padding:20px;background:#0A0A0A}.sc.active{display:block}
 .stitle{font-family:"Cormorant Garamond",serif;font-size:22px;font-weight:300;letter-spacing:1px;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #E8E8E8;color:#0A0A0A}
@@ -133,7 +133,8 @@ input:focus,select:focus{border-color:#0A0A0A}
   </div>
   <div class="tabs">
     <button class="tab active" onclick="goTab('clientes',this)">Clientes</button>
-    <button class="tab" onclick="goTab('resumo',this)">Resumo</button>
+    <button class="tab" onclick="goTab('agenda',this)">Agenda</button>
+<button class="tab" onclick="goTab('resumo',this)">Resumo</button>
 
   <button class="tab" onclick="goTab('relatorio',this)">Relatório</button>
 <button class="tab" onclick="goTab('config',this)">Config</button>
@@ -146,7 +147,8 @@ input:focus,select:focus{border-color:#0A0A0A}
     <p class="stitle" style="margin:0;border:none;padding:0;color:#fff">Clientes</p>
     <button class="btn-outline" onclick="abrirNovaCli()">+ Novo cliente</button>
   </div>
-  <div class="filtros">
+  <div id="aviso-agenda"></div>
+<div class="filtros">
     <button class="filtro ativo" onclick="filtrar('todos',this)">Todos</button>
     <button class="filtro" onclick="filtrar('urgente',this)">🔴 Urgentes</button>
     <button class="filtro" onclick="filtrar('prioridade',this)">⭐ Prioridade cliente</button>
@@ -206,6 +208,13 @@ input:focus,select:focus{border-color:#0A0A0A}
 <p class="stitle" style="color:#fff;border-bottom:1px solid rgba(255,255,255,0.2)">Relatório mensal</p>
 <div id="rel-conteudo"></div>
 </div>
+<div class="sc" id="tela-agenda">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.2)">
+<p class="stitle" style="margin:0;border:none;padding:0;color:#fff">Agenda</p>
+<button class="btn-outline" onclick="abrirNovoAg()">+ Agendar</button>
+</div>
+<div id="ag-conteudo"></div>
+</div>
 <div class="sc" id="tela-config">
   <p class="stitle" style="color:#fff;border-bottom:1px solid rgba(255,255,255,0.2)">Configurações</p>
   <div class="cfg-sec">
@@ -227,6 +236,16 @@ input:focus,select:focus{border-color:#0A0A0A}
   </div>
 <div class="cfg-sec"><div class="cfg-title">Costureiras cadastradas</div><div id="cfg-costureiras"></div><div class="cfg-add"><input id="cfg-cs-nome" placeholder="Nome da costureira"><button onclick="addCostureira()" style="padding:0 14px;background:#fff;color:#0A0A0A;border:1px solid #E8E8E8;border-radius:6px;font-size:20px;cursor:pointer">+</button></div></div><div class="cfg-sec"><div class="cfg-title">Lojas cadastradas</div><div id="cfg-lojas"></div><div class="cfg-add"><input id="cfg-lj-nome" placeholder="Nome da loja"><button onclick="addLoja()" style="padding:0 14px;background:#fff;color:#0A0A0A;border:1px solid #E8E8E8;border-radius:6px;font-size:20px;cursor:pointer">+</button></div></div>
 </div>
+<!-- MODAL AGENDAMENTO -->
+<div class="mov" id="mod-ag"><div class="mo"><div class="mh"></div>
+<h2>Novo agendamento</h2><p class="msub">Escolha a cliente, o tipo e o horário.</p>
+<div class="fg"><label>Cliente</label><select id="ag-cli" onchange="agPrefill()"></select></div>
+<div class="fg"><label>Tipo</label><select id="ag-tipo" onchange="agPrefill()"><option value="prova">🪡 Prova / ajuste</option><option value="retirada">🎁 Retirada da peça</option><option value="recebimento">📥 Recebimento de peça</option><option value="visita">🚗 Visita à casa da cliente</option></select></div>
+<div class="fr"><div class="fg"><label>Data</label><input type="date" id="ag-data"></div><div class="fg"><label>Hora</label><input type="time" id="ag-hora"></div></div>
+<div class="fg"><label>Observação / endereço (opcional)</label><textarea id="ag-obs" style="height:60px;resize:none;width:100%;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-family:DM Sans,sans-serif;font-size:14px"></textarea></div>
+<button class="btn-p" id="btn-salvar-ag" onclick="salvarAg()">Agendar</button>
+<button class="btn-s" onclick="closeMod('mod-ag')">Cancelar</button>
+</div></div>
 <!-- MODAL NOVA CLIENTE -->
 <div class="mov" id="mod-ncli">
   <div class="mo">
@@ -622,6 +641,137 @@ function addCostureira(){ var n = document.getElementById("cfg-cs-nome").value.t
     el.innerHTML = totHTML + "<div class='pgl'>"+cards+"</div>";
   } catch(e){ el.innerHTML = "<div class='vz'>Erro: "+e.message+"</div>"; }
 }
+var AG_LISTA = []; var AG_CLIS = [];
+var AG_TIPOS = {prova:{i:"🪡",n:"Prova / ajuste"},retirada:{i:"🎁",n:"Retirada da peça"},recebimento:{i:"📥",n:"Recebimento de peça"},visita:{i:"🚗",n:"Visita à casa da cliente"}};
+function agHoje(off){ var dt = new Date(); dt.setDate(dt.getDate()+(off||0)); return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0"); }
+function agEsc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/'/g,"&#39;"); }
+function agDataLbl(dt){ var l = new Date(dt+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"}); return l.charAt(0).toUpperCase()+l.slice(1); }
+function agAch(id){ return AG_LISTA.filter(function(a){ return String(a.id)===String(id); })[0]; }
+function agItemHTML(a){
+  var t = AG_TIPOS[a.tipo] || {i:"📅",n:a.tipo};
+  return "<div class='cb' style='margin-bottom:8px'><div class='cp' style='display:block'>"+
+  "<div style='display:flex;justify-content:space-between;gap:8px'><div><div style='font-weight:600;color:#0A0A0A'>"+t.i+" "+agEsc(a.cliente_nome)+"</div><div class='pgd'>"+t.n+"</div></div><div style='text-align:right'><div style='font-weight:700;color:#0A0A0A'>"+agEsc(a.hora||"")+"</div><div class='pgd'>"+agDataLbl(a.data)+"</div></div></div>"+
+  (a.obs ? "<div class='ps' style='margin-top:6px'>"+agEsc(a.obs)+"</div>" : "")+
+  "<div style='display:flex;gap:6px;flex-wrap:wrap;margin-top:8px'>"+
+  "<button class='bm vd' data-id='"+a.id+"' onclick='agConcluir(this.dataset.id)'>✓ Feito</button>"+
+  "<button class='bm' data-id='"+a.id+"' onclick='agWpp(this.dataset.id)'>💬 WhatsApp</button>"+
+  "<button class='bm' data-id='"+a.id+"' onclick='agCalendario(this.dataset.id)'>📅 Calendário</button>"+
+  "<button class='bm' data-id='"+a.id+"' onclick='agExcluir(this.dataset.id)' style='color:#B8B8B8'>🗑️</button>"+
+  "</div></div></div>";
+}
+async function renderAgenda(){
+  var el = document.getElementById("ag-conteudo");
+  el.innerHTML = "<div class='loading'>Carregando...</div>";
+  try {
+    var r = await Promise.all([ supa("agendamentos?select=*&concluido=eq.false&order=data.asc,hora.asc"), supa("clientes?select=id,nome,telefone,endereco") ]);
+    AG_LISTA = r[0] || []; AG_CLIS = r[1] || [];
+    var h = agHoje(0), am = agHoje(1);
+    var grupos = [
+      {t:"⚠️ Atrasados", f:function(a){ return a.data < h; }},
+      {t:"Hoje", f:function(a){ return a.data === h; }},
+      {t:"Amanhã", f:function(a){ return a.data === am; }},
+      {t:"Próximos", f:function(a){ return a.data > am; }}
+    ];
+    var html = grupos.map(function(g){
+      var l = AG_LISTA.filter(g.f); if(!l.length) return "";
+      return "<div class='cfg-title' style='margin-top:14px'>"+g.t+" ("+l.length+")</div>"+l.map(agItemHTML).join("");
+    }).join("");
+    el.innerHTML = html || "<div class='vz'><span class='vi2'>📅</span>Nenhum agendamento.</div>";
+  } catch(e){
+    if(String(e.message).indexOf("agendamentos") >= 0){ el.innerHTML = "<div class='vz'>A tabela da agenda ainda não foi criada no Supabase.</div>"; }
+    else { el.innerHTML = "<div class='vz'>Erro: "+e.message+"</div>"; }
+  }
+}
+async function carregarAvisoAgenda(){
+  var el = document.getElementById("aviso-agenda"); if(!el) return;
+  try {
+    var lista = await supa("agendamentos?select=*&concluido=eq.false&data=lte."+agHoje(1)+"&order=data.asc,hora.asc");
+    if(!lista || !lista.length){ el.innerHTML = ""; return; }
+    var h = agHoje(0);
+    var linhas = lista.map(function(a){
+      var t = AG_TIPOS[a.tipo] || {i:"📅",n:a.tipo};
+      var quando = a.data < h ? "ATRASADO "+fdata(a.data) : (a.data === h ? "HOJE" : "AMANHÃ");
+      var cor = a.data < h ? "#FF6B6B" : (a.data === h ? "#fff" : "#B8B8B8");
+      return "<div style='display:flex;gap:8px;padding:4px 0;font-size:13px;color:"+cor+"'><span style='min-width:78px;font-weight:700;font-size:11px;letter-spacing:.5px'>"+quando+(a.hora ? " "+agEsc(a.hora) : "")+"</span><span>"+t.i+" "+agEsc(a.cliente_nome)+" · "+t.n+"</span></div>";
+    }).join("");
+    el.innerHTML = "<div onclick=\"goTab('agenda', document.querySelector('.tab[onclick*=agenda]'))\" style='background:#1C1C1C;border:1px solid #2E2E2E;border-left:3px solid #C9A227;border-radius:8px;padding:12px 14px;margin-bottom:14px;cursor:pointer'><div style='font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#C9A227;margin-bottom:4px'>📅 Agenda · toque para abrir</div>"+linhas+"</div>";
+  } catch(e){ el.innerHTML = ""; }
+}
+async function abrirNovoAg(){
+  document.getElementById("ag-data").value = agHoje(1);
+  document.getElementById("ag-hora").value = "";
+  document.getElementById("ag-obs").value = "";
+  document.getElementById("ag-tipo").value = "prova";
+  document.getElementById("mod-ag").classList.add("open");
+  if(!AG_CLIS.length){ try { AG_CLIS = await supa("clientes?select=id,nome,telefone,endereco"); } catch(e){ AG_CLIS = []; } }
+  var lista = AG_CLIS.slice().sort(function(a,b){ return a.nome.localeCompare(b.nome); });
+  document.getElementById("ag-cli").innerHTML = "<option value=''>Selecionar cliente...</option>"+lista.map(function(c){ return "<option value='"+c.id+"'>"+agEsc(c.nome)+"</option>"; }).join("");
+}
+function agPrefill(){
+  var tipo = document.getElementById("ag-tipo").value;
+  var obs = document.getElementById("ag-obs");
+  if(tipo !== "visita" || obs.value) return;
+  var id = document.getElementById("ag-cli").value;
+  var c = AG_CLIS.filter(function(x){ return String(x.id)===String(id); })[0];
+  if(c && c.endereco) obs.value = c.endereco;
+}
+async function salvarAg(){
+  var cid = document.getElementById("ag-cli").value;
+  var data = document.getElementById("ag-data").value;
+  if(!cid){ alert("Escolha a cliente."); return; }
+  if(!data){ alert("Escolha a data."); return; }
+  var c = AG_CLIS.filter(function(x){ return String(x.id)===String(cid); })[0];
+  var btn = document.getElementById("btn-salvar-ag");
+  btn.textContent = "Salvando..."; btn.disabled = true;
+  try {
+    await supa("agendamentos", {method:"POST", body:{cliente_id:String(cid), cliente_nome:c?c.nome:"", tipo:document.getElementById("ag-tipo").value, data:data, hora:document.getElementById("ag-hora").value||null, obs:document.getElementById("ag-obs").value.trim()||null, concluido:false}});
+    closeMod("mod-ag");
+    showToast("Agendado!");
+    renderAgenda();
+  } catch(e){ alert("Erro: "+e.message); }
+  btn.textContent = "Agendar"; btn.disabled = false;
+}
+async function agConcluir(id){
+  try { await supa("agendamentos?id=eq."+id, {method:"PATCH", body:{concluido:true}}); showToast("Feito!"); renderAgenda(); } catch(e){ alert("Erro: "+e.message); }
+}
+async function agExcluir(id){
+  if(!confirm("Excluir este agendamento?")) return;
+  try { await supa("agendamentos?id=eq."+id, {method:"DELETE", prefer:"return=minimal"}); showToast("Excluído"); renderAgenda(); } catch(e){ alert("Erro: "+e.message); }
+}
+function agWpp(id){
+  var a = agAch(id); if(!a) return;
+  var c = AG_CLIS.filter(function(x){ return String(x.id)===String(a.cliente_id); })[0];
+  var tel = ((c && c.telefone) || "").replace(/\D/g,"");
+  if(!tel){ showToast("Cliente sem telefone cadastrado"); return; }
+  if(tel.length <= 11) tel = "55"+tel;
+  var pn = (a.cliente_nome||"").trim().split(" ")[0].toLowerCase(); pn = pn.charAt(0).toUpperCase()+pn.slice(1);
+  var h = agHoje(0), am = agHoje(1);
+  var dia = a.data === h ? "hoje" : (a.data === am ? "amanhã" : new Date(a.data+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"2-digit"}));
+  var quando = dia + (a.hora ? " às "+a.hora : "");
+  var msg = {
+    prova: "Olá, "+pn+"! Passando para confirmar sua prova no Métrica Ateliê "+quando+". Pode confirmar?",
+    retirada: "Olá, "+pn+"! Sua peça está pronta para retirada no Métrica Ateliê "+quando+". Te esperamos!",
+    recebimento: "Olá, "+pn+"! Confirmando que você vai trazer sua peça no Métrica Ateliê "+quando+". Combinado?",
+    visita: "Olá, "+pn+"! Confirmando minha visita à sua casa "+quando+". Tudo certo?"
+  }[a.tipo] || ("Olá, "+pn+"! Confirmando nosso horário "+quando+".");
+  window.open("https://wa.me/"+tel+"?text="+encodeURIComponent(msg), "_blank");
+}
+function agCalendario(id){
+  var a = agAch(id); if(!a) return;
+  var t = AG_TIPOS[a.tipo] || {n:a.tipo};
+  var hp = (a.hora || "09:00").split(":");
+  var hh = hp[0].padStart(2,"0"), mm = (hp[1]||"00").padStart(2,"0");
+  var ini = new Date(a.data+"T"+hh+":"+mm+":00");
+  var fim = new Date(ini.getTime()+3600000);
+  function f(x){ return x.getFullYear()+String(x.getMonth()+1).padStart(2,"0")+String(x.getDate()).padStart(2,"0")+"T"+String(x.getHours()).padStart(2,"0")+String(x.getMinutes()).padStart(2,"0")+"00"; }
+  function esc(s){ return String(s||"").replace(/\\/g,"\\\\").replace(/,/g,"\\,").replace(/;/g,"\\;").replace(/\n/g,"\\n"); }
+  var ics = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Metrica Atelie//PT","BEGIN:VEVENT","UID:"+a.id+"@metrica-atelie","DTSTAMP:"+new Date().toISOString().replace(/[-:]/g,"").split(".")[0]+"Z","DTSTART:"+f(ini),"DTEND:"+f(fim),"SUMMARY:"+esc(t.n+" - "+a.cliente_nome),"DESCRIPTION:"+esc(a.obs||""),"BEGIN:VALARM","TRIGGER:-P1D","ACTION:DISPLAY","DESCRIPTION:Amanhã: "+esc(t.n+" - "+a.cliente_nome),"END:VALARM","BEGIN:VALARM","TRIGGER:-PT1H","ACTION:DISPLAY","DESCRIPTION:Em 1 hora: "+esc(t.n+" - "+a.cliente_nome),"END:VALARM","END:VEVENT","END:VCALENDAR"].join("\r\n");
+  var blob = new Blob([ics], {type:"text/calendar;charset=utf-8"});
+  var url = URL.createObjectURL(blob);
+  var l = document.createElement("a"); l.href = url; l.download = "agendamento.ics";
+  document.body.appendChild(l); l.click(); document.body.removeChild(l);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+}
 function calcComSt(){
   var v = parseFloat(document.getElementById("mst-valcos").value)||0;
   document.getElementById("mst-com").value = (v*0.45).toFixed(2);
@@ -671,10 +821,11 @@ document.querySelectorAll(".sc").forEach(function(s){ s.classList.remove("active
 document.querySelectorAll(".tab").forEach(function(b){ b.classList.remove("active"); });
 document.getElementById("tela-"+t).classList.add("active");
 if(btn) btn.classList.add("active");
-if(t==="clientes") renderLista();
+if(t==="clientes"){ renderLista(); carregarAvisoAgenda(); }
 if(t==="resumo") renderRes();
 if(t==="config") renderConfig();
 if(t==="relatorio") renderRelatorio();
+if(t==="agenda") renderAgenda();
 }
 function toggleClearBusca(){var inp=document.getElementById("busca-cli");var btn=document.getElementById("busca-cli-clear");if(btn)btn.style.display=(inp&&inp.value)?"block":"none";}function limparBusca(){var inp=document.getElementById("busca-cli");if(!inp)return;inp.value="";toggleClearBusca();renderLista();inp.focus();}async function renderLista(){
   var cont = document.getElementById("lista-cli");
@@ -1394,6 +1545,7 @@ document.querySelectorAll(".mov").forEach(function(o){ o.addEventListener("click
 document.getElementById("np-valcos").addEventListener("input", calcCom);populateLojasDL();
 populateMarcasDL();
 renderLista();
+carregarAvisoAgenda();
 </script>
 <!-- MODAL EDITAR PEÇA -->
 <div class="mov" id="mod-editar">
