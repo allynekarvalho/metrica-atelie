@@ -1052,18 +1052,25 @@ async function renderRes(){
   try {
     var res2 = await Promise.all([
       supa("pecas?select=*"),
-      supa("pagamentos?select=valor,data")
+      supa("pagamentos?select=valor,data"),
+      supa("clientes?select=saldo_anterior,desconto")
     ]);
-    var pecas = res2[0], pags = res2[1];
+    var pecas = res2[0], pags = res2[1], clientes = res2[2];
     var at = pecas.filter(function(p){ return p.status!=="entregue"; });
     var urg = at.filter(isUrgente).length;
     var and = at.filter(function(p){ return p.status==="em-andamento"; }).length;
     var prt = at.filter(function(p){ return p.status==="pronto"; }).length;
-    var tg = pecas.reduce(function(s,p){ return s+(p.valor||0); },0);
+var tgCliente = pecas.reduce(function(s,p){ return s+(p.pago_por?0:(p.valor||0)); },0);
+    var tgLoja = pecas.reduce(function(s,p){ return s+(p.pago_por?(p.valor||0):0); },0);
+    var tg = tgCliente+tgLoja;
     var tpCli = pags.reduce(function(s,p){ return s+p.valor; },0);
     var tpLoja = pecas.reduce(function(s,p){ return s+(p.pago_por&&p.loja_pago?(p.valor||0):0); },0);
     var tp = tpCli+tpLoja;
-    var sd = tg-tp;
+    var somaSaldoAnt = clientes.reduce(function(s,c){ return s+(c.saldo_anterior||0); },0);
+    var somaDesconto = clientes.reduce(function(s,c){ return s+(c.desconto||0); },0);
+    var sd = (tgCliente+somaSaldoAnt-tpCli-somaDesconto)+(tgLoja-tpLoja);
+    var mesAtual = new Date().toISOString().slice(0,7);
+    var recMes = pags.reduce(function(s,p){ return s+((p.data&&p.data.slice(0,7)===mesAtual)?p.valor:0); },0);
     document.getElementById("res-n").innerHTML =
       "<div class='rc'><div class='rn'>"+at.length+"</div><div class='rl'>Ativas</div></div>"+
       "<div class='rc'><div class='rn' style='color:#8B0000'>"+urg+"</div><div class='rl'>Urgentes</div></div>"+
@@ -1071,7 +1078,8 @@ async function renderRes(){
       "<div class='rc'><div class='rn' style='color:#2E5E2E'>"+prt+"</div><div class='rl'>P/ conferir</div></div>"+
       "<div class='rc' style='grid-column:1/-1'><div class='rn' style='font-size:24px'>"+fval(tg)+"</div><div class='rl'>Total geral</div></div>"+
       "<div class='rc'><div class='rn' style='font-size:20px;color:#2E5E2E'>"+fval(tp)+"</div><div class='rl'>Recebido</div></div>"+
-      "<div class='rc'><div class='rn' style='font-size:20px;color:#8B0000'>"+fval(sd)+"</div><div class='rl'>A receber</div></div>";
+      "<div class='rc'><div class='rn' style='font-size:20px;color:#8B0000'>"+fval(sd)+"</div><div class='rl'>A receber</div></div>"+
+      "<div class='rc' style='grid-column:1/-1'><div class='rn' style='font-size:20px;color:#2E5E2E'>"+fval(recMes)+"</div><div class='rl'>Recebido este mês</div></div>";
     var porMes = {};
     pags.forEach(function(p){ if(!p.data) return; var m=p.data.slice(0,7); porMes[m]=(porMes[m]||0)+(p.valor||0); });
     var mesesOrd = Object.keys(porMes).sort().reverse();
