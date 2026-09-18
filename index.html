@@ -46,7 +46,7 @@ input:focus,select:focus{border-color:#0A0A0A}
 .perfil-header{background:#0A0A0A;color:#fff;padding:20px;margin:-20px -20px 20px -20px}
 .perfil-nome{font-family:"Cormorant Garamond",serif;font-size:26px;font-weight:300;letter-spacing:1px;margin-bottom:4px}
 .perfil-meta{font-size:11px;color:#B8B8B8;letter-spacing:.5px}
-.perfil-acoes{display:flex;gap:8px;margin-top:14px}
+.perfil-acoes{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 .btn-perfil{padding:9px 16px;border-radius:6px;font-family:"DM Sans",sans-serif;font-size:12px;font-weight:600;cursor:pointer;border:none;letter-spacing:.5px}
 .btn-perfil.branco{background:#fff;color:#0A0A0A}
 .btn-perfil.outline{background:transparent;color:#fff;border:1px solid #fff}
@@ -180,6 +180,7 @@ input:focus,select:focus{border-color:#0A0A0A}
       <button class="btn-perfil outline" onclick="copiarLinkPortal()">🔗 Link cliente</button>
       <button class="btn-perfil outline" onclick="enviarSaldo()">💰 Enviar saldo</button>
         <button class="btn-perfil outline" onclick="gerarPDFCliente()">📄 PDF</button>
+<button class="btn-perfil outline" onclick="abrirNovoAg(CLI_ATIVA_ID)">📅 Agendar</button>
     </div>
   </div>
   <div class="ftabs">
@@ -703,7 +704,7 @@ async function carregarAvisoAgenda(){
     el.innerHTML = "<div onclick=\"goTab('agenda', document.querySelector('.tab[onclick*=agenda]'))\" style='background:#1C1C1C;border:1px solid #2E2E2E;border-left:3px solid #C9A227;border-radius:8px;padding:12px 14px;margin-bottom:14px;cursor:pointer'><div style='font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#C9A227;margin-bottom:4px'>📅 Agenda · toque para abrir</div>"+linhas+"</div>";
   } catch(e){ el.innerHTML = ""; }
 }
-async function abrirNovoAg(){
+async function abrirNovoAg(cid){
   document.getElementById("ag-data").value = agHoje(1);
   document.getElementById("ag-hora").value = "";
   document.getElementById("ag-obs").value = "";
@@ -712,6 +713,7 @@ async function abrirNovoAg(){
   if(!AG_CLIS.length){ try { AG_CLIS = await supa("clientes?select=id,nome,telefone,endereco"); } catch(e){ AG_CLIS = []; } }
   var lista = AG_CLIS.slice().sort(function(a,b){ return a.nome.localeCompare(b.nome); });
   document.getElementById("ag-cli").innerHTML = "<option value=''>Selecionar cliente...</option>"+lista.map(function(c){ return "<option value='"+c.id+"'>"+agEsc(c.nome)+"</option>"; }).join("");
+  if(cid){ document.getElementById("ag-cli").value = cid; agPrefill(); }
 }
 function agPrefill(){
   var tipo = document.getElementById("ag-tipo").value;
