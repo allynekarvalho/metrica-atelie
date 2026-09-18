@@ -135,7 +135,8 @@ input:focus,select:focus{border-color:#0A0A0A}
     <button class="tab active" onclick="goTab('clientes',this)">Clientes</button>
     <button class="tab" onclick="goTab('resumo',this)">Resumo</button>
 
-  <button class="tab" onclick="goTab('config',this)">Config</button>
+  <button class="tab" onclick="goTab('relatorio',this)">Relatório</button>
+<button class="tab" onclick="goTab('config',this)">Config</button>
 </div>
 </header>
 <div class="toast" id="toast"></div>
@@ -200,6 +201,10 @@ input:focus,select:focus{border-color:#0A0A0A}
     <div id="res-com"></div><div class="cfg-sec" style="margin-top:16px"><div class="cfg-title">🏬 Fechamento de lojas</div><div class="fr" style="margin-bottom:10px"><div class="fg"><label>Loja</label><select id="fechloja-nome" onchange="renderFechamentoLoja()"><option value="">Selecione a loja...</option></select></div><div class="fg"><label>Mês</label><input type="month" id="fechloja-mes" onchange="renderFechamentoLoja()"></div></div><div id="res-fechloja"></div></div>
   </div>
   <button class="btn-p" onclick="fazerBackup()" style="margin-top:16px">☁️ Fazer backup no Google Sheets</button>
+</div>
+<div class="sc" id="tela-relatorio">
+<p class="stitle" style="color:#fff;border-bottom:1px solid rgba(255,255,255,0.2)">Relatório mensal</p>
+<div id="rel-conteudo"></div>
 </div>
 <div class="sc" id="tela-config">
   <p class="stitle" style="color:#fff;border-bottom:1px solid rgba(255,255,255,0.2)">Configurações</p>
@@ -594,7 +599,30 @@ saveMarcas();
 renderConfig();
 populateMarcasDL();
 }
-function addCostureira(){ var n = document.getElementById("cfg-cs-nome").value.trim(); if(!n){ alert("Digite o nome da costureira."); return; } var existe = COSTUREIRAS.some(function(c){ return c.toLowerCase()===n.toLowerCase(); }); if(!existe){ COSTUREIRAS.push(n); saveCostureiras(); } document.getElementById("cfg-cs-nome").value=""; renderConfig(); } function updateCostureiraNome(i,val){ val = val.trim(); if(!val) return; COSTUREIRAS[i]=val; saveCostureiras(); } function delCostureira(i){ if(!confirm("Remover esta costureira?")) return; COSTUREIRAS.splice(i,1); saveCostureiras(); renderConfig(); } function calcComSt(){
+function addCostureira(){ var n = document.getElementById("cfg-cs-nome").value.trim(); if(!n){ alert("Digite o nome da costureira."); return; } var existe = COSTUREIRAS.some(function(c){ return c.toLowerCase()===n.toLowerCase(); }); if(!existe){ COSTUREIRAS.push(n); saveCostureiras(); } document.getElementById("cfg-cs-nome").value=""; renderConfig(); } function updateCostureiraNome(i,val){ val = val.trim(); if(!val) return; COSTUREIRAS[i]=val; saveCostureiras(); } function delCostureira(i){ if(!confirm("Remover esta costureira?")) return; COSTUREIRAS.splice(i,1); saveCostureiras(); renderConfig(); } async function renderRelatorio(){
+  var el = document.getElementById("rel-conteudo");
+  el.innerHTML = "<div class='loading'>Carregando...</div>";
+  try {
+    var r = await Promise.all([ supa("pecas?select=data_entrada,valor"), supa("pagamentos?select=valor,data") ]);
+    var pecas = r[0], pags = r[1], M = {};
+    function g(m){ if(!M[m]) M[m] = {n:0,svc:0,rec:0}; return M[m]; }
+    pecas.forEach(function(p){ if(!p.data_entrada) return; var o = g(p.data_entrada.slice(0,7)); o.n++; o.svc += (p.valor||0); });
+    pags.forEach(function(p){ if(!p.data) return; g(p.data.slice(0,7)).rec += (p.valor||0); });
+    var meses = Object.keys(M).sort().reverse();
+    if(!meses.length){ el.innerHTML = "<div class='vz'>Nenhum registro.</div>"; return; }
+    var tot = {n:0,svc:0,rec:0};
+    function lin(l,v,cor){ return "<div style='display:flex;justify-content:space-between;margin-top:4px'><span class='pgd'>"+l+"</span><span style='font-weight:600;"+(cor?"color:"+cor:"color:#0A0A0A")+"'>"+v+"</span></div>"; }
+    var cards = meses.map(function(m){
+      var o = M[m]; tot.n += o.n; tot.svc += o.svc; tot.rec += o.rec;
+      var lbl = new Date(m+"-01T12:00:00").toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+      lbl = lbl.charAt(0).toUpperCase()+lbl.slice(1);
+      return "<div class='pgi' style='display:block'><div style='font-weight:600;margin-bottom:6px;color:#0A0A0A'>"+lbl+"</div>"+lin("Peças recebidas",o.n)+lin("Serviços (entrou)",fval(o.svc))+lin("Recebido (pago)",fval(o.rec),"#2E5E2E")+"</div>";
+    }).join("");
+    var totHTML = "<div class='pgl' style='margin-bottom:16px'><div class='pgi' style='display:block'><div style='font-weight:700;margin-bottom:6px;color:#0A0A0A;text-transform:uppercase;letter-spacing:1px;font-size:11px'>Todos os meses</div>"+lin("Peças recebidas",tot.n)+lin("Serviços (entrou)",fval(tot.svc))+lin("Recebido (pago)",fval(tot.rec),"#2E5E2E")+"</div></div>";
+    el.innerHTML = totHTML + "<div class='pgl'>"+cards+"</div>";
+  } catch(e){ el.innerHTML = "<div class='vz'>Erro: "+e.message+"</div>"; }
+}
+function calcComSt(){
   var v = parseFloat(document.getElementById("mst-valcos").value)||0;
   document.getElementById("mst-com").value = (v*0.45).toFixed(2);
 }
@@ -646,6 +674,7 @@ if(btn) btn.classList.add("active");
 if(t==="clientes") renderLista();
 if(t==="resumo") renderRes();
 if(t==="config") renderConfig();
+if(t==="relatorio") renderRelatorio();
 }
 function toggleClearBusca(){var inp=document.getElementById("busca-cli");var btn=document.getElementById("busca-cli-clear");if(btn)btn.style.display=(inp&&inp.value)?"block":"none";}function limparBusca(){var inp=document.getElementById("busca-cli");if(!inp)return;inp.value="";toggleClearBusca();renderLista();inp.focus();}async function renderLista(){
   var cont = document.getElementById("lista-cli");
@@ -1078,7 +1107,8 @@ var tgCliente = pecas.reduce(function(s,p){ return s+(p.pago_por?0:(p.valor||0))
     var somaSaldoAnt = clientes.reduce(function(s,c){ return s+(c.saldo_anterior||0); },0);
     var somaDesconto = clientes.reduce(function(s,c){ return s+(c.desconto||0); },0);
     var sd = (tgCliente+somaSaldoAnt-tpCli-somaDesconto)+(tgLoja-tpLoja);
-    var mesAtual = new Date().toISOString().slice(0,7);
+    var mesAtual = (function(){ var dt = new Date(); return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0"); })();
+    var svcMes = pecas.reduce(function(s,p){ return s+((p.data_entrada && p.data_entrada.slice(0,7)===mesAtual)?(p.valor||0):0); },0);
     var recMes = pags.reduce(function(s,p){ return s+((p.data&&p.data.slice(0,7)===mesAtual)?p.valor:0); },0);
     document.getElementById("res-n").innerHTML =
       "<div class='rc'><div class='rn'>"+at.length+"</div><div class='rl'>Ativas</div></div>"+
@@ -1088,7 +1118,8 @@ var tgCliente = pecas.reduce(function(s,p){ return s+(p.pago_por?0:(p.valor||0))
       "<div class='rc' style='grid-column:1/-1'><div class='rn' style='font-size:24px'>"+fval(tg)+"</div><div class='rl'>Total geral</div></div>"+
       "<div class='rc'><div class='rn' style='font-size:20px;color:#2E5E2E'>"+fval(tp)+"</div><div class='rl'>Recebido</div></div>"+
       "<div class='rc'><div class='rn' style='font-size:20px;color:#8B0000'>"+fval(sd)+"</div><div class='rl'>A receber</div></div>"+
-      "<div class='rc' style='grid-column:1/-1'><div class='rn' style='font-size:20px;color:#2E5E2E'>"+fval(recMes)+"</div><div class='rl'>Recebido este mês</div></div>";
+      "<div class='rc'><div class='rn' style='font-size:20px'>"+fval(svcMes)+"</div><div class='rl'>Serviços este mês</div></div>"+
+      "<div class='rc'><div class='rn' style='font-size:20px;color:#2E5E2E'>"+fval(recMes)+"</div><div class='rl'>Recebido este mês</div></div>";
 var porMes = {};
         pags.forEach(function(p){ if(!p.data) return; var m=p.data.slice(0,7); porMes[m]=(porMes[m]||0)+(p.valor||0); });
         var porMesSvc = {};
