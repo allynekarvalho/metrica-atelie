@@ -339,7 +339,7 @@ var CHAVE_PIX_ATELIE = "65996885868";
 var FILTRO = "todos";
 var CLI_ATIVA = null;
 var CLI_ATIVA_ID = null;
-var PECA_ATIVA = null; var ED_STATUS_ORIG = null; var RETORNO_PECA = null; var DATA_RETORNO_ESCOLHIDA = null;
+var PECA_ATIVA = null; var ED_STATUS_ORIG = null; var ED_SO_EDITAR = false; var RETORNO_PECA = null; var DATA_RETORNO_ESCOLHIDA = null;
 var RETRABALHO_COSTUREIRA = null; var RETRABALHO_VALOR = null; var RETRABALHO_COMISSAO = null;
 var SEL = [];
 var FOTO_FILE = null;
@@ -1009,7 +1009,7 @@ function mkPecaHTML(p, comAcoes){
     acoes += "<button class='bm' data-id='"+id+"' onclick='excluirPeca(this)' style='color:#B8B8B8'>Excluir</button>";
     html += "<div class='pac'>"+acoes+"</div>";
   } else {
-    html += "<div class='pac'><button class='bm' data-id='"+p.id+"' onclick='abrirEditar(this.dataset.id)'>↩️ Retornar peça</button></div>";
+    html += "<div class='pac'><button class='bm' data-id='"+p.id+"' onclick='abrirEditar(this.dataset.id,true)'>✏️ Editar</button><button class='bm' data-id='"+p.id+"' onclick='abrirEditar(this.dataset.id)'>↩️ Retornar peça</button></div>";
   }
   return "<div>"+html+"</div>";
 }
@@ -1439,11 +1439,12 @@ var url = URL.createObjectURL(blob);
 var a = document.createElement("a"); a.href = url; a.target = "_blank";
 a.click(); URL.revokeObjectURL(url);
 }
-async function abrirEditar(id) {
+async function abrirEditar(id, soEditar) {
+ED_SO_EDITAR = !!soEditar;
 var p = await supa("pecas?id=eq."+id);
 if(!p||!p[0]) return;
 p = p[0];
-if(p.status==="entregue"){ abrirRetorno(p); return; } DATA_RETORNO_ESCOLHIDA = null; RETRABALHO_COSTUREIRA = null; RETRABALHO_VALOR = null; RETRABALHO_COMISSAO = null; abrirEditarForm(p); } function abrirEditarForm(p) { document.getElementById("ed-id").value = p.id; ED_STATUS_ORIG = p.status;
+if(p.status==="entregue" && !ED_SO_EDITAR){ abrirRetorno(p); return; } DATA_RETORNO_ESCOLHIDA = null; RETRABALHO_COSTUREIRA = null; RETRABALHO_VALOR = null; RETRABALHO_COMISSAO = null; abrirEditarForm(p); } function abrirEditarForm(p) { document.getElementById("ed-id").value = p.id; ED_STATUS_ORIG = p.status;
 document.getElementById("ed-peca").value = p.peca||"";
 document.getElementById("ed-marca").value = p.marca||"";
 document.getElementById("ed-serv").value = p.servico||"";
@@ -1482,10 +1483,10 @@ servico: document.getElementById("ed-serv").value.trim(),
 costureira: document.getElementById("ed-cos").value, observacao: document.getElementById("ed-obs").value.trim(),
 prazo: document.getElementById("ed-prazo").value||null,
 data_entrada: document.getElementById("ed-data").value||null,
-status: (ED_STATUS_ORIG==="entregue"||ED_STATUS_ORIG==="pronto")?"aguardando":(ED_STATUS_ORIG==="urgente"?"aguardando":ED_STATUS_ORIG),
+status: ED_SO_EDITAR ? ED_STATUS_ORIG : (ED_STATUS_ORIG==="entregue"||ED_STATUS_ORIG==="pronto")?"aguardando":(ED_STATUS_ORIG==="urgente"?"aguardando":ED_STATUS_ORIG),
 valor: val,
 valor_costureira: valCos,
-comissao: com, data_retorno: (ED_STATUS_ORIG==="entregue"?(DATA_RETORNO_ESCOLHIDA||hoje):undefined)
+comissao: com, data_retorno: ((ED_STATUS_ORIG==="entregue"&&!ED_SO_EDITAR)?(DATA_RETORNO_ESCOLHIDA||hoje):undefined)
 };
 if(RETRABALHO_COSTUREIRA){
 body.retrabalho_costureira = RETRABALHO_COSTUREIRA;
@@ -1495,7 +1496,7 @@ body.retrabalho_data = DATA_RETORNO_ESCOLHIDA||hoje;
 }
 if(marcaEd) registrarMarca(marcaEd);
 await supa("pecas?id=eq."+id, {method:"PATCH", body:body});
-RETRABALHO_COSTUREIRA = null; RETRABALHO_VALOR = null; RETRABALHO_COMISSAO = null;
+RETRABALHO_COSTUREIRA = null; RETRABALHO_VALOR = null; RETRABALHO_COMISSAO = null; ED_SO_EDITAR = false;
 if(FOTO_FILE_EDIT){
 try {
 var fotoUrlEd = await uploadFoto(FOTO_FILE_EDIT, id);
