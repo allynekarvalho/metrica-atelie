@@ -147,7 +147,8 @@ html += "<label class='selw'><input type='checkbox' "+(SEL[p.id]?"checked ":"")+
   html += "<div class='pinfo'"+(p.foto_url?"":" style='padding-left:54px'")+"><div class='pnome'>"+p.peca+"</div>";
   if(p.servico) html += "<div class='pserv'>"+p.servico+"</div>";
   html += "<span class='badge "+p.status+"'>"+slbl(p.status)+"</span>";
-  if(p.valor) html += "<div style='margin-top:8px;font-size:14px;font-weight:600;color:#fff'>"+fval(p.valor)+"</div>";
+  if(emRetrabalho(p)) html += "<div style='margin-top:8px;font-size:13px;font-weight:600;color:#fff'>🔁 Retrabalho · sem custo</div>";
+  else if(p.valor) html += "<div style='margin-top:8px;font-size:14px;font-weight:600;color:#fff'>"+fval(p.valor)+"</div>";
   if(tipo==="pecas") {
     html += "<button class='btn-toggle"+(p.prioridade_cliente?" ativo":"")+"' onclick=\"togglePeca('"+p.id+"','prioridade_cliente')\">"+(p.prioridade_cliente?"⭐ Prioridade":"☆ Marcar como prioridade")+"</button>";
   }
@@ -172,7 +173,7 @@ function renderLista(lista, vazioMsg, tipo) {
   });
   var datas = Object.keys(porData).sort(function(a,b){ return b.localeCompare(a); });
   datas.forEach(function(d){
-    var totDia = porData[d].reduce(function(s,p){ return s+(p.valor||0); },0);
+    var totDia = porData[d].reduce(function(s,p){ return s+valCli(p); },0);
     html += "<div class='eg'><div class='ehdr'>📅 Entrada em "+fdata(d)+"</div>";
     porData[d].forEach(function(p){ html += renderPeca(p, tipo); });
     if(totDia>0) html += "<div style='display:flex;justify-content:space-between;padding:8px 2px 2px;font-size:12px;font-weight:600;color:#fff'><span>Total do dia</span><span>"+fval(totDia)+"</span></div>";
@@ -180,9 +181,10 @@ function renderLista(lista, vazioMsg, tipo) {
   });
   return html;
 }
+function emRetrabalho(p){ return !!(p && p.status!=="entregue" && p.retrabalho_data && p.retrabalho_data===p.data_retorno); } function valCli(p){ return emRetrabalho(p)?0:(p.valor||0); }
 function renderComTotal(lista, tituloTotal, vazioMsg, tipo) {
   if(!lista.length) return renderLista(lista, vazioMsg, tipo);
-  var total = lista.reduce(function(s,p){ return s+(p.valor||0); },0);
+  var total = lista.reduce(function(s,p){ return s+valCli(p); },0);
   var box = "<div class='total-box'><div class='tl'>"+tituloTotal+"</div><div class='tv'>"+fval(total)+"</div></div>";
   return box + renderLista(lista, vazioMsg, tipo);
 }
@@ -225,15 +227,15 @@ var linhas = ["Olá! 😊", ""];
 linhas.push(todasProntas ? (pp.length>1 ? "Suas peças estão prontas e passaram pela conferência final:" : "Sua peça está pronta e passou pela conferência final:") : "Segue a situação das suas peças:");
 linhas.push("");
 var total = 0;
-pp.forEach(function(p){ total += (p.valor||0); linhas.push("👗 "+p.peca+(p.servico ? " — "+p.servico : "")+(todasProntas ? "" : " ("+slbl(p.status)+")")); });
+pp.forEach(function(p){ total += valCli(p); linhas.push("👗 "+p.peca+(p.servico ? " — "+p.servico : "")+(emRetrabalho(p) ? " (retrabalho · sem custo)" : "")+(todasProntas ? "" : " ("+slbl(p.status)+")")); });
 if(total > 0) linhas.push("", "💰 Total: "+fval(total));
 linhas.push("", todasProntas ? "Quando preferir, é só combinar a retirada 🌸" : "Qualquer dúvida é só chamar 🌸", "", "— Métrica Ateliê");
 window.open("https://wa.me/?text="+encodeURIComponent(linhas.join("\n")), "_blank");
 }
 function selImprimir(){
 var pp = selPecas(); if(!pp.length) return;
-var total = pp.reduce(function(s,p){ return s+(p.valor||0); },0);
-var linhas = pp.map(function(p){ return "<tr><td style='width:70px'>"+(p.foto_url?"<img src='"+escH(p.foto_url)+"' style='width:60px;height:60px;object-fit:cover;border-radius:6px'>":"")+"</td><td><b>"+escH(p.peca)+"</b>"+(p.servico?"<div class='s'>"+escH(p.servico)+"</div>":"")+"</td><td>"+escH(slbl(p.status))+"</td><td class='v'>"+(p.valor?fval(p.valor):"")+"</td></tr>"; }).join("");
+var total = pp.reduce(function(s,p){ return s+valCli(p); },0);
+var linhas = pp.map(function(p){ return "<tr><td style='width:70px'>"+(p.foto_url?"<img src='"+escH(p.foto_url)+"' style='width:60px;height:60px;object-fit:cover;border-radius:6px'>":"")+"</td><td><b>"+escH(p.peca)+"</b>"+(p.servico?"<div class='s'>"+escH(p.servico)+"</div>":"")+"</td><td>"+escH(slbl(p.status))+"</td><td class='v'>"+(emRetrabalho(p)?"Retrabalho · sem custo":(p.valor?fval(p.valor):""))+"</td></tr>"; }).join("");
 var html = "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Peças</title><style>body{font-family:Arial,sans-serif;margin:20px;color:#000}h1{font-size:18px;margin:0 0 2px}p{font-size:12px;color:#555;margin:0 0 14px}table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:8px 6px;border-bottom:1px solid #ccc;text-align:left;vertical-align:middle}th{font-size:11px;text-transform:uppercase;color:#555}.s{font-size:12px;color:#555;margin-top:2px}.v{text-align:right;white-space:nowrap}button{margin-top:16px;padding:10px 18px;font-size:14px}@media print{button{display:none}}</style></head><body><h1>Métrica Ateliê</h1><p>"+new Date().toLocaleDateString("pt-BR")+"</p><table><tr><th></th><th>Peça</th><th>Situação</th><th class='v'>Valor</th></tr>"+linhas+(total>0?"<tr><td colspan='3'><b>Total</b></td><td class='v'><b>"+fval(total)+"</b></td></tr>":"")+"</table><button onclick='window.print()'>🖨️ Imprimir / salvar PDF</button></body></html>";
 var blob = new Blob([html], {type:"text/html"});
 var url = URL.createObjectURL(blob);

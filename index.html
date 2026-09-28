@@ -340,7 +340,7 @@ var FILTRO = "todos";
 var CLI_ATIVA = null;
 var CLI_ATIVA_ID = null;
 var PECA_ATIVA = null; var ED_STATUS_ORIG = null; var ED_SO_EDITAR = false; var RETORNO_PECA = null; var DATA_RETORNO_ESCOLHIDA = null;
-var RETRABALHO_COSTUREIRA = null; var RETRABALHO_VALOR = null; var RETRABALHO_COMISSAO = null;
+var RETRABALHO_COSTUREIRA = null; var RETRABALHO_VALOR = null; var RETRABALHO_COMISSAO = null; var RETRABALHO_ATIVO = false;
 var SEL = [];
 var FOTO_FILE = null;
 var FOTO_FILE_EDIT = null;
@@ -441,6 +441,7 @@ function showToast(msg) {
   t.style.display = "block";
   setTimeout(function(){ t.style.display = "none"; }, 3000);
 }
+function emRetrabalho(p){ return !!(p && p.status!=="entregue" && p.retrabalho_data && p.retrabalho_data===p.data_retorno); } function valCli(p){ return emRetrabalho(p)?0:(p.valor||0); }
 function slbl(s){ return {urgente:"Urgente",aguardando:"Aguardando","em-andamento":"Em andamento",pronto:"Pronto",entregue:"Entregue"}[s]||s; } function prazoVencido(p){ if(!p||!p.prazo) return false; if(p.status==="pronto"||p.status==="entregue") return false; var lim=new Date(); lim.setDate(lim.getDate()+1); var limStr=lim.toISOString().split("T")[0]; return p.prazo<=limStr; } function isUrgente(p){ if(p&&p.ignorar_urgente) return false; return prazoVencido(p); }
 function fdata(d){ if(!d)return""; return new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}); }
 function fval(v){ if(!v&&v!==0)return"—"; return "R$ "+Number(v).toFixed(2).replace(".",","); }
@@ -799,14 +800,14 @@ function imprimirSel(){ var ids = selIds(); if(!ids.length) return; window.IMPR_
 async function selEnviar(){
   var ids = selIds(); if(!ids.length) return;
   try {
-    var r = await Promise.all([ supa("pecas?id=in.("+ids.join(",")+")&select=peca,servico,valor,status"), supa("clientes?id=eq."+CLI_ATIVA_ID+"&select=telefone") ]);
+    var r = await Promise.all([ supa("pecas?id=in.("+ids.join(",")+")&select=peca,servico,valor,status,retrabalho_data,data_retorno"), supa("clientes?id=eq."+CLI_ATIVA_ID+"&select=telefone") ]);
     var pp = r[0] || [];
     var todasProntas = pp.every(function(p){ return p.status === "pronto"; });
     var linhas = ["Olá, "+CLI_ATIVA+"! 😊", ""];
     linhas.push(todasProntas ? (pp.length>1 ? "Suas peças estão prontas e passaram pela conferência final:" : "Sua peça está pronta e passou pela conferência final:") : "Segue a situação das suas peças:");
     linhas.push("");
     var total = 0;
-    pp.forEach(function(p){ total += (p.valor||0); linhas.push("👗 "+p.peca+(p.servico ? " — "+p.servico : "")+(todasProntas ? "" : " ("+slbl(p.status)+")")); });
+    pp.forEach(function(p){ total += valCli(p); linhas.push("👗 "+p.peca+(p.servico ? " — "+p.servico : "")+(emRetrabalho(p) ? " (retrabalho · sem custo)" : "")+(todasProntas ? "" : " ("+slbl(p.status)+")")); });
     if(total > 0) linhas.push("", "💰 Total: "+fval(total));
     linhas.push("", todasProntas ? "Quando preferir vir retirar 🌸" : "Qualquer dúvida é só chamar 🌸", "", "— Métrica Ateliê");
     var msg = linhas.join("\n");
@@ -983,7 +984,7 @@ porData[d].push(p);
 var datas = Object.keys(porData).sort(function(a,b){ return b.localeCompare(a); });
 return datas.map(function(d){
 var pp = porData[d];
-var tot = pp.reduce(function(s,p){ return s+(p.valor||0); },0);
+var tot = pp.reduce(function(s,p){ return s+valCli(p); },0);
 var df = new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
 return "<div class='eg'><div class='ehdr'><span class='edata'>📅 "+df+"</span><span class='eres'>"+pp.length+" peça"+(pp.length>1?"s":"")+"</span></div>"+
 pp.map(function(p){ return mkPecaHTML(p, comAcoes); }).join("")+
@@ -994,7 +995,7 @@ pp.map(function(p){ return mkPecaHTML(p, comAcoes); }).join("")+
 }
 function mkPecaHTML(p, comAcoes){
   var fotoHTML = p.foto_url ? "<img src='"+p.foto_url+"' class='pfoto' loading='lazy' decoding='async' data-url='"+p.foto_url+"' onclick='verFoto(this.dataset.url)'>" : "";
-  var html = "<div class='pi'>"+(comAcoes ? "<label class='selw'><input type='checkbox' class='selp-cb' value='"+p.id+"' onchange='selAtualizar()'><span></span></label>" : "")+"<div class='pin'>"+fotoHTML+"<div class='pn' style='text-transform:uppercase'>"+p.peca+"</div>"+(p.observacao?"<div class='ps' style='font-style:italic;color:royalblue'>"+p.observacao+"</div>":"")+(p.marca?"<div class='ps' style='text-transform:uppercase;font-weight:700;color:#6B6B6B'>"+p.marca+"</div>":"")+(p.pago_por?"<div class='ps' style='color:#6B4FA0;font-weight:700'>🏬 "+p.pago_por+(p.loja_pago?" · pago":" · a receber")+"</div>":"")+(p.servico?p.servico.split(" + ").map(function(sv){ return "<div class='ps'>• "+sv+"</div>"; }).join(""):"<div class='ps'>—</div>")+(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+Number(p.valor).toFixed(2).replace('.',',')+"</div>":"")+"<div class='pc'>"+(p.numero_comanda?"🎫 Nº "+String(p.numero_comanda).padStart(4,"0")+" · ":"")+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div>"+(p.retrabalho_costureira?"<div class='ps' style='color:#B8860B;font-weight:600'>🔁 Retrabalho: "+p.retrabalho_costureira+(p.retrabalho_valor_costureira?" · R$ "+Number(p.retrabalho_valor_costureira).toFixed(2).replace('.',','):"")+"</div>":"")+(p.prioridade_cliente?"<div class='ps' style='color:#B8860B;font-weight:700'>⭐ Cliente marcou como prioridade</div>":"")+(p.confirmado_cliente_em?"<div class='ps' style='color:#2E5E2E;font-weight:600'>✓ Cliente confirmou recebimento em "+fdata(p.confirmado_cliente_em.split("T")[0])+"</div>":"")+"</div><div class='pd'><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
+  var html = "<div class='pi'>"+(comAcoes ? "<label class='selw'><input type='checkbox' class='selp-cb' value='"+p.id+"' onchange='selAtualizar()'><span></span></label>" : "")+"<div class='pin'>"+fotoHTML+"<div class='pn' style='text-transform:uppercase'>"+p.peca+"</div>"+(emRetrabalho(p)?"<div class='ps' style='color:#2E5E2E;font-weight:700'>🔁 Retrabalho · sem custo p/ cliente</div>":"")+(p.observacao?"<div class='ps' style='font-style:italic;color:royalblue'>"+p.observacao+"</div>":"")+(p.marca?"<div class='ps' style='text-transform:uppercase;font-weight:700;color:#6B6B6B'>"+p.marca+"</div>":"")+(p.pago_por?"<div class='ps' style='color:#6B4FA0;font-weight:700'>🏬 "+p.pago_por+(p.loja_pago?" · pago":" · a receber")+"</div>":"")+(p.servico?p.servico.split(" + ").map(function(sv){ return "<div class='ps'>• "+sv+"</div>"; }).join(""):"<div class='ps'>—</div>")+(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+Number(p.valor).toFixed(2).replace('.',',')+"</div>":"")+"<div class='pc'>"+(p.numero_comanda?"🎫 Nº "+String(p.numero_comanda).padStart(4,"0")+" · ":"")+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div>"+(p.retrabalho_costureira?"<div class='ps' style='color:#B8860B;font-weight:600'>🔁 Retrabalho: "+p.retrabalho_costureira+(p.retrabalho_valor_costureira?" · R$ "+Number(p.retrabalho_valor_costureira).toFixed(2).replace('.',','):"")+"</div>":"")+(p.prioridade_cliente?"<div class='ps' style='color:#B8860B;font-weight:700'>⭐ Cliente marcou como prioridade</div>":"")+(p.confirmado_cliente_em?"<div class='ps' style='color:#2E5E2E;font-weight:600'>✓ Cliente confirmou recebimento em "+fdata(p.confirmado_cliente_em.split("T")[0])+"</div>":"")+"</div><div class='pd'><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
   if(comAcoes){
     var id = p.id;
     var acoes = "<button class='bm' data-id='"+id+"' data-peca='"+p.peca+"' data-serv='"+(p.servico||"")+"' data-cos='"+(p.costureira||"").replace(/'/g,"&#39;")+"' onclick='abrirSt(this)'>Status</button>";
@@ -1005,7 +1006,7 @@ function mkPecaHTML(p, comAcoes){
     if(prazoVencido(p)) acoes += p.ignorar_urgente
       ? "<button class='bm' data-id='"+id+"' onclick='toggleIgnorarUrgencia(this)' style='color:#8B0000'>🔴 Reativar urgência</button>"
       : "<button class='bm' data-id='"+id+"' onclick='toggleIgnorarUrgencia(this)'>🔕 Tirar da urgência</button>";
-    if(p.status==="pronto") acoes += "<button class='bm vd' data-id='"+id+"' data-val='"+p.valor+"' onclick='abrirWpp(this)'>Avisar</button>";
+    if(p.status==="pronto") acoes += "<button class='bm vd' data-id='"+id+"' data-val='"+valCli(p)+"' onclick='abrirWpp(this)'>Avisar</button>";
     acoes += "<button class='bm' data-id='"+id+"' onclick='excluirPeca(this)' style='color:#B8B8B8'>Excluir</button>";
     html += "<div class='pac'>"+acoes+"</div>";
   } else {
@@ -1243,7 +1244,7 @@ async function setStatus(s){
   showToast("Status atualizado!");
   renderPerfil();
 }
-function abrirDataEntrega(){closeMod("mod-st");document.getElementById("ent-data").value=new Date().toISOString().split("T")[0];document.getElementById("mod-ent-data").classList.add("open");}async function confirmarEntrega(){var data=document.getElementById("ent-data").value||new Date().toISOString().split("T")[0];await supa("pecas?id=eq."+PECA_ATIVA,{method:"PATCH",body:{status:"entregue",data_entrega:data}});closeMod("mod-ent-data");showToast("Peça entregue!");renderPerfil();}function abrirRetorno(p){RETORNO_PECA=p;document.getElementById("ret-motivo").value="refazer";document.getElementById("ret-novo").value="";document.getElementById("ret-novo-wrap").style.display="none";document.getElementById("ret-refazer-wrap").style.display="block";document.getElementById("ret-cos").innerHTML=optsCostureiras("");document.getElementById("ret-valcos").value="";document.getElementById("ret-com").value="";document.getElementById("ret-data").value=new Date().toISOString().split("T")[0];document.getElementById("mod-retorno").classList.add("open");}function toggleRetNovo(){var isNovo=document.getElementById("ret-motivo").value==="novo";document.getElementById("ret-novo-wrap").style.display=isNovo?"block":"none";document.getElementById("ret-refazer-wrap").style.display=isNovo?"none":"block";}function calcComRet(){var v=parseFloat(document.getElementById("ret-valcos").value)||0;document.getElementById("ret-com").value=(v*0.45).toFixed(2);}function confirmarRetorno(){var p=RETORNO_PECA;var motivo=document.getElementById("ret-motivo").value;var dataRet=document.getElementById("ret-data").value||new Date().toISOString().split("T")[0];DATA_RETORNO_ESCOLHIDA=dataRet;if(motivo==="refazer"){var cosRet=document.getElementById("ret-cos").value;RETRABALHO_COSTUREIRA=cosRet||null;RETRABALHO_VALOR=parseFloat(document.getElementById("ret-valcos").value)||0;RETRABALHO_COMISSAO=parseFloat(document.getElementById("ret-com").value)||0;}else{RETRABALHO_COSTUREIRA=null;RETRABALHO_VALOR=null;RETRABALHO_COMISSAO=null;}closeMod("mod-retorno");abrirEditarForm(p);if(motivo==="novo"){var novoServ=document.getElementById("ret-novo").value.trim();if(novoServ){var atual=document.getElementById("ed-serv").value.trim();document.getElementById("ed-serv").value=atual?(atual+" + "+novoServ):novoServ;}}}async function togUrg(btn){
+function abrirDataEntrega(){closeMod("mod-st");document.getElementById("ent-data").value=new Date().toISOString().split("T")[0];document.getElementById("mod-ent-data").classList.add("open");}async function confirmarEntrega(){var data=document.getElementById("ent-data").value||new Date().toISOString().split("T")[0];await supa("pecas?id=eq."+PECA_ATIVA,{method:"PATCH",body:{status:"entregue",data_entrega:data}});closeMod("mod-ent-data");showToast("Peça entregue!");renderPerfil();}function abrirRetorno(p){RETORNO_PECA=p;document.getElementById("ret-motivo").value="refazer";document.getElementById("ret-novo").value="";document.getElementById("ret-novo-wrap").style.display="none";document.getElementById("ret-refazer-wrap").style.display="block";document.getElementById("ret-cos").innerHTML=optsCostureiras("");document.getElementById("ret-valcos").value="";document.getElementById("ret-com").value="";document.getElementById("ret-data").value=new Date().toISOString().split("T")[0];document.getElementById("mod-retorno").classList.add("open");}function toggleRetNovo(){var isNovo=document.getElementById("ret-motivo").value==="novo";document.getElementById("ret-novo-wrap").style.display=isNovo?"block":"none";document.getElementById("ret-refazer-wrap").style.display=isNovo?"none":"block";}function calcComRet(){var v=parseFloat(document.getElementById("ret-valcos").value)||0;document.getElementById("ret-com").value=(v*0.45).toFixed(2);}function confirmarRetorno(){var p=RETORNO_PECA;var motivo=document.getElementById("ret-motivo").value;var dataRet=document.getElementById("ret-data").value||new Date().toISOString().split("T")[0];DATA_RETORNO_ESCOLHIDA=dataRet;RETRABALHO_ATIVO=(motivo==="refazer");if(motivo==="refazer"){var cosRet=document.getElementById("ret-cos").value;RETRABALHO_COSTUREIRA=cosRet||null;RETRABALHO_VALOR=parseFloat(document.getElementById("ret-valcos").value)||0;RETRABALHO_COMISSAO=parseFloat(document.getElementById("ret-com").value)||0;}else{RETRABALHO_COSTUREIRA=null;RETRABALHO_VALOR=null;RETRABALHO_COMISSAO=null;}closeMod("mod-retorno");abrirEditarForm(p);if(motivo==="novo"){var novoServ=document.getElementById("ret-novo").value.trim();if(novoServ){var atual=document.getElementById("ed-serv").value.trim();document.getElementById("ed-serv").value=atual?(atual+" + "+novoServ):novoServ;}}}async function togUrg(btn){
   var id = btn.dataset.id;
   var p = await supa("pecas?id=eq."+id);
   var novo = p[0].status==="urgente"?"aguardando":"urgente";
@@ -1451,7 +1452,7 @@ ED_SO_EDITAR = !!soEditar;
 var p = await supa("pecas?id=eq."+id);
 if(!p||!p[0]) return;
 p = p[0];
-if(p.status==="entregue" && !ED_SO_EDITAR){ abrirRetorno(p); return; } DATA_RETORNO_ESCOLHIDA = null; RETRABALHO_COSTUREIRA = null; RETRABALHO_VALOR = null; RETRABALHO_COMISSAO = null; abrirEditarForm(p); } function abrirEditarForm(p) { document.getElementById("ed-id").value = p.id; ED_STATUS_ORIG = p.status;
+if(p.status==="entregue" && !ED_SO_EDITAR){ abrirRetorno(p); return; } RETRABALHO_ATIVO = false; DATA_RETORNO_ESCOLHIDA = null; RETRABALHO_COSTUREIRA = null; RETRABALHO_VALOR = null; RETRABALHO_COMISSAO = null; abrirEditarForm(p); } function abrirEditarForm(p) { document.getElementById("ed-id").value = p.id; ED_STATUS_ORIG = p.status;
 document.getElementById("ed-peca").value = p.peca||"";
 document.getElementById("ed-marca").value = p.marca||"";
 document.getElementById("ed-serv").value = p.servico||"";
@@ -1495,6 +1496,7 @@ valor: val,
 valor_costureira: valCos,
 comissao: com, data_retorno: ((ED_STATUS_ORIG==="entregue"&&!ED_SO_EDITAR)?(DATA_RETORNO_ESCOLHIDA||hoje):undefined)
 };
+if(RETRABALHO_ATIVO && !ED_SO_EDITAR){ body.retrabalho_data = DATA_RETORNO_ESCOLHIDA||hoje; }
 if(RETRABALHO_COSTUREIRA){
 body.retrabalho_costureira = RETRABALHO_COSTUREIRA;
 body.retrabalho_valor_costureira = RETRABALHO_VALOR||0;
@@ -1503,7 +1505,7 @@ body.retrabalho_data = DATA_RETORNO_ESCOLHIDA||hoje;
 }
 if(marcaEd) registrarMarca(marcaEd);
 await supa("pecas?id=eq."+id, {method:"PATCH", body:body});
-RETRABALHO_COSTUREIRA = null; RETRABALHO_VALOR = null; RETRABALHO_COMISSAO = null; ED_SO_EDITAR = false;
+RETRABALHO_COSTUREIRA = null; RETRABALHO_VALOR = null; RETRABALHO_COMISSAO = null; RETRABALHO_ATIVO = false; ED_SO_EDITAR = false;
 if(FOTO_FILE_EDIT){
 try {
 var fotoUrlEd = await uploadFoto(FOTO_FILE_EDIT, id);
