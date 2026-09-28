@@ -1432,8 +1432,15 @@ var html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><meta name='viewpor
 ".sig-item{flex:1;border-bottom:1px solid #000;padding-bottom:1px;font-size:9px;color:#999}"+
 ".rodape{margin-top:8px;text-align:center;font-size:8px;color:#999;border-top:1px solid #eee;padding-top:4px}"+
 ".sep{border:none;border-top:1px dashed #999;margin:8px 0}"+
-"@media print{body{padding:2mm}.item-peca{page-break-inside:avoid}}"+
-"</style></head><body>"+corpo+"</body></html>";
+"@media print{body{padding:2mm}.item-peca{page-break-inside:avoid}.barra{display:none}}"+
+".barra{position:sticky;top:0;background:#fff;padding:8px 0;display:flex;gap:8px;justify-content:space-between;border-bottom:1px solid #ddd;margin-bottom:10px;z-index:9}"+
+".barra button{flex:1;font-size:14px;font-weight:600;padding:10px 8px;border-radius:6px;border:1px solid #ccc;background:#f5f5f5;cursor:pointer}"+
+".barra .bimp{background:#8B0000;color:#fff;border-color:#8B0000}"+
+"</style></head><body>"+
+"<div class='barra'><button onclick='fechar()'>✕ Fechar</button><button class='bimp' onclick='window.print()'>🖨️ Imprimir</button></div>"+
+corpo+
+"<scr"+"ipt>function fechar(){window.close();setTimeout(function(){if(!window.closed){history.length>1?history.back():alert('Pode fechar esta aba.');}},200);}</scr"+"ipt>"+
+"</body></html>";
 var blob = new Blob([html], {type:"text/html"});
 var url = URL.createObjectURL(blob);
 var a = document.createElement("a"); a.href = url; a.target = "_blank";
