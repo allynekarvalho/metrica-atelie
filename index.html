@@ -447,7 +447,7 @@ function relmD(d){ return d ? new Date(d+"T12:00:00").toLocaleDateString("pt-BR"
 function relmMesAtual(){ var h=new Date(); return h.getFullYear()+"-"+String(h.getMonth()+1).padStart(2,"0"); }
 function relmNomeMes(mes){ var p=mes.split("-"); var n=new Date(parseInt(p[0]),parseInt(p[1])-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"}); return n.charAt(0).toUpperCase()+n.slice(1); }
 function relmDados(){
-  var el=document.getElementById("relm-mes"); var mes=(el&&el.value)||relmMesAtual(); var pt=mes.split("-");
+  var el=document.getElementById("relm-mes"); var mes=(el&&el.value)||relmMesAtual(); if(mes<"2026-09"){ mes="2026-09"; if(el) el.value=mes; } var pt=mes.split("-");
   var ini=mes+"-01", fim=mes+"-"+String(new Date(parseInt(pt[0]),parseInt(pt[1]),0).getDate()).padStart(2,"0");
   function dentro(d){ return d && d>=ini && d<=fim; }
   var pp=RELM.pecas.filter(function(p){ return dentro(p.data_entrada); }).sort(function(a,b){ return String(a.data_entrada).localeCompare(String(b.data_entrada)); });
@@ -459,7 +459,7 @@ function relmValTxt(p){ return emRetrabalho(p) ? "retrabalho · sem custo" : fva
 function relmBoxHTML(){
   return "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:16px;margin:14px 0 12px;color:#0A0A0A'>"+
     "<div style='display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px'><div style='font-size:14px;font-weight:700'>📅 Relatório do mês</div>"+
-    "<input type='month' id='relm-mes' value='"+relmMesAtual()+"' onchange='relmRender()' style='padding:8px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;color:#0A0A0A;background:#fff'></div>"+
+    "<input type='month' id='relm-mes' min='2026-09' value='"+relmMesAtual()+"' onchange='relmRender()' style='padding:8px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;color:#0A0A0A;background:#fff'></div>"+
     "<div id='relm-res'></div>"+
     "<div style='display:flex;gap:8px;margin-top:12px'><button onclick='relmImprimir()' style='flex:1;padding:11px;border:1px solid #E8E8E8;border-radius:6px;background:#fff;color:#0A0A0A;font-size:13px;font-weight:600;cursor:pointer'>🖨️ Imprimir</button><button onclick='relmWpp()' style='flex:1;padding:11px;border:1px solid #E8E8E8;border-radius:6px;background:#fff;color:#0A0A0A;font-size:13px;font-weight:600;cursor:pointer'>📲 WhatsApp</button></div>"+
     "</div>";
