@@ -442,6 +442,56 @@ function showToast(msg) {
   setTimeout(function(){ t.style.display = "none"; }, 3000);
 }
 function emRetrabalho(p){ return !!(p && p.status!=="entregue" && p.retrabalho_data && p.retrabalho_data===p.data_retorno); } function valCli(p){ return emRetrabalho(p)?0:(p.valor||0); }
+var RELM = {pecas:[], pags:[], nome:"", tel:""};
+function relmD(d){ return d ? new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"}) : ""; }
+function relmMesAtual(){ var h=new Date(); return h.getFullYear()+"-"+String(h.getMonth()+1).padStart(2,"0"); }
+function relmNomeMes(mes){ var p=mes.split("-"); var n=new Date(parseInt(p[0]),parseInt(p[1])-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"}); return n.charAt(0).toUpperCase()+n.slice(1); }
+function relmDados(){
+  var el=document.getElementById("relm-mes"); var mes=(el&&el.value)||relmMesAtual(); var pt=mes.split("-");
+  var ini=mes+"-01", fim=mes+"-"+String(new Date(parseInt(pt[0]),parseInt(pt[1]),0).getDate()).padStart(2,"0");
+  function dentro(d){ return d && d>=ini && d<=fim; }
+  var pp=RELM.pecas.filter(function(p){ return dentro(p.data_entrada); }).sort(function(a,b){ return String(a.data_entrada).localeCompare(String(b.data_entrada)); });
+  var pg=RELM.pags.filter(function(p){ return dentro(p.data); }).sort(function(a,b){ return String(a.data).localeCompare(String(b.data)); });
+  var tot=pp.reduce(function(s,p){ return s+valCli(p); },0), totPg=pg.reduce(function(s,p){ return s+(p.valor||0); },0);
+  return {mes:mes, ini:ini, fim:fim, pp:pp, pg:pg, tot:tot, totPg:totPg, falta:tot-totPg};
+}
+function relmValTxt(p){ return emRetrabalho(p) ? "retrabalho · sem custo" : fval(p.valor||0); }
+function relmBoxHTML(){
+  return "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:16px;margin:14px 0 12px;color:#0A0A0A'>"+
+    "<div style='display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px'><div style='font-size:14px;font-weight:700'>📅 Relatório do mês</div>"+
+    "<input type='month' id='relm-mes' value='"+relmMesAtual()+"' onchange='relmRender()' style='padding:8px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;color:#0A0A0A;background:#fff'></div>"+
+    "<div id='relm-res'></div>"+
+    "<div style='display:flex;gap:8px;margin-top:12px'><button onclick='relmImprimir()' style='flex:1;padding:11px;border:1px solid #E8E8E8;border-radius:6px;background:#fff;color:#0A0A0A;font-size:13px;font-weight:600;cursor:pointer'>🖨️ Imprimir</button><button onclick='relmWpp()' style='flex:1;padding:11px;border:1px solid #E8E8E8;border-radius:6px;background:#fff;color:#0A0A0A;font-size:13px;font-weight:600;cursor:pointer'>📲 WhatsApp</button></div>"+
+    "</div>";
+}
+function relmRender(){
+  var box=document.getElementById("relm-res"); if(!box) return; var d=relmDados();
+  var ln=function(a,b,c){ return "<div style='display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #F4F4F4;font-size:13px'><span>"+a+"</span><span style='white-space:nowrap;font-weight:600;"+(c?"color:"+c:"")+"'>"+b+"</span></div>"; };
+  var h="<div style='font-size:12px;color:#6B6B6B;margin-bottom:6px'>"+relmD(d.ini)+" a "+relmD(d.fim)+" · "+d.pp.length+" peça"+(d.pp.length!==1?"s":"")+"</div>";
+  h+= d.pp.length ? d.pp.map(function(p){ return ln("<span style='color:#6B6B6B;font-size:11px'>"+relmD(p.data_entrada).slice(0,5)+"</span> · <b>"+p.peca+"</b>"+(p.servico?"<div style='font-size:12px;color:#6B6B6B'>"+p.servico+"</div>":""), relmValTxt(p)); }).join("") : "<div style='font-size:13px;color:#6B6B6B;padding:6px 0'>Nenhuma peça neste mês.</div>";
+  h+= "<div style='margin-top:6px'>"+ln("<b>Total do mês</b>", fval(d.tot))+(d.pg.length?ln("Pago no mês ("+d.pg.map(function(p){ return relmD(p.data).slice(0,5); }).join(", ")+")", "− "+fval(d.totPg), "#2E5E2E"):"")+ln("<b>Falta pagar do mês</b>", fval(Math.max(d.falta,0)), d.falta>0?"#8B0000":"#2E5E2E")+"</div>";
+  box.innerHTML=h;
+}
+function relmWpp(){
+  var d=relmDados();
+  var l=["Olá, "+RELM.nome+"! 😊","","Segue o relatório de "+relmNomeMes(d.mes)+" ("+relmD(d.ini)+" a "+relmD(d.fim)+"):",""];
+  if(d.pp.length) d.pp.forEach(function(p){ l.push("• "+relmD(p.data_entrada).slice(0,5)+" · "+p.peca+(p.servico?" — "+p.servico:"")+" · "+relmValTxt(p)); }); else l.push("Nenhuma peça neste mês.");
+  l.push("","Total do mês: "+fval(d.tot)); if(d.pg.length) l.push("Pago no mês: "+fval(d.totPg)); l.push("💰 Falta pagar do mês: "+fval(Math.max(d.falta,0)),"","— Métrica Ateliê");
+  var tel=String(RELM.tel||"").replace(/\D/g,""); if(tel && tel.length<=11) tel="55"+tel;
+  window.open("https://wa.me/"+tel+"?text="+encodeURIComponent(l.join("\n")),"_blank");
+}
+function relmImprimir(){
+  var d=relmDados();
+  var linhas=d.pp.map(function(p){ return "<tr><td>"+relmD(p.data_entrada).slice(0,5)+"</td><td><b>"+p.peca+"</b>"+(p.servico?"<div class='s'>"+p.servico+"</div>":"")+"</td><td class='v'>"+relmValTxt(p)+"</td></tr>"; }).join("") || "<tr><td colspan='3'>Nenhuma peça neste mês.</td></tr>";
+  var html="<!DOCTYPE html><html lang='pt-BR'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Relatório "+relmNomeMes(d.mes)+"</title><style>body{font-family:Arial,sans-serif;margin:20px;color:#000}h1{font-size:18px;margin:0 0 2px}p{font-size:12px;color:#555;margin:0 0 14px}table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:7px 6px;border-bottom:1px solid #ccc;text-align:left;vertical-align:top}th{font-size:11px;text-transform:uppercase;color:#555}.s{font-size:12px;color:#555;margin-top:2px}.v{text-align:right;white-space:nowrap}.tt td{border:none;padding:4px 6px}.barra{display:flex;gap:8px;margin-bottom:14px}.barra button{flex:1;font-size:14px;font-weight:600;padding:10px;border-radius:6px;border:1px solid #ccc;background:#f5f5f5}.barra .bimp{background:#8B0000;color:#fff;border-color:#8B0000}@media print{.barra{display:none}}</style></head><body>"+
+    "<div class='barra'><button onclick='window.close()'>✕ Fechar</button><button class='bimp' onclick='window.print()'>🖨️ Imprimir</button></div>"+
+    "<h1>Métrica Ateliê · Relatório do mês</h1><p><b>"+RELM.nome+"</b> · "+relmNomeMes(d.mes)+" ("+relmD(d.ini)+" a "+relmD(d.fim)+")</p>"+
+    "<table><tr><th>Data</th><th>Peça / serviço</th><th class='v'>Valor</th></tr>"+linhas+"</table>"+
+    "<table class='tt' style='margin-top:10px'><tr><td>Total do mês ("+d.pp.length+" peça"+(d.pp.length!==1?"s":"")+")</td><td class='v'><b>"+fval(d.tot)+"</b></td></tr>"+
+    (d.pg.length?"<tr><td>Pago no mês</td><td class='v'>− "+fval(d.totPg)+"</td></tr>":"")+
+    "<tr><td><b>Falta pagar do mês</b></td><td class='v'><b>"+fval(Math.max(d.falta,0))+"</b></td></tr></table></body></html>";
+  var w=window.open("","_blank"); if(!w){ alert("Libere pop-ups para imprimir."); return; } w.document.write(html); w.document.close();
+}
 function slbl(s){ return {urgente:"Urgente",aguardando:"Aguardando","em-andamento":"Em andamento",pronto:"Pronto",entregue:"Entregue"}[s]||s; } function prazoVencido(p){ if(!p||!p.prazo) return false; if(p.status==="pronto"||p.status==="entregue") return false; var lim=new Date(); lim.setDate(lim.getDate()+1); var limStr=lim.toISOString().split("T")[0]; return p.prazo<=limStr; } function isUrgente(p){ if(p&&p.ignorar_urgente) return false; return prazoVencido(p); }
 function fdata(d){ if(!d)return""; return new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}); }
 function fval(v){ if(!v&&v!==0)return"—"; return "R$ "+Number(v).toFixed(2).replace(".",","); }
@@ -1056,7 +1106,7 @@ async function renderFinanceiro(){
       resumoHTML+
       "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:8px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px'><div style='flex:1'><div style='font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6B6B6B;margin-bottom:3px'>Chave Pix</div><div style='font-size:13px;color:#0A0A0A;word-break:break-all'>"+CHAVE_PIX_ATELIE+"</div></div><button onclick='copiarPixFin()' style='background:transparent;color:#0A0A0A;border:1px solid #E8E8E8;border-radius:5px;padding:8px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;white-space:nowrap'>Copiar</button></div>"+
       pgHTML+
-      "<div class='rp'><div class='rpl'>Registrar pagamento</div><div class='rpw' style='margin-bottom:8px'><div class='vw' style='flex:1'><span class='vp'>R$</span><input type='number' id='pv-inp' class='vi' placeholder='0,00' min='0' step='0.01' style='width:100%'></div><input type='date' id='pd-inp' value='"+hojeStr+"' style='flex:1;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;font-family:DM Sans,sans-serif;color:#0A0A0A'></div><div class='rpw'><input id='po-inp' placeholder='Obs.' style='flex:1;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;font-family:DM Sans,sans-serif'><button onclick='regPag()' style='padding:0 14px;background:#0A0A0A;color:#fff;border:none;border-radius:6px;font-size:18px;cursor:pointer'>✓</button></div></div>"; } catch(e){
+      "<div class='rp'><div class='rpl'>Registrar pagamento</div><div class='rpw' style='margin-bottom:8px'><div class='vw' style='flex:1'><span class='vp'>R$</span><input type='number' id='pv-inp' class='vi' placeholder='0,00' min='0' step='0.01' style='width:100%'></div><input type='date' id='pd-inp' value='"+hojeStr+"' style='flex:1;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;font-family:DM Sans,sans-serif;color:#0A0A0A'></div><div class='rpw'><input id='po-inp' placeholder='Obs.' style='flex:1;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;font-family:DM Sans,sans-serif'><button onclick='regPag()' style='padding:0 14px;background:#0A0A0A;color:#fff;border:none;border-radius:6px;font-size:18px;cursor:pointer'>✓</button></div></div>"; RELM={pecas:pecas, pags:pags, nome:CLI_ATIVA, tel:(cli[0]&&cli[0].telefone)||""}; document.getElementById("fp-f").insertAdjacentHTML("beforeend", relmBoxHTML()); relmRender(); } catch(e){
     document.getElementById("fp-f").innerHTML = "<div class='vz'>Erro: "+e.message+"</div>";
   }
 }
