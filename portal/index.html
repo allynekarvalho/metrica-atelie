@@ -27,7 +27,7 @@ body{font-family:"DM Sans",sans-serif;background:#0A0A0A;color:#fff;min-height:1
 .ehdr{font-size:11px;font-weight:600;color:#B8B8B8;letter-spacing:.5px;margin-bottom:10px}
 .pcard{position:relative;background:#1C1C1C;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid #2E2E2E}
 .pcard.prioridade{border-color:#FFD700}
-.pfoto{width:100%;height:280px;object-fit:contain;background:#111}
+.pfoto{width:100%;height:280px;object-fit:contain;background:#111}.pfoto-err{width:100%;height:120px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#999;background:#111}
 .pinfo{padding:14px}
 .pnome{font-size:15px;font-weight:500;color:#fff;margin-bottom:4px}
 .pserv{font-size:13px;color:#B8B8B8;margin-bottom:10px}
@@ -143,7 +143,7 @@ function mudarAba(nome) {
 function renderPeca(p, tipo) {
   var html = "<div class='pcard"+(tipo==="pecas"&&p.prioridade_cliente?" prioridade":"")+"'>";
 html += "<label class='selw'><input type='checkbox' "+(SEL[p.id]?"checked ":"")+"onchange=\"selToggle('"+p.id+"',this.checked)\"><span></span></label>";
-  if(p.foto_url) html += "<img src='"+p.foto_url+"' class='pfoto' loading='lazy' decoding='async'>";
+  if(p.foto_url) html += "<img src='"+p.foto_url+"' class='pfoto' loading='lazy' decoding='async' onerror='fotoErro(this)'>";
   html += "<div class='pinfo'"+(p.foto_url?"":" style='padding-left:54px'")+"><div class='pnome'>"+p.peca+"</div>";
   if(p.servico) html += "<div class='pserv'>"+p.servico+"</div>";
   html += "<span class='badge "+p.status+"'>"+slbl(p.status)+"</span>";
@@ -232,6 +232,7 @@ function relmImprimir(){
     "<tr><td><b>Falta pagar do mês</b></td><td class='v'><b>"+fval(Math.max(d.falta,0))+"</b></td></tr></table></body></html>";
   var w=window.open("","_blank"); if(!w){ alert("Libere pop-ups para imprimir."); return; } w.document.write(html); w.document.close();
 }
+function fotoErro(img){ var d=document.createElement("div"); d.className="pfoto-err"; d.textContent="📷 Foto não carregou"; if(img.dataset&&img.dataset.url){ d.onclick=function(){ window.open(img.dataset.url,"_blank"); }; } img.replaceWith(d); }
 function renderComTotal(lista, tituloTotal, vazioMsg, tipo) {
   if(!lista.length) return renderLista(lista, vazioMsg, tipo);
   var total = lista.reduce(function(s,p){ return s+valCli(p); },0);

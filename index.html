@@ -67,7 +67,7 @@ input:focus,select:focus{border-color:#0A0A0A}
 .pd{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:90px}
 .pv{font-size:14px;font-weight:600}
 .pco{font-size:10px;color:#6B6B6B}
-.pfoto{width:84px;height:84px;object-fit:cover;border-radius:6px;border:1px solid #E8E8E8;margin-bottom:6px;cursor:pointer}
+.pfoto{width:84px;height:84px;object-fit:cover;border-radius:6px;border:1px solid #E8E8E8;margin-bottom:6px;cursor:pointer}.pfoto-err{width:84px;height:84px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:10px;color:#8B0000;background:#FAF3F3;border:1px dashed #D9B8B8;border-radius:6px;margin-bottom:6px;padding:4px;box-sizing:border-box;cursor:pointer}
 .badge{font-size:9px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:.8px;text-transform:uppercase;white-space:nowrap}
 .badge.urgente{background:#FDE8E8;color:#8B0000}
 .badge.aguardando{background:#E8E8E8;color:#6B6B6B}
@@ -389,15 +389,15 @@ async function supa(path, opts) {
   return text ? JSON.parse(text) : null;
 }
 async function uploadFoto(file, pecaId) {
-  var ext = file.name.split(".").pop() || "jpg";
-  var path = pecaId + "." + ext;
+  var ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+  var path = pecaId + "-" + Date.now() + "." + ext;
   var url = SUPA_URL + "/storage/v1/object/fotos-pecas/" + path;
   var res = await fetch(url, {
     method: "POST",
     headers: {
       "apikey": SUPA_KEY,
       "Authorization": "Bearer " + SUPA_KEY,
-      "Content-Type": file.type,
+      "Content-Type": file.type || "image/jpeg",
       "x-upsert": "true"
     },
     body: file
@@ -405,11 +405,17 @@ async function uploadFoto(file, pecaId) {
   if (!res.ok) throw new Error("Erro ao enviar foto");
   return SUPA_URL + "/storage/v1/object/public/fotos-pecas/" + path;
 }
+function fotoErro(img){ var d=document.createElement("div"); d.className="pfoto-err"; d.textContent="📷 Foto não carregou"; if(img.dataset&&img.dataset.url){ d.onclick=function(){ window.open(img.dataset.url,"_blank"); }; } img.replaceWith(d); }
+function ehHeic(f){ return !!f && (/hei[cf]/i.test(f.type||"") || /\.hei[cf]$/i.test(f.name||"")); }
+function carregarHeic2any(){ return new Promise(function(ok,erro){ if(window.heic2any) return ok(); var sc=document.createElement("script"); sc.src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.js"; sc.onload=function(){ ok(); }; sc.onerror=erro; document.head.appendChild(sc); }); }
+async function converterHeic(file){ await carregarHeic2any(); var b=await heic2any({blob:file,toType:"image/jpeg",quality:0.8}); if(Array.isArray(b)) b=b[0]; return new File([b], (file.name||"foto").replace(/\.[^.]+$/,"")+".jpg", {type:"image/jpeg"}); }
 function comprimirImagem(file, maxDim, qualidade) {
   maxDim = maxDim || 1280;
   qualidade = qualidade || 0.72;
   return new Promise(function(resolve){
-    if(!file || !file.type || file.type.indexOf("image/") !== 0){ resolve(file); return; }
+    if(!file){ resolve(file); return; }
+    if(ehHeic(file)){ converterHeic(file).then(function(j){ comprimirImagem(j, maxDim, qualidade).then(resolve); }).catch(function(){ showToast("Não consegui converter a foto (HEIC). Tire um print dela e envie o print."); resolve(file); }); return; }
+    if(!file.type || file.type.indexOf("image/") !== 0){ resolve(file); return; }
     var url = URL.createObjectURL(file);
     var img = new Image();
     img.onload = function(){
@@ -1044,7 +1050,7 @@ pp.map(function(p){ return mkPecaHTML(p, comAcoes); }).join("")+
 }).join("");
 }
 function mkPecaHTML(p, comAcoes){
-  var fotoHTML = p.foto_url ? "<img src='"+p.foto_url+"' class='pfoto' loading='lazy' decoding='async' data-url='"+p.foto_url+"' onclick='verFoto(this.dataset.url)'>" : "";
+  var fotoHTML = p.foto_url ? "<img src='"+p.foto_url+"' class='pfoto' loading='lazy' decoding='async' data-url='"+p.foto_url+"' onerror='fotoErro(this)' onclick='verFoto(this.dataset.url)'>" : "";
   var html = "<div class='pi'>"+(comAcoes ? "<label class='selw'><input type='checkbox' class='selp-cb' value='"+p.id+"' onchange='selAtualizar()'><span></span></label>" : "")+"<div class='pin'>"+fotoHTML+"<div class='pn' style='text-transform:uppercase'>"+p.peca+"</div>"+(emRetrabalho(p)?"<div class='ps' style='color:#2E5E2E;font-weight:700'>🔁 Retrabalho · sem custo p/ cliente</div>":"")+(p.observacao?"<div class='ps' style='font-style:italic;color:royalblue'>"+p.observacao+"</div>":"")+(p.marca?"<div class='ps' style='text-transform:uppercase;font-weight:700;color:#6B6B6B'>"+p.marca+"</div>":"")+(p.pago_por?"<div class='ps' style='color:#6B4FA0;font-weight:700'>🏬 "+p.pago_por+(p.loja_pago?" · pago":" · a receber")+"</div>":"")+(p.servico?p.servico.split(" + ").map(function(sv){ return "<div class='ps'>• "+sv+"</div>"; }).join(""):"<div class='ps'>—</div>")+(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+Number(p.valor).toFixed(2).replace('.',',')+"</div>":"")+"<div class='pc'>"+(p.numero_comanda?"🎫 Nº "+String(p.numero_comanda).padStart(4,"0")+" · ":"")+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div>"+(p.retrabalho_costureira?"<div class='ps' style='color:#B8860B;font-weight:600'>🔁 Retrabalho: "+p.retrabalho_costureira+(p.retrabalho_valor_costureira?" · R$ "+Number(p.retrabalho_valor_costureira).toFixed(2).replace('.',','):"")+"</div>":"")+(p.prioridade_cliente?"<div class='ps' style='color:#B8860B;font-weight:700'>⭐ Cliente marcou como prioridade</div>":"")+(p.confirmado_cliente_em?"<div class='ps' style='color:#2E5E2E;font-weight:600'>✓ Cliente confirmou recebimento em "+fdata(p.confirmado_cliente_em.split("T")[0])+"</div>":"")+"</div><div class='pd'><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
   if(comAcoes){
     var id = p.id;
