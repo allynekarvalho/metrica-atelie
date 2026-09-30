@@ -143,7 +143,7 @@ function mudarAba(nome) {
 function renderPeca(p, tipo) {
   var html = "<div class='pcard"+(tipo==="pecas"&&p.prioridade_cliente?" prioridade":"")+"'>";
 html += "<label class='selw'><input type='checkbox' "+(SEL[p.id]?"checked ":"")+"onchange=\"selToggle('"+p.id+"',this.checked)\"><span></span></label>";
-  if(p.foto_url) html += "<img src='"+p.foto_url+"' class='pfoto' loading='lazy' decoding='async' onerror='fotoErro(this)'>";
+  if(p.foto_url) html += "<img src='"+p.foto_url+"' data-full='"+p.foto_url+"' class='pfoto' loading='lazy' decoding='async' onerror='fotoCarregaErro(this)'>";
   html += "<div class='pinfo'"+(p.foto_url?"":" style='padding-left:54px'")+"><div class='pnome'>"+p.peca+"</div>";
   if(p.servico) html += "<div class='pserv'>"+p.servico+"</div>";
   html += "<span class='badge "+p.status+"'>"+slbl(p.status)+"</span>";
@@ -232,6 +232,8 @@ function relmImprimir(){
     "<tr><td><b>Falta pagar do mês</b></td><td class='v'><b>"+fval(Math.max(d.falta,0))+"</b></td></tr></table></body></html>";
   var w=window.open("","_blank"); if(!w){ alert("Libere pop-ups para imprimir."); return; } w.document.write(html); w.document.close();
 }
+function fotoMini(u){ return (u && /-\d{13}\.jpg$/.test(u)) ? u.replace(/\.jpg$/,"-mini.jpg") : u; }
+function fotoCarregaErro(img){ var full=img.getAttribute("data-full")||img.dataset.url; var n=parseInt(img.getAttribute("data-try")||"0"); if(full && img.src.indexOf("-mini.jpg")>-1 && n===0){ img.setAttribute("data-try","1"); img.src=full; return; } if(n<3){ img.setAttribute("data-try",String(n+1)); setTimeout(function(){ img.src=(full||img.src).split("?")[0]+"?r="+Date.now(); },1500*(n+1)); return; } fotoErro(img); }
 function fotoErro(img){ var d=document.createElement("div"); d.className="pfoto-err"; d.textContent="📷 Foto não carregou"; if(img.dataset&&img.dataset.url){ d.onclick=function(){ window.open(img.dataset.url,"_blank"); }; } img.replaceWith(d); }
 function renderComTotal(lista, tituloTotal, vazioMsg, tipo) {
   if(!lista.length) return renderLista(lista, vazioMsg, tipo);
