@@ -156,6 +156,7 @@ input:focus,select:focus{border-color:#0A0A0A}
   <div id="aviso-agenda"></div>
 <div class="filtros">
     <button class="filtro ativo" onclick="filtrar('todos',this)">Todos</button>
+    <button class="filtro" onclick="filtrar('receber',this)">💰 A receber</button>
     <button class="filtro" onclick="filtrar('urgente',this)">🔴 Urgentes</button>
     <button class="filtro" onclick="filtrar('prioridade',this)">⭐ Prioridade cliente</button>
     <button class="filtro" onclick="filtrar('aguardando',this)">Aguardando</button>
@@ -967,6 +968,7 @@ function toggleClearBusca(){var inp=document.getElementById("busca-cli");var btn
   var cont = document.getElementById("lista-cli");
   cont.innerHTML = "<div class='loading'>Carregando...</div>";
   try {
+    if(FILTRO==="receber"){ var bEl=document.getElementById("busca-cli"); await renderAReceber(cont, (bEl&&bEl.value)||""); return; }
     var res0 = await Promise.all([
       supa("clientes?select=*"),
       supa("pecas?select=cliente_id,status,prazo,data_entrada,numero_comanda")
@@ -1008,6 +1010,56 @@ function toggleClearBusca(){var inp=document.getElementById("busca-cli");var btn
   } catch(e) {
     cont.innerHTML = "<div class='vz'>Erro ao carregar: "+e.message+"</div>";
   }
+}
+var AREC = {};
+async function renderAReceber(cont, busca){
+  var r = await Promise.all([ supa("clientes?select=id,nome,telefone,saldo_anterior,desconto"), supa("pecas?select=cliente_id,valor,status,pago_por,data_entrega,data_entrada"), supa("pagamentos?select=cliente_id,valor,data") ]);
+  var hoje = new Date();
+  var lista = (r[0]||[]).map(function(c){
+    var pp = (r[1]||[]).filter(function(p){ return p.cliente_id===c.id && !p.pago_por; });
+    var pg = (r[2]||[]).filter(function(p){ return p.cliente_id===c.id; });
+    var totPg = pg.reduce(function(s,p){ return s+(p.valor||0); },0);
+    var base = (c.saldo_anterior||0) - totPg - (c.desconto||0);
+    var entregues = pp.filter(function(p){ return p.status==="entregue"; });
+    var vEnt = entregues.reduce(function(s,p){ return s+(p.valor||0); },0);
+    var vAtelie = pp.filter(function(p){ return p.status!=="entregue"; }).reduce(function(s,p){ return s+(p.valor||0); },0);
+    var deveEnt = +(base + vEnt).toFixed(2);
+    var ultEnt = entregues.reduce(function(m,p){ var d=p.data_entrega||p.data_entrada||""; return d>m?d:m; },"");
+    var ultPg = pg.reduce(function(m,p){ return (p.data||"")>m?p.data:m; },"");
+    var dias = ultEnt ? Math.floor((hoje - new Date(ultEnt+"T12:00:00"))/86400000) : 0;
+    return {id:c.id, nome:c.nome, tel:c.telefone||"", deve:deveEnt, atelie:vAtelie, ultEnt:ultEnt, ultPg:ultPg, dias:dias};
+  }).filter(function(c){ return c.deve > 0.009; });
+  if(busca) lista = lista.filter(function(c){ return c.nome.toLowerCase().includes(busca.toLowerCase()); });
+  lista.sort(function(a,b){ return b.deve-a.deve; });
+  AREC = {}; lista.forEach(function(c){ AREC[c.id]=c; });
+  var total = lista.reduce(function(s,c){ return s+c.deve; },0);
+  function dBR(d){ return d ? d.slice(8,10)+"/"+d.slice(5,7) : "—"; }
+  var html = "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:14px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center'><div><div style='font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6B6B6B'>Entregue e falta pagar</div><div style='font-size:12px;color:#6B6B6B;margin-top:2px'>"+lista.length+" cliente"+(lista.length!==1?"s":"")+"</div></div><div style='font-size:22px;font-weight:700;color:#8B0000'>"+fval(total)+"</div></div>";
+  if(!lista.length) html += "<div class='vz'><span class='vi2'>🎉</span>Ninguém devendo peça entregue!</div>";
+  html += lista.map(function(c){
+    var cor = c.dias>30?"#8B0000":c.dias>15?"#B8860B":"#6B6B6B";
+    return "<div class='cli-item' style='flex-direction:column;align-items:stretch;gap:8px' data-id='"+c.id+"' data-nome='"+c.nome.replace(/'/g,"&#39;")+"' onclick='abrirPerfil(this.dataset.id,this.dataset.nome)'>"+
+      "<div style='display:flex;justify-content:space-between;align-items:flex-start;gap:10px'><div><div class='cli-nome'>"+c.nome+"</div><div class='cli-meta' style='color:"+cor+"'>Última entrega "+dBR(c.ultEnt)+(c.ultEnt?" · há "+c.dias+" dia"+(c.dias!==1?"s":""):"")+"</div><div class='cli-meta'>Último pagamento "+dBR(c.ultPg)+(c.atelie>0?" · + "+fval(c.atelie)+" no ateliê":"")+"</div></div><div style='font-size:17px;font-weight:700;color:#FF8A80;white-space:nowrap'>"+fval(c.deve)+"</div></div>"+
+      "<div style='display:flex;gap:8px'><button class='bm' style='flex:1' data-id='"+c.id+"' onclick='event.stopPropagation();cobrarCli(this.dataset.id)'>📲 Cobrar</button><button class='bm vd' style='flex:1' data-id='"+c.id+"' onclick='event.stopPropagation();receberCli(this.dataset.id)'>✓ Recebi</button></div>"+
+      "</div>";
+  }).join("");
+  cont.innerHTML = html;
+}
+function cobrarCli(id){
+  var c = AREC[id]; if(!c) return;
+  var msg = ["Olá, "+c.nome+"! 😊","","Passando pra lembrar do valor das peças já entregues:","","💰 "+fval(c.deve),"","Chave Pix: "+CHAVE_PIX_ATELIE,"","Depois é só me mandar o comprovante por aqui 🙏","","— Métrica Ateliê"].join("\n");
+  var tel = c.tel.replace(/\D/g,""); if(tel && tel.length<=11) tel = "55"+tel;
+  window.open("https://wa.me/"+tel+"?text="+encodeURIComponent(msg), "_blank");
+}
+async function receberCli(id){
+  var c = AREC[id]; if(!c) return;
+  var v = prompt("Quanto "+c.nome+" pagou? (R$)", c.deve.toFixed(2).replace(".",","));
+  if(v===null) return;
+  var val = parseFloat(String(v).replace(/\./g,"").replace(",","."))||0;
+  if(!val){ alert("Valor inválido."); return; }
+  await supa("pagamentos", {method:"POST", body:{cliente_id:id, cliente_nome:c.nome, valor:val, observacao:"", data:new Date().toISOString().split("T")[0]}});
+  showToast("Pagamento de "+fval(val)+" registrado!");
+  renderLista();
 }
 function filtrar(f,btn){
   FILTRO=f;
