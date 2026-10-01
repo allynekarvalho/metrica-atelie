@@ -110,9 +110,10 @@ async function supaPatch(path, body) {
     body: JSON.stringify(body)
   });
 }
+function fmtBR(n){ return Number(n||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fval(v) {
   if(!v) return "";
-  return "R$ "+Number(v).toFixed(2).replace(".",",");
+  return "R$ "+fmtBR(v);
 }
 function slbl(s) {
   return {
@@ -320,7 +321,7 @@ function renderTudo() {
     linhaP("Total pago", "− "+(fval(totPg)||"R$ 0,00"), {vc:"#2E5E2E"})+
     (desconto>0?linhaP("Desconto", "− "+fval(desconto), {vc:"#2E5E2E"}):"")+
     "<div style='border-top:2px solid #0A0A0A;margin:10px 0'></div>"+
-    "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total a pagar</div><div style='font-size:24px;font-weight:700;color:"+corP+"'>R$ "+saldo.toFixed(2).replace(".",",")+"</div></div>"+
+    "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total a pagar</div><div style='font-size:24px;font-weight:700;color:"+corP+"'>R$ "+fmtBR(saldo)+"</div></div>"+
     "</div>";
   var pagsOrd = PAGAMENTOS.slice().sort(function(a,b){ return String(b.data||"").localeCompare(String(a.data||"")); });
 var pgHTML = pagsOrd.length ? "<div class='secao-titulo' style='margin-top:18px'>Pagamentos recebidos</div><div style='background:#fff;border-radius:10px;overflow:hidden;margin-bottom:12px'>"+pagsOrd.map(function(p,i){ return "<div style='display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;"+(i?"border-top:1px solid #F0F0F0;":"")+"'><div style='font-weight:600;color:#2E5E2E;font-size:14px'>+ "+fval(p.valor)+"</div><div style='font-size:11px;color:#6B6B6B;text-align:right'>"+(p.data?fdata(p.data):"")+(p.observacao?" · "+escH(p.observacao):"")+"</div></div>"; }).join("")+"</div>" : "";
