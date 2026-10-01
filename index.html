@@ -1565,9 +1565,9 @@ return "<div class='item-peca'>"+
 "</div>";
 }).join("<hr class='sep'>");
 var corpo = "<div class='via'>"+
-"<div class='header'><h1>MÉTRICA ATELIÊ</h1><p>Allyne Carvalho · Ordem de Serviço</p><div class='os-num'>Nº "+String(numeroComanda).padStart(4,"0")+" · "+pecasImprimir.length+" peça"+(pecasImprimir.length>1?"s":"")+"</div></div>"+
+"<div class='header'><h1>MÉTRICA ATELIÊ</h1><p>Allyne Carvalho · Ordem de Serviço</p><div class='os-num'>"+p.cliente_nome+" · "+pecasImprimir.length+" peça"+(pecasImprimir.length>1?"s":"")+"</div></div>"+
 "<div class='row'>"+
-"<div class='campo' style='flex:2'><div class='label'>Cliente</div><div class='valor' style='font-size:11px;font-weight:600'>"+p.cliente_nome+"</div></div>"+
+"<div class='campo' style='flex:2'><div class='label'>Pedido</div><div class='valor' style='font-size:24px;font-weight:800;letter-spacing:1px'>Nº "+String(numeroComanda).padStart(4,"0")+"</div></div>"+
 "<div class='campo' style='flex:1'><div class='label'>Data</div><div class='valor'>"+data+"</div></div>"+
 "</div>"+
 itensHTML+
