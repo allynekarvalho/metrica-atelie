@@ -111,6 +111,35 @@ async function supaPatch(path, body) {
   });
 }
 function fmtBR(n){ return Number(n||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function extratoHTML(pecas, saldoAnt, totPg, desconto, nota){
+  saldoAnt = saldoAnt||0; desconto = desconto||0; totPg = totPg||0;
+  var ord = pecas.filter(function(p){ return (p.valor||0) > 0; }).slice().sort(function(a,b){ return (String(a.data_entrada||"")+String(a.criado_em||"")).localeCompare(String(b.data_entrada||"")+String(b.criado_em||"")); });
+  var credito = totPg + desconto;
+  var antPago = Math.min(saldoAnt, credito); credito -= antPago;
+  var itens = ord.map(function(p){ var v=p.valor||0; var pg=Math.min(v, credito); credito -= pg; return {p:p, v:v, pago:pg, falta:+(v-pg).toFixed(2)}; });
+  var totServ = saldoAnt + ord.reduce(function(s,p){ return s+(p.valor||0); },0);
+  var falta = +(totServ - totPg - desconto).toFixed(2);
+  var aPagar = itens.filter(function(i){ return i.falta > 0.009; }).reverse();
+  var pagas = itens.filter(function(i){ return i.falta <= 0.009; }).reverse();
+  function dBR(d){ return d ? d.slice(8,10)+"/"+d.slice(5,7)+"/"+d.slice(2,4) : ""; }
+  function linhaPeca(i, mostraFalta){
+    var p=i.p, st = p.status==="entregue" ? "🎁 Entregue" : p.status==="pronto" ? "✅ Pronta" : "🧵 No ateliê";
+    var val = mostraFalta && i.pago>0.009 ? "<div style='text-align:right'><div style='font-weight:700;color:#8B0000'>"+fval(i.falta)+"</div><div style='font-size:10px;color:#6B6B6B'>pago "+fval(i.pago)+" de "+fval(i.v)+"</div></div>" : "<div style='font-weight:700;color:"+(mostraFalta?"#8B0000":"#2E5E2E")+";white-space:nowrap'>"+fval(i.v)+"</div>";
+    return "<div style='display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #F2F2F2'><div style='min-width:0'><div style='font-size:13px;font-weight:600;color:#0A0A0A;text-transform:uppercase'>"+p.peca+"</div><div style='font-size:11px;color:#6B6B6B'>"+dBR(p.data_entrada)+(p.servico?" · "+p.servico:"")+" · "+st+"</div></div>"+val+"</div>";
+  }
+  var cardTop = falta > 0.009
+    ? "<div style='background:#fff;border-radius:12px;padding:18px 16px;margin-bottom:12px;border-left:5px solid #8B0000'><div style='font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6B6B6B'>Falta pagar</div><div style='font-size:30px;font-weight:700;color:#8B0000;margin:2px 0 6px'>"+fval(falta)+"</div><div style='font-size:12px;color:#6B6B6B'>"+aPagar.length+" peça"+(aPagar.length!==1?"s":"")+(saldoAnt-antPago>0.009?" + saldo anterior":"")+" em aberto · já pago "+(fval(totPg)||"R$ 0,00")+(desconto>0?" · desconto "+fval(desconto):"")+"</div></div>"
+    : "<div style='background:#fff;border-radius:12px;padding:18px 16px;margin-bottom:12px;border-left:5px solid #2E5E2E'><div style='font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6B6B6B'>Situação</div><div style='font-size:24px;font-weight:700;color:#2E5E2E;margin-top:2px'>Tudo pago ✓</div>"+(falta < -0.009?"<div style='font-size:12px;color:#2E5E2E;margin-top:4px'>Crédito de "+fval(-falta)+" para as próximas peças</div>":"")+"</div>";
+  var blocoAPagar = (aPagar.length || saldoAnt-antPago>0.009)
+    ? "<div style='background:#fff;border-radius:12px;padding:12px 16px;margin-bottom:12px'><div style='font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#8B0000;margin-bottom:2px'>🧾 Em aberto</div>"+
+      aPagar.map(function(i){ return linhaPeca(i,true); }).join("")+
+      (saldoAnt-antPago>0.009?"<div style='display:flex;justify-content:space-between;padding:9px 0'><div style='font-size:13px;font-weight:600'>SALDO ANTERIOR</div><div style='font-weight:700;color:#8B0000'>"+fval(saldoAnt-antPago)+"</div></div>":"")+
+      "</div>" : "";
+  var blocoPagas = pagas.length
+    ? "<details style='background:#fff;border-radius:12px;padding:12px 16px;margin-bottom:12px'><summary style='font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#2E5E2E;cursor:pointer'>✅ Já pagas ("+pagas.length+") · "+fval(pagas.reduce(function(s,i){ return s+i.v; },0))+" <span style='font-weight:400;text-transform:none;color:#6B6B6B'>— toque para ver</span></summary>"+
+      pagas.map(function(i){ return linhaPeca(i,false); }).join("")+"</details>" : "";
+  return cardTop + (nota||"") + blocoAPagar + blocoPagas;
+}
 function fval(v) {
   if(!v) return "";
   return "R$ "+fmtBR(v);
@@ -313,16 +342,7 @@ function renderTudo() {
   var corP = saldo>0?"#8B0000":"#2E5E2E";
   var subtotalP = saldoAnt+pecasSum;
   var linhaP = function(lbl, val, opts){ opts=opts||{}; return "<div style='display:flex;justify-content:space-between;align-items:center;padding:"+(opts.pad||"7px")+" 0'><div style='font-size:"+(opts.fs||"13px")+";color:"+(opts.lc||"#6B6B6B")+";font-weight:"+(opts.lw||"400")+"'>"+lbl+"</div><div style='font-size:"+(opts.fs||"13px")+";font-weight:"+(opts.vw||"600")+";color:"+(opts.vc||"#0A0A0A")+"'>"+val+"</div></div>"; };
-  var resumoHTML = "<div style='background:#fff;border-radius:10px;padding:18px 16px;margin-bottom:12px'>"+
-    linhaP("Saldo anterior", fval(saldoAnt)||"R$ 0,00")+
-    linhaP("Peças", fval(pecasSum)||"R$ 0,00")+
-    "<div style='border-top:1px solid #F0F0F0;margin:8px 0'></div>"+
-    linhaP("Subtotal", fval(subtotalP)||"R$ 0,00", {lc:"#0A0A0A",lw:"600"})+
-    linhaP("Total pago", "− "+(fval(totPg)||"R$ 0,00"), {vc:"#2E5E2E"})+
-    (desconto>0?linhaP("Desconto", "− "+fval(desconto), {vc:"#2E5E2E"}):"")+
-    "<div style='border-top:2px solid #0A0A0A;margin:10px 0'></div>"+
-    "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total a pagar</div><div style='font-size:24px;font-weight:700;color:"+corP+"'>R$ "+fmtBR(saldo)+"</div></div>"+
-    "</div>";
+  var resumoHTML = extratoHTML(pecas, saldoAnt, totPg, desconto, "");
   var pagsOrd = PAGAMENTOS.slice().sort(function(a,b){ return String(b.data||"").localeCompare(String(a.data||"")); });
 var pgHTML = pagsOrd.length ? "<div class='secao-titulo' style='margin-top:18px'>Pagamentos recebidos</div><div style='background:#fff;border-radius:10px;overflow:hidden;margin-bottom:12px'>"+pagsOrd.map(function(p,i){ return "<div style='display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;"+(i?"border-top:1px solid #F0F0F0;":"")+"'><div style='font-weight:600;color:#2E5E2E;font-size:14px'>+ "+fval(p.valor)+"</div><div style='font-size:11px;color:#6B6B6B;text-align:right'>"+(p.data?fdata(p.data):"")+(p.observacao?" · "+escH(p.observacao):"")+"</div></div>"; }).join("")+"</div>" : "";
 var saldoHTML = "<div class='saldo-box'>"+

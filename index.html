@@ -533,6 +533,35 @@ function relmImprimir(){
 function slbl(s){ return {urgente:"Urgente",aguardando:"Aguardando","em-andamento":"Em andamento",pronto:"Pronto",entregue:"Entregue"}[s]||s; } function prazoVencido(p){ if(!p||!p.prazo) return false; if(p.status==="pronto"||p.status==="entregue") return false; var lim=new Date(); lim.setDate(lim.getDate()+1); var limStr=lim.toISOString().split("T")[0]; return p.prazo<=limStr; } function isUrgente(p){ if(p&&p.ignorar_urgente) return false; return prazoVencido(p); }
 function fdata(d){ if(!d)return""; return new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}); }
 function fmtBR(n){ return Number(n||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function extratoHTML(pecas, saldoAnt, totPg, desconto, nota){
+  saldoAnt = saldoAnt||0; desconto = desconto||0; totPg = totPg||0;
+  var ord = pecas.filter(function(p){ return (p.valor||0) > 0; }).slice().sort(function(a,b){ return (String(a.data_entrada||"")+String(a.criado_em||"")).localeCompare(String(b.data_entrada||"")+String(b.criado_em||"")); });
+  var credito = totPg + desconto;
+  var antPago = Math.min(saldoAnt, credito); credito -= antPago;
+  var itens = ord.map(function(p){ var v=p.valor||0; var pg=Math.min(v, credito); credito -= pg; return {p:p, v:v, pago:pg, falta:+(v-pg).toFixed(2)}; });
+  var totServ = saldoAnt + ord.reduce(function(s,p){ return s+(p.valor||0); },0);
+  var falta = +(totServ - totPg - desconto).toFixed(2);
+  var aPagar = itens.filter(function(i){ return i.falta > 0.009; }).reverse();
+  var pagas = itens.filter(function(i){ return i.falta <= 0.009; }).reverse();
+  function dBR(d){ return d ? d.slice(8,10)+"/"+d.slice(5,7)+"/"+d.slice(2,4) : ""; }
+  function linhaPeca(i, mostraFalta){
+    var p=i.p, st = p.status==="entregue" ? "🎁 Entregue" : p.status==="pronto" ? "✅ Pronta" : "🧵 No ateliê";
+    var val = mostraFalta && i.pago>0.009 ? "<div style='text-align:right'><div style='font-weight:700;color:#8B0000'>"+fval(i.falta)+"</div><div style='font-size:10px;color:#6B6B6B'>pago "+fval(i.pago)+" de "+fval(i.v)+"</div></div>" : "<div style='font-weight:700;color:"+(mostraFalta?"#8B0000":"#2E5E2E")+";white-space:nowrap'>"+fval(i.v)+"</div>";
+    return "<div style='display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #F2F2F2'><div style='min-width:0'><div style='font-size:13px;font-weight:600;color:#0A0A0A;text-transform:uppercase'>"+p.peca+"</div><div style='font-size:11px;color:#6B6B6B'>"+dBR(p.data_entrada)+(p.servico?" · "+p.servico:"")+" · "+st+"</div></div>"+val+"</div>";
+  }
+  var cardTop = falta > 0.009
+    ? "<div style='background:#fff;border-radius:12px;padding:18px 16px;margin-bottom:12px;border-left:5px solid #8B0000'><div style='font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6B6B6B'>Falta pagar</div><div style='font-size:30px;font-weight:700;color:#8B0000;margin:2px 0 6px'>"+fval(falta)+"</div><div style='font-size:12px;color:#6B6B6B'>"+aPagar.length+" peça"+(aPagar.length!==1?"s":"")+(saldoAnt-antPago>0.009?" + saldo anterior":"")+" em aberto · já pago "+(fval(totPg)||"R$ 0,00")+(desconto>0?" · desconto "+fval(desconto):"")+"</div></div>"
+    : "<div style='background:#fff;border-radius:12px;padding:18px 16px;margin-bottom:12px;border-left:5px solid #2E5E2E'><div style='font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6B6B6B'>Situação</div><div style='font-size:24px;font-weight:700;color:#2E5E2E;margin-top:2px'>Tudo pago ✓</div>"+(falta < -0.009?"<div style='font-size:12px;color:#2E5E2E;margin-top:4px'>Crédito de "+fval(-falta)+" para as próximas peças</div>":"")+"</div>";
+  var blocoAPagar = (aPagar.length || saldoAnt-antPago>0.009)
+    ? "<div style='background:#fff;border-radius:12px;padding:12px 16px;margin-bottom:12px'><div style='font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#8B0000;margin-bottom:2px'>🧾 Em aberto</div>"+
+      aPagar.map(function(i){ return linhaPeca(i,true); }).join("")+
+      (saldoAnt-antPago>0.009?"<div style='display:flex;justify-content:space-between;padding:9px 0'><div style='font-size:13px;font-weight:600'>SALDO ANTERIOR</div><div style='font-weight:700;color:#8B0000'>"+fval(saldoAnt-antPago)+"</div></div>":"")+
+      "</div>" : "";
+  var blocoPagas = pagas.length
+    ? "<details style='background:#fff;border-radius:12px;padding:12px 16px;margin-bottom:12px'><summary style='font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#2E5E2E;cursor:pointer'>✅ Já pagas ("+pagas.length+") · "+fval(pagas.reduce(function(s,i){ return s+i.v; },0))+" <span style='font-weight:400;text-transform:none;color:#6B6B6B'>— toque para ver</span></summary>"+
+      pagas.map(function(i){ return linhaPeca(i,false); }).join("")+"</details>" : "";
+  return cardTop + (nota||"") + blocoAPagar + blocoPagas;
+}
 function fval(v){ if(!v&&v!==0)return"—"; return "R$ "+fmtBR(v); }
 var PECAS_DIC = {
 "calca":"calça","calcas":"calças","macacao":"macacão","macacoes":"macacões",
@@ -1177,16 +1206,8 @@ async function renderFinanceiro(){
     var pecasD = pecasSum;
     var subtotalD = +(saldoAntD+pecasD).toFixed(2);
     var linha = function(lbl, val, opts){ opts=opts||{}; return "<div style='display:flex;justify-content:space-between;align-items:center;padding:"+(opts.pad||"7px")+" 0'><div style='font-size:"+(opts.fs||"13px")+";color:"+(opts.lc||"#6B6B6B")+";font-weight:"+(opts.lw||"400")+"'>"+lbl+"</div><div style='font-size:"+(opts.fs||"13px")+";font-weight:"+(opts.vw||"600")+";color:"+(opts.vc||"#0A0A0A")+"'>"+val+"</div></div>"; };
-    var resumoHTML = "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:18px 16px;margin-bottom:12px'>"+
-      linha("Saldo anterior", fval(saldoAntD))+
-      linha("Saldo", fval(pecasD))+(lojaCount>0?("<div style='font-size:11px;color:#6B4FA0;padding:2px 0 4px'>🏬 "+lojaCount+" peça"+(lojaCount>1?"s":"")+" com loja ("+fval(lojaSum)+") não "+(lojaCount>1?"entram":"entra")+" neste saldo</div>"):"")+
-      "<div style='border-top:1px solid #F0F0F0;margin:8px 0'></div>"+
-      linha("Subtotal", fval(subtotalD), {lc:"#0A0A0A",lw:"600"})+
-      linha("Total pago", "− "+fval(totPg), {vc:"#2E5E2E"})+
-      (desconto>0?linha("Desconto", "− "+fval(desconto), {vc:"#2E5E2E"}):"")+
-      "<div style='border-top:2px solid #0A0A0A;margin:10px 0'></div>"+
-      "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total a pagar</div><div style='font-size:26px;font-weight:700;color:"+cor+"'>"+fval(saldo)+"</div></div>"+
-      "</div>"+
+    var nota = lojaCount>0?("<div style='font-size:11px;color:#6B4FA0;margin:-4px 0 10px'>🏬 "+lojaCount+" peça"+(lojaCount>1?"s":"")+" com loja ("+fval(lojaSum)+") não "+(lojaCount>1?"entram":"entra")+" neste saldo</div>"):"";
+    var resumoHTML = extratoHTML(pecas.filter(function(p){ return !p.pago_por; }), saldoAnt, totPg, desconto, nota)+
       "<div style='text-align:right;margin:-6px 0 12px;display:flex;justify-content:flex-end;gap:14px'><button onclick='editarSaldoAnt()' style='font-size:11px;color:#6B6B6B;border:none;background:none;cursor:pointer;text-decoration:underline;font-family:DM Sans,sans-serif'>"+(saldoAnt>0?"Editar saldo anterior":"+ Adicionar saldo anterior")+"</button><button onclick='editarDesconto("+subtotalD+")' style='font-size:11px;color:#6B6B6B;border:none;background:none;cursor:pointer;text-decoration:underline;font-family:DM Sans,sans-serif'>"+(desconto>0?"Editar desconto":"+ Adicionar desconto")+"</button></div>";
     var pgHTML = pags.length
       ? "<div class='pgl'>"+pags.map(function(p){ return "<div class='pgi'><div><div class='pgv'>+ "+fval(p.valor)+"</div><div class='pgd'>"+(p.data||"")+(p.observacao?" · "+p.observacao:"")+"</div></div><button data-id='"+p.id+"' onclick='excluirPag(this)' style='font-size:11px;color:#B8B8B8;border:none;background:none;cursor:pointer'>✕</button></div>"; }).join("")+"</div>"
