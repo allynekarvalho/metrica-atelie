@@ -128,6 +128,7 @@ input:focus,select:focus{border-color:#0A0A0A}
 .selw span{width:26px;height:26px;border-radius:50%;border:2px solid #B8B8B8;background:#fff;display:block}
 .selw input:checked+span{background:#0A0A0A;border-color:#0A0A0A}
 .selw input:checked+span::after{content:"✓";color:#fff;font-size:15px;display:block;text-align:center;line-height:22px}
+.lj-card{background:#fff;color:#0A0A0A;border-radius:10px;padding:14px;margin-bottom:10px;display:block}.lj-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #F2F2F2;font-size:13px;color:#0A0A0A}.lj-t{font-weight:700;font-size:15px;color:#0A0A0A}.lj-card code{background:#F5F5F5;padding:2px 4px;border-radius:4px;font-size:11px}
 </style>
 </head>
 <body>
@@ -139,6 +140,7 @@ input:focus,select:focus{border-color:#0A0A0A}
   <div class="tabs">
     <button class="tab active" onclick="goTab('clientes',this)">Clientes</button>
     <button class="tab" onclick="goTab('agenda',this)">Agenda</button>
+<button class="tab" onclick="goTab('lojas',this)">Lojas</button>
 <button class="tab" onclick="goTab('resumo',this)">Resumo</button>
 
   <button class="tab" onclick="goTab('relatorio',this)">Relatório</button>
@@ -208,6 +210,10 @@ input:focus,select:focus{border-color:#0A0A0A}
     <div id="res-com"></div><div class="cfg-sec" style="margin-top:16px"><div class="cfg-title">🏬 Fechamento de lojas</div><div class="fr" style="margin-bottom:10px"><div class="fg"><label>Loja</label><select id="fechloja-nome" onchange="renderFechamentoLoja()"><option value="">Selecione a loja...</option></select></div><div class="fg"><label>Mês</label><input type="month" id="fechloja-mes" onchange="renderFechamentoLoja()"></div></div><div id="res-fechloja"></div></div>
   </div>
   <button class="btn-p" onclick="fazerBackup()" style="margin-top:16px">☁️ Fazer backup no Google Sheets</button>
+</div>
+<div class="sc" id="tela-lojas">
+  <div class="fg" style="margin-bottom:10px"><label>Mês do fechamento</label><input type="month" id="lj-mes" min="2026-09" onchange="renderLojas()"></div>
+  <div id="lj-res"></div>
 </div>
 <div class="sc" id="tela-relatorio">
 <p class="stitle" style="color:#fff;border-bottom:1px solid rgba(255,255,255,0.2)">Relatório mensal</p>
@@ -494,7 +500,7 @@ function relmD(d){ return d ? new Date(d+"T12:00:00").toLocaleDateString("pt-BR"
 function relmMesAtual(){ var h=new Date(); return h.getFullYear()+"-"+String(h.getMonth()+1).padStart(2,"0"); }
 function relmNomeMes(mes){ var p=mes.split("-"); var n=new Date(parseInt(p[0]),parseInt(p[1])-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"}); return n.charAt(0).toUpperCase()+n.slice(1); }
 function relmDados(){
-  var el=document.getElementById("relm-mes"); var mes=(el&&el.value)||relmMesAtual(); if(mes<"2026-09"){ mes="2026-09"; if(el) el.value=mes; } var pt=mes.split("-");
+  var el=document.getElementById("relm-mes"); var mes=RELM.mes||(el&&el.value)||relmMesAtual(); if(mes<"2026-09"){ mes="2026-09"; if(el) el.value=mes; } var pt=mes.split("-");
   var ini=mes+"-01", fim=mes+"-"+String(new Date(parseInt(pt[0]),parseInt(pt[1]),0).getDate()).padStart(2,"0");
   function dentro(d){ return d && d>=ini && d<=fim; }
   var pp=RELM.pecas.filter(function(p){ return dentro(p.data_entrada); }).sort(function(a,b){ return String(a.data_entrada).localeCompare(String(b.data_entrada)); });
@@ -1005,6 +1011,7 @@ if(t==="resumo") renderRes();
 if(t==="config") renderConfig();
 if(t==="relatorio") renderRelatorio();
 if(t==="agenda") renderAgenda();
+if(t==="lojas") renderLojas();
 selAtualizar();
 }
 function toggleClearBusca(){var inp=document.getElementById("busca-cli");var btn=document.getElementById("busca-cli-clear");if(btn)btn.style.display=(inp&&inp.value)?"block":"none";}function limparBusca(){var inp=document.getElementById("busca-cli");if(!inp)return;inp.value="";toggleClearBusca();renderLista();inp.focus();}async function renderLista(){
@@ -1048,7 +1055,7 @@ function toggleClearBusca(){var inp=document.getElementById("busca-cli");var btn
       var temPrior = c.pecas && c.pecas.some(function(p){ return p.prioridade_cliente; });
       return "<div class='cli-item' data-id='"+c.id+"' data-nome='"+c.nome.replace(/'/g,"&#39;")+"' onclick='abrirPerfil(this.dataset.id,this.dataset.nome)'>" +
         "<div><div class='cli-nome'>"+(temUrg?"🔴 ":"")+(temPrior?"⭐ ":"")+c.nome+"</div><div class='cli-meta'>"+ativas+" ativa"+(ativas!==1?"s":"")+" · "+total+" total</div></div>" +
-        "<div style='display:flex;gap:6px;align-items:center'><button class='bm' data-id='"+c.id+"' data-nome='"+c.nome.replace(/'/g,"&#39;")+"' data-tel='"+(c.telefone||"").replace(/'/g,"&#39;")+"' data-end='"+(c.endereco||"").replace(/'/g,"&#39;")+"' onclick='event.stopPropagation();editarCliente(this)' style='font-size:11px'>✏️</button><button class='bm' data-id='"+c.id+"' onclick='event.stopPropagation();excluirCliente(this)' style='font-size:11px;color:#B8B8B8'>🗑️</button><span class='cli-arrow'>›</span></div></div>";
+        "<div style='display:flex;gap:6px;align-items:center'><button class='bm' data-id='"+c.id+"' data-nome='"+c.nome.replace(/'/g,"&#39;")+"' data-tel='"+(c.telefone||"").replace(/'/g,"&#39;")+"' data-end='"+(c.endereco||"").replace(/'/g,"&#39;")+"' data-loja='"+(c.loja?"1":"")+"' onclick='event.stopPropagation();editarCliente(this)' style='font-size:11px'>✏️</button><button class='bm' data-id='"+c.id+"' onclick='event.stopPropagation();excluirCliente(this)' style='font-size:11px;color:#B8B8B8'>🗑️</button><span class='cli-arrow'>›</span></div></div>";
     }).join("");
   } catch(e) {
     cont.innerHTML = "<div class='vz'>Erro ao carregar: "+e.message+"</div>";
@@ -1103,6 +1110,68 @@ async function receberCli(id){
   await supa("pagamentos", {method:"POST", body:{cliente_id:id, cliente_nome:c.nome, valor:val, observacao:"", data:new Date().toISOString().split("T")[0]}});
   showToast("Pagamento de "+fval(val)+" registrado!");
   renderLista();
+}
+
+var LJ = {};
+async function renderLojas(){
+  var box=document.getElementById("lj-res"); box.innerHTML="<div class='loading'>Carregando...</div>";
+  var mesEl=document.getElementById("lj-mes"); if(!mesEl.value) mesEl.value=relmMesAtual(); if(mesEl.value<"2026-09") mesEl.value="2026-09";
+  var mes=mesEl.value, pt=mes.split("-"), ini=mes+"-01", fim=mes+"-"+String(new Date(parseInt(pt[0]),parseInt(pt[1]),0).getDate()).padStart(2,"0");
+  try{
+    var r=await Promise.all([supa("clientes?select=*&order=nome"), supa("pecas?select=*"), supa("pagamentos?select=*")]);
+    var clientes=r[0]||[], pecas=r[1]||[], pags=r[2]||[];
+    var colunaOk = !clientes.length || ("loja" in clientes[0]);
+    var lojas=clientes.filter(function(c){ return c.loja; });
+    LJ={mes:mes, pecas:pecas, pags:pags, cli:{}};
+    function dentro(d){ return d && d>=ini && d<=fim; }
+    var html="";
+    if(!colunaOk){ html+="<div class='lj-card' style='border-left:4px solid #B8860B'><div class='lj-t'>⚠️ Falta ativar no banco</div><div style='font-size:12px;color:#444'>No Supabase → SQL Editor, rode:<br><code>alter table clientes add column if not exists loja boolean default false;</code></div></div>"; }
+    var totMes=0, totDeve=0;
+    var cards=lojas.map(function(c){
+      var pp=pecas.filter(function(p){ return p.cliente_id===c.id; }), pg=pags.filter(function(p){ return p.cliente_id===c.id; });
+      LJ.cli[c.id]={nome:c.nome, tel:c.telefone||"", pp:pp, pg:pg};
+      var ppMes=pp.filter(function(p){ return dentro(p.data_entrada); }), pgMes=pg.filter(function(p){ return dentro(p.data); });
+      var vMes=ppMes.reduce(function(s,p){ return s+valCli(p); },0), pgM=pgMes.reduce(function(s,p){ return s+(p.valor||0); },0);
+      var deve=(c.saldo_anterior||0)+pp.filter(function(p){ return !p.pago_por; }).reduce(function(s,p){ return s+(p.valor||0); },0)-pg.reduce(function(s,p){ return s+(p.valor||0); },0)-(c.desconto||0);
+      deve=+deve.toFixed(2); totMes+=vMes; totDeve+=Math.max(deve,0);
+      var id=c.id;
+      return "<div class='lj-card'>"+
+        "<div style='display:flex;justify-content:space-between;align-items:baseline;gap:8px'><div class='lj-t' style='margin:0'>🏬 "+c.nome+"</div><div style='font-weight:700;color:"+(deve>0.009?"#8B0000":"#2E5E2E")+";white-space:nowrap'>"+(deve>0.009?"deve "+fval(deve):"em dia ✓")+"</div></div>"+
+        "<div class='lj-row'><span style='color:#2E2E2E'>"+ppMes.length+" peça"+(ppMes.length!==1?"s":"")+" no mês</span><span style='font-weight:600'>"+fval(vMes)+"</span></div>"+
+        (pgM?"<div class='lj-row'><span style='color:#2E5E2E'>Pago no mês</span><span style='color:#2E5E2E;font-weight:600'>− "+fval(pgM)+"</span></div>":"")+
+        "<div class='lj-row'><span style='font-weight:700'>Falta do mês</span><span style='font-weight:700;color:"+(vMes-pgM>0.009?"#8B0000":"#2E5E2E")+"'>"+fval(Math.max(vMes-pgM,0))+"</span></div>"+
+        "<div style='display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px'>"+
+          "<button class='bm' data-id='"+id+"' onclick='ljImprimir(this.dataset.id)'>🖨️ Fechamento</button>"+
+          "<button class='bm' data-id='"+id+"' onclick='ljWpp(this.dataset.id)'>📲 Enviar</button>"+
+          "<button class='bm vd' data-id='"+id+"' data-deve='"+deve+"' onclick='ljRecebi(this.dataset.id,this.dataset.deve)'>✓ Recebi</button>"+
+          "<button class='bm' data-id='"+id+"' data-nome='"+c.nome.replace(/'/g,"&#39;")+"' onclick='abrirPerfil(this.dataset.id,this.dataset.nome)'>📂 Abrir</button>"+
+        "</div></div>";
+    });
+    if(lojas.length){
+      html+="<div class='lj-card' style='border-left:4px solid #8B0000'><div class='lj-row'><span style='font-weight:700'>"+relmNomeMes(mes)+" · "+lojas.length+" loja"+(lojas.length!==1?"s":"")+"</span><span style='font-weight:700'>"+fval(totMes)+"</span></div><div class='lj-row'><span style='color:#8B0000'>Total que as lojas devem hoje</span><span style='font-weight:700;color:#8B0000'>"+fval(totDeve)+"</span></div></div>";
+      html+=cards.join("");
+    } else if(colunaOk){
+      html+="<div class='vz'>Nenhuma loja marcada ainda.</div>";
+    }
+    if(colunaOk){
+      html+="<details class='lj-card' style='margin-top:12px'><summary style='font-size:13px;font-weight:600;cursor:pointer'>⚙️ Marcar quais clientes são lojas</summary><input placeholder='🔍 Buscar...' oninput='ljFiltrar(this.value)' style='width:100%;padding:8px;margin:8px 0;border:1px solid #E8E8E8;border-radius:6px;box-sizing:border-box'>"+
+        clientes.map(function(c){ return "<div class='lj-row lj-op' data-n='"+c.nome.toLowerCase().replace(/'/g,"")+"'><span style='color:#2E2E2E'>"+c.nome+"</span><button class='bm"+(c.loja?" vd":"")+"' data-id='"+c.id+"' data-v='"+(c.loja?"1":"")+"' onclick='ljToggle(this)'>"+(c.loja?"🏬 Loja ✓":"Marcar loja")+"</button></div>"; }).join("")+"</details>";
+    }
+    box.innerHTML=html;
+  }catch(e){ box.innerHTML="<div style='padding:12px;color:red'>Erro: "+e.message+"</div>"; }
+}
+function ljFiltrar(q){ q=(q||"").toLowerCase(); document.querySelectorAll(".lj-op").forEach(function(el){ el.style.display=el.dataset.n.indexOf(q)>-1?"flex":"none"; }); }
+async function ljToggle(btn){ var novo=!btn.dataset.v; try{ await supa("clientes?id=eq."+btn.dataset.id,{method:"PATCH",body:{loja:novo}}); showToast(novo?"Marcada como loja!":"Desmarcada"); renderLojas(); }catch(e){ alert("Erro: "+e.message); } }
+function ljRelm(id){ var c=LJ.cli[id]; if(!c) return false; RELM={pecas:c.pp, pags:c.pg, nome:c.nome, tel:c.tel, mes:LJ.mes}; return true; }
+function ljImprimir(id){ if(ljRelm(id)){ relmImprimir(); RELM.mes=null; } }
+function ljWpp(id){ if(ljRelm(id)){ relmWpp(); RELM.mes=null; } }
+async function ljRecebi(id, deve){
+  var c=LJ.cli[id]; if(!c) return;
+  var v=prompt("Quanto "+c.nome+" pagou? (R$)", Math.max(parseFloat(deve)||0,0).toFixed(2).replace(".",","));
+  if(v===null) return;
+  var val=parseFloat(String(v).replace(/\./g,"").replace(",","."))||0; if(!val){ alert("Valor inválido."); return; }
+  await supa("pagamentos",{method:"POST",body:{cliente_id:id, cliente_nome:c.nome, valor:val, observacao:"", data:hojeISO()}});
+  showToast("Pagamento de "+fval(val)+" registrado!"); renderLojas();
 }
 function filtrar(f,btn){
   FILTRO=f;
@@ -1745,8 +1814,10 @@ var tel = prompt("Telefone:", btn.dataset.tel||"");
 if(tel===null) return;
 var end = prompt("Endereço:", btn.dataset.end||"");
 if(end===null) return;
+var ehLoja = confirm("🏬 "+nome+" é uma LOJA?\n\nOK = sim, é loja\nCancelar = não, cliente normal"+(btn.dataset.loja?"\n\n(hoje está marcada como loja)":""));
   try {
-    await supa("clientes?id=eq."+btn.dataset.id,{method:"PATCH",body:{nome:nome,telefone:tel,endereco:end}});
+    try { await supa("clientes?id=eq."+btn.dataset.id,{method:"PATCH",body:{nome:nome,telefone:tel,endereco:end,loja:ehLoja}}); }
+    catch(e1){ if(String(e1.message).indexOf("loja")>-1){ await supa("clientes?id=eq."+btn.dataset.id,{method:"PATCH",body:{nome:nome,telefone:tel,endereco:end}}); alert("Cliente salvo, mas falta ativar o campo LOJA no banco (comando no Supabase)."); } else throw e1; }
     showToast("Cliente atualizado!");
     renderLista();
   } catch(e){
