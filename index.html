@@ -1532,10 +1532,10 @@ async function renderComissoes(pecas){
     var feito = p.status==="pronto" || p.status==="entregue";
     var dia = p.data_pronto || (feito ? (p.data_entrega||p.data_entrada) : null);
     if(p.costureira && (p.comissao||p.valor_costureira) && noMes(dia)){
-      add(p.costureira, {dia:dia, cli:p.cliente_nome, peca:p.peca, serv:p.servico, val:p.valor_costureira||0, com:p.comissao||+((p.valor_costureira||0)*0.45).toFixed(2), semData:!p.data_pronto});
+      add(p.costureira, {dia:dia, num:p.numero_comanda, cli:p.cliente_nome, peca:p.peca, serv:p.servico, val:p.valor_costureira||0, com:p.comissao||+((p.valor_costureira||0)*0.45).toFixed(2), semData:!p.data_pronto});
     }
     if(p.retrabalho_costureira && p.retrabalho_comissao && noMes(p.retrabalho_data)){
-      add(p.retrabalho_costureira, {dia:p.retrabalho_data, cli:p.cliente_nome, peca:p.peca+" (retrabalho)", serv:"", val:p.retrabalho_valor_costureira||0, com:p.retrabalho_comissao||0});
+      add(p.retrabalho_costureira, {dia:p.retrabalho_data, num:p.numero_comanda, cli:p.cliente_nome, peca:p.peca+" (retrabalho)", serv:"", val:p.retrabalho_valor_costureira||0, com:p.retrabalho_comissao||0});
     }
   });
   COM_DADOS = {mes:mes, ini:ini, fim:fim, porCost:porCost};
@@ -1547,10 +1547,10 @@ async function renderComissoes(pecas){
     html += "<div class='cb' style='border-left:4px solid #2E5E2E'><div class='ct'>💰 A pagar no mês</div>"+nomes.map(function(c){ return "<div class='cp'><span style='color:#2E2E2E'>"+c+"</span><span style='font-weight:700'>"+fval(porCost[c].totCom)+"</span></div>"; }).join("")+"<div class='cp' style='border-top:1px solid #F0F0F0;margin-top:6px;padding-top:8px'><span style='font-weight:700'>Total</span><span style='font-weight:700;color:#2E5E2E'>"+fval(totGeral)+"</span></div></div>";
   }
   html += nomes.length ? nomes.map(function(c, idx){
-    var d = porCost[c]; d.itens.sort(function(a,b){ return String(a.dia).localeCompare(String(b.dia)); });
+    var d = porCost[c]; d.itens.sort(function(a,b){ return ((a.num||1e9)-(b.num||1e9)) || String(a.dia).localeCompare(String(b.dia)); });
     return "<div class='cb'><div class='ct'>🪡 "+c+" · "+d.itens.length+" peça"+(d.itens.length>1?"s":"")+"</div>"+
       "<details><summary style='font-size:12px;color:#6B6B6B;cursor:pointer;padding:4px 0'>Ver peças</summary>"+
-      d.itens.map(function(it){ return "<div class='cp'><span style='color:#2E2E2E;font-size:12px'>"+dBR(it.dia)+(it.semData?"*":"")+" · "+it.cli+" · "+it.peca+"</span><span style='font-size:12px;white-space:nowrap'>"+fval(it.val)+"</span></div>"; }).join("")+"</details>"+
+      d.itens.map(function(it){ return "<div class='cp'><span style='color:#2E2E2E;font-size:12px'><b>"+comNum(it)+"</b> · "+dBR(it.dia)+(it.semData?"*":"")+" · "+it.peca+"</span><span style='font-size:12px;white-space:nowrap'>"+fval(it.val)+"</span></div>"; }).join("")+"</details>"+
       "<div class='cp'><span style='color:#2E2E2E'>Valor costureira</span><span style='font-weight:600'>"+fval(d.totVal)+"</span></div>"+
       "<div class='cp'><span style='color:#2E2E2E;font-weight:700'>💰 A pagar (45%)</span><span style='font-weight:700;color:#2E5E2E'>"+fval(d.totCom)+"</span></div>"+
       "<div style='display:flex;gap:8px;margin-top:8px'><button class='bm' style='flex:1' data-c='"+c.replace(/'/g,"&#39;")+"' onclick='comImprimir(this.dataset.c)'>🖨️ Imprimir</button><button class='bm' style='flex:1' data-c='"+c.replace(/'/g,"&#39;")+"' onclick='comWpp(this.dataset.c)'>📲 WhatsApp</button></div></div>";
@@ -1558,6 +1558,7 @@ async function renderComissoes(pecas){
   if(nomes.some(function(c){ return porCost[c].itens.some(function(it){ return it.semData; }); })) html += "<div style='font-size:11px;color:#6B6B6B;margin-top:4px'>* peça marcada como pronta antes de existir a data de pronto (usa a data de entrega ou de entrada)</div>";
   document.getElementById("res-com").innerHTML = html;
 }
+function comNum(it){ return it.num ? "Nº "+String(it.num).padStart(4,"0") : "s/ nº"; }
 function comTexto(c){
   var D=COM_DADOS, d=D.porCost[c]; if(!d) return null;
   function dBR(x){ return x ? x.slice(8,10)+"/"+x.slice(5,7) : ""; }
@@ -1566,16 +1567,16 @@ function comTexto(c){
 function comWpp(c){
   var t=comTexto(c); if(!t) return;
   var l=["Olá, "+c+"! 😊","",t.titulo+":",""];
-  t.d.itens.forEach(function(it){ l.push("• "+t.dBR(it.dia)+" · "+it.cli+" · "+it.peca+" · "+fval(it.val)); });
+  t.d.itens.forEach(function(it){ l.push("• "+comNum(it)+" · "+t.dBR(it.dia)+" · "+it.peca+" · "+fval(it.val)); });
   l.push("","Total valor costureira: "+fval(t.d.totVal),"💰 A receber (45%): "+fval(t.d.totCom),"","— Métrica Ateliê");
   window.open("https://wa.me/?text="+encodeURIComponent(l.join("\n")),"_blank");
 }
 function comImprimir(c){
   var t=comTexto(c); if(!t) return;
-  var linhas=t.d.itens.map(function(it){ return "<tr><td>"+t.dBR(it.dia)+"</td><td><b>"+it.cli+"</b><div class='s'>"+it.peca+(it.serv?" — "+it.serv:"")+"</div></td><td class='v'>"+fval(it.val)+"</td></tr>"; }).join("");
+  var linhas=t.d.itens.map(function(it){ return "<tr><td><b>"+comNum(it)+"</b></td><td>"+t.dBR(it.dia)+"</td><td><b>"+it.peca+"</b>"+(it.serv?"<div class='s'>"+it.serv+"</div>":"")+"</td><td class='v'>"+fval(it.val)+"</td></tr>"; }).join("");
   var html="<!DOCTYPE html><html lang='pt-BR'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Comissão "+c+"</title><style>body{font-family:Arial,sans-serif;margin:20px;color:#000}h1{font-size:18px;margin:0 0 2px}p{font-size:12px;color:#555;margin:0 0 14px}table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px;border-bottom:1px solid #ccc;text-align:left;vertical-align:top}th{font-size:11px;text-transform:uppercase;color:#555}.s{font-size:12px;color:#555}.v{text-align:right;white-space:nowrap}.tt td{border:none;padding:4px 6px}.barra{display:flex;gap:8px;margin-bottom:14px}.barra button{flex:1;font-size:14px;font-weight:600;padding:10px;border-radius:6px;border:1px solid #ccc;background:#f5f5f5}.barra .bimp{background:#8B0000;color:#fff;border-color:#8B0000}@media print{.barra{display:none}}</style></head><body>"+
     "<div class='barra'><button onclick='window.close()'>✕ Fechar</button><button class='bimp' onclick='window.print()'>🖨️ Imprimir</button></div>"+
-    "<h1>Métrica Ateliê · Comissão</h1><p><b>"+c+"</b> · "+t.titulo+"</p><table><tr><th>Pronta</th><th>Cliente / peça</th><th class='v'>Valor</th></tr>"+linhas+"</table>"+
+    "<h1>Métrica Ateliê · Comissão</h1><p><b>"+c+"</b> · "+t.titulo+"</p><table><tr><th>Comanda</th><th>Pronta</th><th>Peça / serviço</th><th class='v'>Valor</th></tr>"+linhas+"</table>"+
     "<table class='tt' style='margin-top:10px'><tr><td>Total valor costureira ("+t.d.itens.length+" peça"+(t.d.itens.length!==1?"s":"")+")</td><td class='v'>"+fval(t.d.totVal)+"</td></tr><tr><td><b>A receber (45%)</b></td><td class='v'><b>"+fval(t.d.totCom)+"</b></td></tr></table></body></html>";
   var w=window.open("","_blank"); if(!w){ alert("Libere pop-ups para imprimir."); return; } w.document.write(html); w.document.close();
 }
