@@ -1543,15 +1543,21 @@ if(!p||!p[0]) return;
 p = p[0];
 var pecasDia = p.data_entrada ? await supa("pecas?cliente_id=eq."+p.cliente_id+"&data_entrada=eq."+p.data_entrada+"&order=criado_em") : [p];
 if(!pecasDia||!pecasDia.length) pecasDia = [p];
-var numeroComanda = pecasDia.reduce(function(n,pc){ return pc.numero_comanda||n; }, null);
+var pecasImprimir = idsSel ? (await supa("pecas?id=in.("+idsSel.join(",")+")&order=criado_em")) : (apenasEsta ? [p] : pecasDia);
+if(!pecasImprimir || !pecasImprimir.length) pecasImprimir = [p];
+// Um número só para todas as peças impressas juntas
+var nums = pecasImprimir.map(function(pc){ return pc.numero_comanda; }).filter(function(n){ return n!=null; });
+if(!nums.length && apenasEsta) nums = pecasDia.map(function(pc){ return pc.numero_comanda; }).filter(function(n){ return n!=null; });
+var numeroComanda = nums.length ? Math.min.apply(null, nums) : null;
 if(!numeroComanda){
   var ultimo = await supa("pecas?numero_comanda=not.is.null&order=numero_comanda.desc&limit=1");
   numeroComanda = ((ultimo&&ultimo[0]&&ultimo[0].numero_comanda)||0) + 1;
-  await Promise.all(pecasDia.map(function(pc){ return supa("pecas?id=eq."+pc.id, {method:"PATCH", body:{numero_comanda:numeroComanda}}); }));
-  pecasDia.forEach(function(pc){ pc.numero_comanda = numeroComanda; });
 }
-var pecasImprimir = idsSel ? (await supa("pecas?id=in.("+idsSel.join(",")+")&order=criado_em")) : (apenasEsta ? [p] : pecasDia);
-if(!pecasImprimir || !pecasImprimir.length) pecasImprimir = [p];
+var mudar = pecasImprimir.filter(function(pc){ return pc.numero_comanda !== numeroComanda; });
+if(mudar.length){
+  await Promise.all(mudar.map(function(pc){ return supa("pecas?id=eq."+pc.id, {method:"PATCH", body:{numero_comanda:numeroComanda}}); }));
+  mudar.forEach(function(pc){ pc.numero_comanda = numeroComanda; });
+}
 var data = p.data_entrada ? new Date(p.data_entrada+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"}) : new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
 var itensHTML = pecasImprimir.map(function(pc){
 return "<div class='item-peca'>"+
