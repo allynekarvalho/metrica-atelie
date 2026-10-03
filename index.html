@@ -1148,6 +1148,7 @@ async function desfazerPagPeca(pecaId){
 }
 function atualizarTelaPag(){
   var lj = document.getElementById("tela-lojas"); if(lj && lj.classList.contains("active")){ renderLojas(); return; }
+  var pf = document.getElementById("tela-perfil"); if(pf && pf.classList.contains("active") && typeof renderPerfil==="function"){ renderPerfil(); return; }
   if(typeof renderFinanceiro==="function" && document.getElementById("fp-f")) renderFinanceiro();
 }
 var LJ = {};
@@ -1293,12 +1294,13 @@ pp.map(function(p){ return mkPecaHTML(p, comAcoes); }).join("")+
 }
 function mkPecaHTML(p, comAcoes){
   var fotoHTML = p.foto_url ? "<img src='"+fotoMini(p.foto_url)+"' class='pfoto' loading='lazy' decoding='async' data-url='"+p.foto_url+"' data-full='"+p.foto_url+"' onerror='fotoCarregaErro(this)' onclick='verFoto(this.dataset.url)'>" : "";
-  var html = "<div class='pi'>"+(comAcoes ? "<label class='selw'><input type='checkbox' class='selp-cb' value='"+p.id+"' onchange='selAtualizar()'><span></span></label>" : "")+"<div class='pin'>"+fotoHTML+"<div class='pn' style='text-transform:uppercase'>"+p.peca+"</div>"+(emRetrabalho(p)?"<div class='ps' style='color:#2E5E2E;font-weight:700'>🔁 Retrabalho · sem custo p/ cliente</div>":"")+(p.observacao?"<div class='ps' style='font-style:italic;color:royalblue'>"+p.observacao+"</div>":"")+(p.marca?"<div class='ps' style='text-transform:uppercase;font-weight:700;color:#6B6B6B'>"+p.marca+"</div>":"")+(p.pago_por?"<div class='ps' style='color:#6B4FA0;font-weight:700'>🏬 "+p.pago_por+(p.loja_pago?" · pago":" · a receber")+"</div>":"")+(p.servico?p.servico.split(" + ").map(function(sv){ return "<div class='ps'>• "+sv+"</div>"; }).join(""):"<div class='ps'>—</div>")+(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+fmtBR(p.valor)+"</div>":"")+"<div class='pc'>"+(p.numero_comanda?"🎫 Nº "+String(p.numero_comanda).padStart(4,"0")+" · ":"")+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div>"+((p.data_pronto||p.data_entrega)?"<div class='pc' style='color:#2E5E2E'>"+(p.data_pronto?"✅ Pronta "+fdata(p.data_pronto):"")+(p.data_pronto&&p.data_entrega?" · ":"")+(p.data_entrega?"🎁 Entregue "+fdata(p.data_entrega):"")+"</div>":"")+(p.retrabalho_costureira?"<div class='ps' style='color:#B8860B;font-weight:600'>🔁 Retrabalho: "+p.retrabalho_costureira+(p.retrabalho_valor_costureira?" · R$ "+fmtBR(p.retrabalho_valor_costureira):"")+"</div>":"")+(p.prioridade_cliente?"<div class='ps' style='color:#B8860B;font-weight:700'>⭐ Cliente marcou como prioridade</div>":"")+(p.confirmado_cliente_em?"<div class='ps' style='color:#2E5E2E;font-weight:600'>✓ Cliente confirmou recebimento em "+fdata(p.confirmado_cliente_em.split("T")[0])+"</div>":"")+"</div><div class='pd'><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
+  var html = "<div class='pi'>"+(comAcoes ? "<label class='selw'><input type='checkbox' class='selp-cb' value='"+p.id+"' onchange='selAtualizar()'><span></span></label>" : "")+"<div class='pin'>"+fotoHTML+"<div class='pn' style='text-transform:uppercase'>"+p.peca+"</div>"+(emRetrabalho(p)?"<div class='ps' style='color:#2E5E2E;font-weight:700'>🔁 Retrabalho · sem custo p/ cliente</div>":"")+(p.observacao?"<div class='ps' style='font-style:italic;color:royalblue'>"+p.observacao+"</div>":"")+(p.marca?"<div class='ps' style='text-transform:uppercase;font-weight:700;color:#6B6B6B'>"+p.marca+"</div>":"")+(p.pago_por?"<div class='ps' style='color:#6B4FA0;font-weight:700'>🏬 "+p.pago_por+(p.loja_pago?" · pago":" · a receber")+"</div>":"")+(p.servico?p.servico.split(" + ").map(function(sv){ return "<div class='ps'>• "+sv+"</div>"; }).join(""):"<div class='ps'>—</div>")+(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+fmtBR(p.valor)+"</div>":"")+"<div class='pc'>"+(p.numero_comanda?"🎫 Nº "+String(p.numero_comanda).padStart(4,"0")+" · ":"")+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div>"+((p.data_pronto||p.data_entrega)?"<div class='pc' style='color:#2E5E2E'>"+(p.data_pronto?"✅ Pronta "+fdata(p.data_pronto):"")+(p.data_pronto&&p.data_entrega?" · ":"")+(p.data_entrega?"🎁 Entregue "+fdata(p.data_entrega):"")+"</div>":"")+(p.pago_em?"<div class='pc' style='color:#2E5E2E;font-weight:700'>💰 Pago "+fdata(p.pago_em)+"</div>":"")+(p.retrabalho_costureira?"<div class='ps' style='color:#B8860B;font-weight:600'>🔁 Retrabalho: "+p.retrabalho_costureira+(p.retrabalho_valor_costureira?" · R$ "+fmtBR(p.retrabalho_valor_costureira):"")+"</div>":"")+(p.prioridade_cliente?"<div class='ps' style='color:#B8860B;font-weight:700'>⭐ Cliente marcou como prioridade</div>":"")+(p.confirmado_cliente_em?"<div class='ps' style='color:#2E5E2E;font-weight:600'>✓ Cliente confirmou recebimento em "+fdata(p.confirmado_cliente_em.split("T")[0])+"</div>":"")+"</div><div class='pd'><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
   if(comAcoes){
     var id = p.id;
     var acoes = "<button class='bm' data-id='"+id+"' data-peca='"+p.peca+"' data-serv='"+(p.servico||"")+"' data-cos='"+(p.costureira||"").replace(/'/g,"&#39;")+"' onclick='abrirSt(this)'>Status</button>";
       acoes += "<button class='bm' data-id='"+id+"' onclick='imprimirComanda(this.dataset.id,true)'>🖨️ Comanda</button>";
       acoes += "<button class='bm' data-id='"+id+"' onclick='abrirEditar(this.dataset.id)'>✏️ Editar</button>";
+      acoes += (p.pago_em?"<button class='bm' data-id='"+p.id+"' onclick='desfazerPagPeca(this.dataset.id)'>↩️ Desfazer pago</button>":"<button class='bm vd' data-id='"+p.id+"' onclick='pagarPeca(this.dataset.id)'>💰 Pago</button>");
 
 
     if(prazoVencido(p)) acoes += p.ignorar_urgente
@@ -1308,7 +1310,7 @@ function mkPecaHTML(p, comAcoes){
     acoes += "<button class='bm' data-id='"+id+"' onclick='excluirPeca(this)' style='color:#B8B8B8'>Excluir</button>";
     html += "<div class='pac'>"+acoes+"</div>";
   } else {
-    html += "<div class='pac'><button class='bm' data-id='"+p.id+"' onclick='abrirEditar(this.dataset.id,true)'>✏️ Editar</button><button class='bm' data-id='"+p.id+"' onclick='abrirEditar(this.dataset.id)'>↩️ Retornar peça</button></div>";
+    html += "<div class='pac'><button class='bm' data-id='"+p.id+"' onclick='abrirEditar(this.dataset.id,true)'>✏️ Editar</button><button class='bm' data-id='"+p.id+"' onclick='abrirEditar(this.dataset.id)'>↩️ Retornar peça</button>"+(p.pago_em?"<button class='bm' data-id='"+p.id+"' onclick='desfazerPagPeca(this.dataset.id)'>↩️ Desfazer pago</button>":"<button class='bm vd' data-id='"+p.id+"' onclick='pagarPeca(this.dataset.id)'>💰 Pago</button>")+"</div>";
   }
   return "<div>"+html+"</div>";
 }
@@ -1335,8 +1337,16 @@ async function renderFinanceiro(){
     var pecasD = pecasSum;
     var subtotalD = +(saldoAntD+pecasD).toFixed(2);
     var linha = function(lbl, val, opts){ opts=opts||{}; return "<div style='display:flex;justify-content:space-between;align-items:center;padding:"+(opts.pad||"7px")+" 0'><div style='font-size:"+(opts.fs||"13px")+";color:"+(opts.lc||"#6B6B6B")+";font-weight:"+(opts.lw||"400")+"'>"+lbl+"</div><div style='font-size:"+(opts.fs||"13px")+";font-weight:"+(opts.vw||"600")+";color:"+(opts.vc||"#0A0A0A")+"'>"+val+"</div></div>"; };
-    var nota = lojaCount>0?("<div style='font-size:11px;color:#6B4FA0;margin:-4px 0 10px'>🏬 "+lojaCount+" peça"+(lojaCount>1?"s":"")+" com loja ("+fval(lojaSum)+") não "+(lojaCount>1?"entram":"entra")+" neste saldo</div>"):"";
-    var resumoHTML = extratoHTML(pecas.filter(function(p){ return !p.pago_por; }), saldoAnt, totPg, desconto, nota)+
+    var resumoHTML = "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:18px 16px;margin-bottom:12px'>"+
+      linha("Saldo anterior", fval(saldoAntD))+
+      linha("Saldo", fval(pecasD))+(lojaCount>0?("<div style='font-size:11px;color:#6B4FA0;padding:2px 0 4px'>🏬 "+lojaCount+" peça"+(lojaCount>1?"s":"")+" com loja ("+fval(lojaSum)+") não "+(lojaCount>1?"entram":"entra")+" neste saldo</div>"):"")+
+      "<div style='border-top:1px solid #F0F0F0;margin:8px 0'></div>"+
+      linha("Subtotal", fval(subtotalD), {lc:"#0A0A0A",lw:"600"})+
+      linha("Total pago", "− "+fval(totPg), {vc:"#2E5E2E"})+
+      (desconto>0?linha("Desconto", "− "+fval(desconto), {vc:"#2E5E2E"}):"")+
+      "<div style='border-top:2px solid #0A0A0A;margin:10px 0'></div>"+
+      "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total a pagar</div><div style='font-size:26px;font-weight:700;color:"+cor+"'>"+fval(saldo)+"</div></div>"+
+      "</div>"+
       "<div style='text-align:right;margin:-6px 0 12px;display:flex;justify-content:flex-end;gap:14px'><button onclick='editarSaldoAnt()' style='font-size:11px;color:#6B6B6B;border:none;background:none;cursor:pointer;text-decoration:underline;font-family:DM Sans,sans-serif'>"+(saldoAnt>0?"Editar saldo anterior":"+ Adicionar saldo anterior")+"</button><button onclick='editarDesconto("+subtotalD+")' style='font-size:11px;color:#6B6B6B;border:none;background:none;cursor:pointer;text-decoration:underline;font-family:DM Sans,sans-serif'>"+(desconto>0?"Editar desconto":"+ Adicionar desconto")+"</button></div>";
     var pgHTML = pags.length
       ? "<div class='pgl'>"+pags.map(function(p){ return "<div class='pgi'><div><div class='pgv'>+ "+fval(p.valor)+"</div><div class='pgd'>"+(p.data||"")+(p.observacao?" · "+p.observacao:"")+"</div></div><button data-id='"+p.id+"' onclick='excluirPag(this)' style='font-size:11px;color:#B8B8B8;border:none;background:none;cursor:pointer'>✕</button></div>"; }).join("")+"</div>"
@@ -1441,6 +1451,7 @@ async function excluirPag(btn){
   if(!confirm("Excluir pagamento?")) return;
   var id = btn.dataset.id;
   await supa("pagamentos?id=eq."+id, {method:"DELETE", prefer:"return=minimal"});
+  try{ await supa("pecas?pagamento_id=eq."+id, {method:"PATCH", body:{pago_em:null, pagamento_id:null}}); }catch(e){}
   renderFinanceiro();
 }
 function abrirNovaCli(){
