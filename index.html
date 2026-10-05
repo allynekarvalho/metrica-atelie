@@ -207,7 +207,7 @@ input:focus,select:focus{border-color:#0A0A0A}
   <div class="cfg-sec" style="margin-top:16px">
     <div class="cfg-title">💰 Comissões por costureira</div>
     <div class="fg" style="margin-bottom:6px"><label>Mês (conta pela data em que a peça ficou pronta)</label><input type="month" id="com-mes" onchange="renderComissoes()"></div>
-    <div id="res-com"></div><div class="cfg-sec" style="margin-top:16px"><div class="cfg-title">🏬 Fechamento de lojas</div><div class="fr" style="margin-bottom:10px"><div class="fg"><label>Loja</label><select id="fechloja-nome" onchange="renderFechamentoLoja()"><option value="">Selecione a loja...</option></select></div><div class="fg"><label>Mês</label><input type="month" id="fechloja-mes" onchange="renderFechamentoLoja()"></div></div><div id="res-fechloja"></div></div>
+    <div id="res-com"></div>
   </div>
   <button class="btn-p" onclick="fazerBackup()" style="margin-top:16px">☁️ Fazer backup no Google Sheets</button>
 </div>
@@ -1636,7 +1636,7 @@ var porMes = {};
     var cos=COSTUREIRAS;
     var h=cos.map(function(c){ var pp=at.filter(function(p){ return p.costureira===c; }); if(!pp.length)return""; return "<div class='cb'><div class='ct'>🪡 "+c+" · "+pp.length+" peça"+(pp.length>1?"s":"")+"</div>"+pp.map(function(p){ return "<div class='cp'><span style='color:#2E2E2E'>"+p.cliente_nome+" · "+p.peca+"</span><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span></div>"; }).join("")+"</div>"; }).join("");
     document.getElementById("res-c").innerHTML=h||"<div class='vz'><span class='vi2'>🎉</span>Tudo em dia!</div>";
-    renderComissoes(pecas);renderFechamentoLoja();
+    renderComissoes(pecas);
   } catch(e){
     document.getElementById("res-n").innerHTML = "<div style='grid-column:1/-1;padding:20px;color:red'>Erro: "+e.message+"</div>";
   }
@@ -1681,9 +1681,9 @@ async function renderComissoes(pecas){
   html += nomes.length ? nomes.map(function(c, idx){
     var d = porCost[c]; d.itens.sort(function(a,b){ return ((a.num||1e9)-(b.num||1e9)) || String(a.dia).localeCompare(String(b.dia)); });
     return "<div class='cb'><div class='ct'>🪡 "+c+" · "+d.itens.length+" peça"+(d.itens.length>1?"s":"")+"</div>"+
-      "<details><summary style='font-size:12px;color:#6B6B6B;cursor:pointer;padding:4px 0'>Ver peças</summary>"+
+      "<details style='padding:0 12px'><summary style='font-size:12px;color:#6B6B6B;cursor:pointer;padding:4px 0'>Ver peças</summary>"+
       d.itens.map(function(it){ return "<div class='cp'><span style='color:#2E2E2E;font-size:12px'><b>"+comNum(it)+"</b> · "+dBR(it.dia)+(it.semData?"*":"")+" · "+it.peca+"</span><span style='font-size:12px;white-space:nowrap'>"+fval(it.val)+"</span></div>"; }).join("")+"</details>"+
-      "<div class='cp'><span style='color:#2E2E2E'>Valor costureira</span><span style='font-weight:600'>"+fval(d.totVal)+"</span></div>"+
+      "<div class='cp'><span style='color:#2E2E2E'>Valor costureira</span><span style='font-weight:600;color:#0A0A0A'>"+fval(d.totVal)+"</span></div>"+
       "<div class='cp'><span style='color:#2E2E2E;font-weight:700'>💰 A pagar (45%)</span><span style='font-weight:700;color:#2E5E2E'>"+fval(d.totCom)+"</span></div>"+
       "<div style='display:flex;gap:8px;margin-top:8px'><button class='bm' style='flex:1' data-c='"+c.replace(/'/g,"&#39;")+"' onclick='comImprimir(this.dataset.c)'>🖨️ Imprimir</button><button class='bm' style='flex:1' data-c='"+c.replace(/'/g,"&#39;")+"' onclick='comWpp(this.dataset.c)'>📲 WhatsApp</button></div></div>";
   }).join("") : "<div class='vz'>Nenhuma peça pronta com valor de costureira neste mês.</div>";
