@@ -205,8 +205,8 @@ input:focus,select:focus{border-color:#0A0A0A}
   <div id="res-c"></div>
   <div class="cfg-sec" style="margin-top:16px"><div class="cfg-title">📅 Serviços x Recebimentos por mês</div><div id="res-mes"></div></div>
   <div class="cfg-sec" style="margin-top:16px">
-    <div class="cfg-title">💰 Comissões por costureira</div>
-    <div class="fg" style="margin-bottom:6px"><label>Mês (conta pela data em que a peça ficou pronta)</label><input type="month" id="com-mes" onchange="renderComissoes()"></div>
+    <div class="cfg-title">💰 Fechamento das costureiras</div>
+    <div class="fr" style="margin-bottom:6px"><div class="fg"><label>Costureira</label><select id="com-cos" onchange="renderComissoes()"><option value="">Todas</option></select></div><div class="fg"><label>Mês</label><input type="month" id="com-mes" onchange="renderComissoes()"></div></div>
     <div id="res-com"></div>
   </div>
   <button class="btn-p" onclick="fazerBackup()" style="margin-top:16px">☁️ Fazer backup no Google Sheets</button>
@@ -1658,38 +1658,69 @@ async function renderComissoes(pecas){
   var mes = el.value, pt = mes.split("-");
   var ini = mes+"-01", fim = mes+"-"+String(new Date(parseInt(pt[0]),parseInt(pt[1]),0).getDate()).padStart(2,"0");
   function noMes(d){ return d && d>=ini && d<=fim; }
+  var pags = []; try { pags = await supa("pagamentos_costureiras?mes_ref=eq."+mes+"&order=data") || []; } catch(e){ pags = []; }
   var porCost = {};
-  function add(c, item){ if(!porCost[c]) porCost[c] = {itens:[], totVal:0, totCom:0}; porCost[c].itens.push(item); porCost[c].totVal += item.val; porCost[c].totCom += item.com; }
+  function garante(c){ if(!porCost[c]) porCost[c] = {itens:[], totVal:0, totCom:0, pago:0, pags:[]}; return porCost[c]; }
+  function add(c, item){ var d=garante(c); d.itens.push(item); d.totVal += item.val; d.totCom += item.com; }
   pecas.forEach(function(p){
     var feito = p.status==="pronto" || p.status==="entregue";
     var dia = p.data_pronto || (feito ? (p.data_entrega||p.data_entrada) : null);
     if(p.costureira && (p.comissao||p.valor_costureira) && noMes(dia)){
-      add(p.costureira, {dia:dia, num:p.numero_comanda, cli:p.cliente_nome, peca:p.peca, serv:p.servico, val:p.valor_costureira||0, com:p.comissao||+((p.valor_costureira||0)*0.45).toFixed(2), semData:!p.data_pronto});
+      add(p.costureira, {dia:dia, num:p.numero_comanda, peca:p.peca, serv:p.servico, val:p.valor_costureira||0, com:p.comissao||+((p.valor_costureira||0)*0.45).toFixed(2), semData:!p.data_pronto});
     }
     if(p.retrabalho_costureira && p.retrabalho_comissao && noMes(p.retrabalho_data)){
-      add(p.retrabalho_costureira, {dia:p.retrabalho_data, num:p.numero_comanda, cli:p.cliente_nome, peca:p.peca+" (retrabalho)", serv:"", val:p.retrabalho_valor_costureira||0, com:p.retrabalho_comissao||0});
+      add(p.retrabalho_costureira, {dia:p.retrabalho_data, num:p.numero_comanda, peca:p.peca+" (retrabalho)", serv:"", val:p.retrabalho_valor_costureira||0, com:p.retrabalho_comissao||0});
     }
   });
+  pags.forEach(function(pg){ var d=garante(pg.costureira); d.pago += (pg.valor||0); d.pags.push(pg); });
   COM_DADOS = {mes:mes, ini:ini, fim:fim, porCost:porCost};
-  var nomes = Object.keys(porCost).sort();
+  // seletor
+  var sel = document.getElementById("com-cos"), atual = sel.value;
+  var nomes = Object.keys(porCost); (typeof COSTUREIRAS!=="undefined"?COSTUREIRAS:[]).forEach(function(c){ if(nomes.indexOf(c)<0) nomes.push(c); });
+  nomes.sort();
+  sel.innerHTML = "<option value=''>Todas</option>"+nomes.map(function(c){ return "<option"+(c===atual?" selected":"")+">"+c+"</option>"; }).join("");
   function dBR(d){ return d ? d.slice(8,10)+"/"+d.slice(5,7) : ""; }
-  var html = "<div style='font-size:12px;color:#6B6B6B;margin-bottom:8px'>"+dBR(ini)+" a "+dBR(fim)+"</div>";
-  if(nomes.length){
-    var totGeral = nomes.reduce(function(s,c){ return s+porCost[c].totCom; },0);
-    html += "<div class='cb' style='border-left:4px solid #2E5E2E'><div class='ct'>💰 A pagar no mês</div>"+nomes.map(function(c){ return "<div class='cp'><span style='color:#2E2E2E'>"+c+"</span><span style='font-weight:700'>"+fval(porCost[c].totCom)+"</span></div>"; }).join("")+"<div class='cp' style='border-top:1px solid #F0F0F0;margin-top:6px;padding-top:8px'><span style='font-weight:700'>Total</span><span style='font-weight:700;color:#2E5E2E'>"+fval(totGeral)+"</span></div></div>";
+  var box = document.getElementById("res-com"), html = "";
+  var ativos = Object.keys(porCost).filter(function(c){ return porCost[c].itens.length || porCost[c].pago; }).sort();
+  if(!atual){
+    var tC=0,tP=0;
+    html = "<div class='lj-card'><div class='lj-t' style='margin-bottom:6px'>"+relmNomeMes(mes)+"</div>"+
+      (ativos.length ? "<div class='lj-row' style='font-size:11px;color:#6B6B6B;text-transform:uppercase'><span>Costureira</span><span>A pagar · Pago · <b>Falta</b></span></div>"+ativos.map(function(c){ var d=porCost[c], f=Math.max(d.totCom-d.pago,0); tC+=d.totCom; tP+=d.pago;
+        return "<div class='lj-row' style='cursor:pointer' data-c='"+c.replace(/'/g,"&#39;")+"' onclick='comSelecionar(this.dataset.c)'><span><b>"+c+"</b> ›</span><span style='white-space:nowrap'>"+fval(d.totCom)+" · <span style='color:#2E5E2E'>"+fval(d.pago)+"</span> · <b style='color:"+(f>0.009?"#8B0000":"#2E5E2E")+"'>"+fval(f)+"</b></span></div>"; }).join("")+
+        "<div class='lj-row' style='border:none;padding-top:10px'><b>Total</b><span style='white-space:nowrap'>"+fval(tC)+" · <span style='color:#2E5E2E'>"+fval(tP)+"</span> · <b style='color:#8B0000'>"+fval(Math.max(tC-tP,0))+"</b></span></div>"
+      : "<div style='font-size:13px;color:#6B6B6B'>Nenhuma peça pronta com valor de costureira neste mês.</div>")+
+      "<div style='font-size:11px;color:#6B6B6B;margin-top:6px'>Toque numa costureira pra ver o fechamento dela.</div></div>";
+    box.innerHTML = html; return;
   }
-  html += nomes.length ? nomes.map(function(c, idx){
-    var d = porCost[c]; d.itens.sort(function(a,b){ return ((a.num||1e9)-(b.num||1e9)) || String(a.dia).localeCompare(String(b.dia)); });
-    return "<div class='cb'><div class='ct'>🪡 "+c+" · "+d.itens.length+" peça"+(d.itens.length>1?"s":"")+"</div>"+
-      "<details style='padding:0 12px'><summary style='font-size:12px;color:#6B6B6B;cursor:pointer;padding:4px 0'>Ver peças</summary>"+
-      d.itens.map(function(it){ return "<div class='cp'><span style='color:#2E2E2E;font-size:12px'><b>"+comNum(it)+"</b> · "+dBR(it.dia)+(it.semData?"*":"")+" · "+it.peca+"</span><span style='font-size:12px;white-space:nowrap'>"+fval(it.val)+"</span></div>"; }).join("")+"</details>"+
-      "<div class='cp'><span style='color:#2E2E2E'>Valor costureira</span><span style='font-weight:600;color:#0A0A0A'>"+fval(d.totVal)+"</span></div>"+
-      "<div class='cp'><span style='color:#2E2E2E;font-weight:700'>💰 A pagar (45%)</span><span style='font-weight:700;color:#2E5E2E'>"+fval(d.totCom)+"</span></div>"+
-      "<div style='display:flex;gap:8px;margin-top:8px'><button class='bm' style='flex:1' data-c='"+c.replace(/'/g,"&#39;")+"' onclick='comImprimir(this.dataset.c)'>🖨️ Imprimir</button><button class='bm' style='flex:1' data-c='"+c.replace(/'/g,"&#39;")+"' onclick='comWpp(this.dataset.c)'>📲 WhatsApp</button></div></div>";
-  }).join("") : "<div class='vz'>Nenhuma peça pronta com valor de costureira neste mês.</div>";
-  if(nomes.some(function(c){ return porCost[c].itens.some(function(it){ return it.semData; }); })) html += "<div style='font-size:11px;color:#6B6B6B;margin-top:4px'>* peça marcada como pronta antes de existir a data de pronto (usa a data de entrega ou de entrada)</div>";
-  document.getElementById("res-com").innerHTML = html;
+  var d = garante(atual); d.itens.sort(function(a,b){ return ((a.num||1e9)-(b.num||1e9)) || String(a.dia).localeCompare(String(b.dia)); });
+  var falta = +(d.totCom - d.pago).toFixed(2);
+  html = "<div class='lj-card'>"+
+    "<div class='lj-t'>🪡 "+atual+"</div><div style='font-size:12px;color:#6B6B6B;margin-bottom:8px'>"+relmNomeMes(mes)+" · "+dBR(ini)+" a "+dBR(fim)+"</div>"+
+    "<div class='lj-row'><span>Peças prontas no mês</span><b>"+d.itens.length+"</b></div>"+
+    "<div class='lj-row'><span>Valor costureira</span><b>"+fval(d.totVal)+"</b></div>"+
+    "<div class='lj-row'><span>A pagar (45%)</span><b>"+fval(d.totCom)+"</b></div>"+
+    "<div class='lj-row'><span style='color:#2E5E2E'>Já pago</span><b style='color:#2E5E2E'>− "+fval(d.pago)+"</b></div>"+
+    "<div style='display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid #0A0A0A;margin-top:8px;padding-top:10px'><b style='font-size:14px;text-transform:uppercase'>"+(falta>0.009?"Falta pagar":"Situação")+"</b><b style='font-size:24px;color:"+(falta>0.009?"#8B0000":"#2E5E2E")+"'>"+(falta>0.009?fval(falta):(falta<-0.009?"Pago a mais "+fval(-falta):"Tudo pago ✓"))+"</b></div>"+
+    "<details style='margin-top:10px'><summary style='font-size:13px;font-weight:600;cursor:pointer;padding:6px 0'>📋 Ver peças ("+d.itens.length+")</summary>"+
+      (d.itens.map(function(it){ return "<div class='lj-row' style='font-size:12px'><span><b>"+comNum(it)+"</b> · "+dBR(it.dia)+(it.semData?"*":"")+" · "+it.peca+"</span><span style='white-space:nowrap'>"+fval(it.val)+"</span></div>"; }).join("")||"<div style='font-size:12px;color:#6B6B6B'>Nenhuma peça.</div>")+"</details>"+
+    (d.pags.length?"<div style='font-size:13px;font-weight:600;margin-top:10px'>💵 Pagamentos feitos</div>"+d.pags.map(function(pg){ return "<div class='lj-row' style='font-size:12px'><span>"+dBR(pg.data)+(pg.observacao?" · "+pg.observacao:"")+"</span><span style='white-space:nowrap;display:flex;gap:8px;align-items:center'><b style='color:#2E5E2E'>"+fval(pg.valor)+"</b><button class='bm' style='padding:2px 7px;font-size:11px' onclick=\"comExcluirPag('"+pg.id+"')\">✕</button></span></div>"; }).join(""):"")+
+    "<div style='margin-top:12px;font-size:12px;font-weight:700;color:#6B6B6B;text-transform:uppercase'>Registrar pagamento</div>"+
+    "<div style='display:flex;gap:6px;margin-top:6px'><input type='number' id='com-pg-val' step='0.01' placeholder='R$' value='"+(falta>0?falta.toFixed(2):"")+"' style='flex:1;min-width:0;padding:10px;border:1px solid #E8E8E8;border-radius:6px;font-size:14px;color:#0A0A0A;background:#fff'><input type='date' id='com-pg-data' value='"+hojeISO()+"' style='flex:1;min-width:0;padding:10px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;color:#0A0A0A;background:#fff'><button class='bm vd' style='padding:0 14px' data-c='"+atual.replace(/'/g,"&#39;")+"' onclick='comRegistrarPag(this.dataset.c)'>✓</button></div>"+
+    "<div style='display:flex;gap:8px;margin-top:12px'><button class='bm' style='flex:1' data-c='"+atual.replace(/'/g,"&#39;")+"' onclick='comImprimir(this.dataset.c)'>🖨️ Imprimir</button><button class='bm' style='flex:1' data-c='"+atual.replace(/'/g,"&#39;")+"' onclick='comWpp(this.dataset.c)'>📲 WhatsApp</button></div>"+
+    "<button class='bm' style='width:100%;margin-top:8px' onclick='comSelecionar(\"\")'>‹ Ver todas</button>"+
+    (d.itens.some(function(it){ return it.semData; })?"<div style='font-size:11px;color:#6B6B6B;margin-top:6px'>* peça pronta antes de existir a data de pronto (usa entrega ou entrada)</div>":"")+
+    "</div>";
+  box.innerHTML = html;
 }
+function comSelecionar(c){ document.getElementById("com-cos").value = c; renderComissoes(); var b=document.getElementById("res-com"); if(b) b.scrollIntoView({behavior:"smooth", block:"start"}); }
+async function comRegistrarPag(c){
+  var v = parseFloat(String(document.getElementById("com-pg-val").value).replace(",","."))||0;
+  if(!v){ alert("Digite o valor."); return; }
+  var data = document.getElementById("com-pg-data").value || hojeISO();
+  try{ await supa("pagamentos_costureiras",{method:"POST",body:{costureira:c, mes_ref:COM_DADOS.mes, valor:v, data:data}}); showToast("Pagamento de "+fval(v)+" para "+c+" registrado!"); renderComissoes(); }
+  catch(e){ alert("Erro: "+e.message); }
+}
+async function comExcluirPag(id){ if(!confirm("Excluir este pagamento?")) return; await supa("pagamentos_costureiras?id=eq."+id,{method:"DELETE",prefer:"return=minimal"}); renderComissoes(); }
 function comNum(it){ return it.num ? "Nº "+String(it.num).padStart(4,"0") : "s/ nº"; }
 function comTexto(c){
   var D=COM_DADOS, d=D.porCost[c]; if(!d) return null;
@@ -1700,7 +1731,9 @@ function comWpp(c){
   var t=comTexto(c); if(!t) return;
   var l=["Olá, "+c+"! 😊","",t.titulo+":",""];
   t.d.itens.forEach(function(it){ l.push("• "+comNum(it)+" · "+t.dBR(it.dia)+" · "+it.peca+" · "+fval(it.val)); });
-  l.push("","Total valor costureira: "+fval(t.d.totVal),"💰 A receber (45%): "+fval(t.d.totCom),"","— Métrica Ateliê");
+  l.push("","Total valor costureira: "+fval(t.d.totVal),"💰 A receber (45%): "+fval(t.d.totCom));
+  if(t.d.pago) l.push("✅ Já pago: "+fval(t.d.pago));
+  l.push("⏳ Falta receber: "+fval(Math.max(t.d.totCom-t.d.pago,0)),"","— Métrica Ateliê");
   window.open("https://wa.me/?text="+encodeURIComponent(l.join("\n")),"_blank");
 }
 function comImprimir(c){
@@ -1709,7 +1742,7 @@ function comImprimir(c){
   var html="<!DOCTYPE html><html lang='pt-BR'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Comissão "+c+"</title><style>body{font-family:Arial,sans-serif;margin:20px;color:#000}h1{font-size:18px;margin:0 0 2px}p{font-size:12px;color:#555;margin:0 0 14px}table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px;border-bottom:1px solid #ccc;text-align:left;vertical-align:top}th{font-size:11px;text-transform:uppercase;color:#555}.s{font-size:12px;color:#555}.v{text-align:right;white-space:nowrap}.tt td{border:none;padding:4px 6px}.barra{display:flex;gap:8px;margin-bottom:14px}.barra button{flex:1;font-size:14px;font-weight:600;padding:10px;border-radius:6px;border:1px solid #ccc;background:#f5f5f5}.barra .bimp{background:#8B0000;color:#fff;border-color:#8B0000}@media print{.barra{display:none}}</style></head><body>"+
     "<div class='barra'><button onclick='window.close()'>✕ Fechar</button><button class='bimp' onclick='window.print()'>🖨️ Imprimir</button></div>"+
     "<h1>Métrica Ateliê · Comissão</h1><p><b>"+c+"</b> · "+t.titulo+"</p><table><tr><th>Comanda</th><th>Pronta</th><th>Peça / serviço</th><th class='v'>Valor</th></tr>"+linhas+"</table>"+
-    "<table class='tt' style='margin-top:10px'><tr><td>Total valor costureira ("+t.d.itens.length+" peça"+(t.d.itens.length!==1?"s":"")+")</td><td class='v'>"+fval(t.d.totVal)+"</td></tr><tr><td><b>A receber (45%)</b></td><td class='v'><b>"+fval(t.d.totCom)+"</b></td></tr></table></body></html>";
+    "<table class='tt' style='margin-top:10px'><tr><td>Total valor costureira ("+t.d.itens.length+" peça"+(t.d.itens.length!==1?"s":"")+")</td><td class='v'>"+fval(t.d.totVal)+"</td></tr><tr><td><b>A receber (45%)</b></td><td class='v'><b>"+fval(t.d.totCom)+"</b></td></tr><tr><td>Já pago</td><td class='v'>− "+fval(t.d.pago||0)+"</td></tr><tr><td><b>Falta receber</b></td><td class='v'><b>"+fval(Math.max(t.d.totCom-(t.d.pago||0),0))+"</b></td></tr></table></body></html>";
   var w=window.open("","_blank"); if(!w){ alert("Libere pop-ups para imprimir."); return; } w.document.write(html); w.document.close();
 }
 function populateLojaSelect(){var sel=document.getElementById("fechloja-nome");if(!sel)return;var cur=sel.value;sel.innerHTML="<option value=''>Selecione a loja...</option>"+LOJAS.slice().sort().map(function(l){return "<option"+(l===cur?" selected":"")+">"+l+"</option>";}).join("");}async function renderFechamentoLoja(){populateLojaSelect();var loja=document.getElementById("fechloja-nome").value;var mesEl=document.getElementById("fechloja-mes");if(!mesEl.value){var hj=new Date();mesEl.value=hj.getFullYear()+"-"+String(hj.getMonth()+1).padStart(2,"0");}var mes=mesEl.value;var box=document.getElementById("res-fechloja");if(!loja){box.innerHTML="<div class='vz'>Selecione uma loja para ver o fechamento.</div>";return;}box.innerHTML="<div class='loading'>Carregando...</div>";var partes=mes.split("-");var ini=mes+"-01";var ultimoDia=new Date(parseInt(partes[0]),parseInt(partes[1]),0).getDate();var fim=mes+"-"+String(ultimoDia).padStart(2,"0");try{var pecasLoja=await supa("pecas?pago_por=eq."+encodeURIComponent(loja)+"&data_entrada=gte."+ini+"&data_entrada=lte."+fim+"&order=data_entrada");var pend=pecasLoja.filter(function(p){return !p.loja_pago;});var pagas=pecasLoja.filter(function(p){return p.loja_pago;});var totPend=pend.reduce(function(s,p){return s+(p.valor||0);},0);var totPagas=pagas.reduce(function(s,p){return s+(p.valor||0);},0);var linhaP=function(p){return "<div class='cp'><span style='color:#2E2E2E'>"+p.cliente_nome+" · "+p.peca+"</span><span style='font-weight:600;color:#8B0000'>"+fval(p.valor)+"</span></div>";};var html="<div class='cb'><div class='ct'>🏬 "+loja+" · "+pend.length+" pendente"+(pend.length!==1?"s":"")+"</div>"+(pend.length?pend.map(linhaP).join(""):"<div class='cp'><span style='color:#6B6B6B'>Nenhuma pendência neste mês.</span></div>")+"<div class='cp' style='border-top:1px solid #F0F0F0;margin-top:6px;padding-top:8px'><span style='font-weight:700'>Total a receber</span><span style='font-weight:700;color:#8B0000'>"+fval(totPend)+"</span></div></div>"+(pagas.length?("<div class='cb'><div class='ct'>✓ Já pagas neste mês · "+pagas.length+"</div><div class='cp'><span style='color:#2E2E2E'>Total recebido</span><span style='font-weight:600;color:#2E5E2E'>"+fval(totPagas)+"</span></div></div>"):"");if(pend.length){html+="<button class='btn-p' style='margin-top:10px' onclick='marcarFechamentoLojaPago("+JSON.stringify(loja)+","+JSON.stringify(ini)+","+JSON.stringify(fim)+")'>✓ Marcar mês como pago ("+fval(totPend)+")</button>";}box.innerHTML=html;}catch(e){box.innerHTML="<div style='padding:12px;color:red'>Erro: "+e.message+"</div>";}}async function marcarFechamentoLojaPago(loja,ini,fim){if(!confirm("Confirmar recebimento de "+loja+" para este período?"))return;await supa("pecas?pago_por=eq."+encodeURIComponent(loja)+"&data_entrada=gte."+ini+"&data_entrada=lte."+fim+"&loja_pago=eq.false",{method:"PATCH",body:{loja_pago:true}});showToast("Fechamento registrado!");renderFechamentoLoja();}async function imprimirComanda(id, apenasEsta) {
