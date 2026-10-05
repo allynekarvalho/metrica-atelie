@@ -185,8 +185,10 @@ function renderPeca(p, tipo) {
 html += "<label class='selw'><input type='checkbox' "+(SEL[p.id]?"checked ":"")+"onchange=\"selToggle('"+p.id+"',this.checked)\"><span></span></label>";
   if(p.foto_url) html += "<img src='"+p.foto_url+"' data-full='"+p.foto_url+"' class='pfoto' loading='lazy' decoding='async' onerror='fotoCarregaErro(this)'>";
   html += "<div class='pinfo'"+(p.foto_url?"":" style='padding-left:54px'")+"><div class='pnome'>"+p.peca+"</div>";
+  if(CLI && CLI.loja && p.observacao) html += "<div class='pserv' style='color:#9DB4FF;font-style:italic'>Cliente: "+p.observacao+"</div>";
   if(p.servico) html += "<div class='pserv'>"+p.servico+"</div>";
   html += "<span class='badge "+p.status+"'>"+slbl(p.status)+"</span>";
+  if(CLI && CLI.loja && !emRetrabalho(p) && p.valor) html += p.pago_em ? "<div style='display:inline-block;margin:8px 0 0 6px;padding:3px 10px;border-radius:12px;background:#E6F2E6;color:#2E5E2E;font-size:12px;font-weight:700'>✅ PAGA em "+fdata(p.pago_em).slice(0,5)+"</div>" : "<div style='display:inline-block;margin:8px 0 0 6px;padding:3px 10px;border-radius:12px;background:#FBEAEA;color:#8B0000;font-size:12px;font-weight:700'>⏳ AGUARDANDO PAGAMENTO</div>";
   if(emRetrabalho(p)) html += "<div style='margin-top:8px;font-size:13px;font-weight:600;color:#fff'>🔁 Retrabalho · sem custo</div>";
   else if(p.valor) html += "<div style='margin-top:8px;font-size:14px;font-weight:600;color:#fff'>"+fval(p.valor)+"</div>";
   if(tipo==="pecas") {
