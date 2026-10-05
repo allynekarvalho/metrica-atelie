@@ -1660,8 +1660,9 @@ async function renderComissoes(pecas){
   function noMes(d){ return d && d>=ini && d<=fim; }
   var pags = []; try { pags = await supa("pagamentos_costureiras?mes_ref=eq."+mes+"&order=data") || []; } catch(e){ pags = []; }
   var porCost = {};
-  function garante(c){ if(!porCost[c]) porCost[c] = {itens:[], totVal:0, totCom:0, pago:0, pags:[]}; return porCost[c]; }
-  function add(c, item){ var d=garante(c); d.itens.push(item); d.totVal += item.val; d.totCom += item.com; }
+  function nomeCost(c){ return String(c||"").trim().toLowerCase().replace(/(^|[\s(])\S/g, function(x){ return x.toUpperCase(); }); }
+  function garante(c){ c = nomeCost(c); if(!porCost[c]) porCost[c] = {itens:[], totVal:0, totCom:0, pago:0, pags:[]}; return porCost[c]; }
+  function add(c, item){ c = nomeCost(c); var d=garante(c); d.itens.push(item); d.totVal += item.val; d.totCom += item.com; }
   pecas.forEach(function(p){
     var feito = p.status==="pronto" || p.status==="entregue";
     var dia = p.data_pronto || (feito ? (p.data_entrega||p.data_entrada) : null);
@@ -1672,11 +1673,11 @@ async function renderComissoes(pecas){
       add(p.retrabalho_costureira, {dia:p.retrabalho_data, num:p.numero_comanda, peca:p.peca+" (retrabalho)", serv:"", val:p.retrabalho_valor_costureira||0, com:p.retrabalho_comissao||0});
     }
   });
-  pags.forEach(function(pg){ var d=garante(pg.costureira); d.pago += (pg.valor||0); d.pags.push(pg); });
+  pags.forEach(function(pg){ pg.costureira = nomeCost(pg.costureira); var d=garante(pg.costureira); d.pago += (pg.valor||0); d.pags.push(pg); });
   COM_DADOS = {mes:mes, ini:ini, fim:fim, porCost:porCost};
   // seletor
   var sel = document.getElementById("com-cos"), atual = sel.value;
-  var nomes = Object.keys(porCost); (typeof COSTUREIRAS!=="undefined"?COSTUREIRAS:[]).forEach(function(c){ if(nomes.indexOf(c)<0) nomes.push(c); });
+  var nomes = Object.keys(porCost); (typeof COSTUREIRAS!=="undefined"?COSTUREIRAS:[]).forEach(function(c){ c=nomeCost(c); if(nomes.indexOf(c)<0) nomes.push(c); });
   nomes.sort();
   sel.innerHTML = "<option value=''>Todas</option>"+nomes.map(function(c){ return "<option"+(c===atual?" selected":"")+">"+c+"</option>"; }).join("");
   function dBR(d){ return d ? d.slice(8,10)+"/"+d.slice(5,7) : ""; }
