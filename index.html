@@ -1635,11 +1635,11 @@ var porMes = {};
         document.getElementById("res-mes").innerHTML = "<div class='pgl'>"+mesesHTML+"</div>";
     var grupos={}; at.forEach(function(p){ if(!p.costureira) return; var k=String(p.costureira).trim().toLowerCase().replace(/(^|[\s(])\S/g,function(x){return x.toUpperCase();}); (grupos[k]=grupos[k]||[]).push(p); });
     var nomesC=Object.keys(grupos).sort(function(a,b){ return grupos[b].length-grupos[a].length; });
-    var h = nomesC.length ? "<div class='lj-card'><div class='lj-t' style='margin-bottom:4px'>🪡 Peças com cada costureira agora</div><div style='font-size:11px;color:#6B6B6B;margin-bottom:6px'>⏳ aguardando · 🧵 em andamento · ✅ pronta — toque pra ver</div>"+
+    var h = nomesC.length ? "<details class='lj-card'><summary style='display:flex;justify-content:space-between;align-items:center;cursor:pointer;list-style:none'><span class='lj-t'>🪡 Peças com cada costureira agora</span><span style='font-size:13px;color:#6B6B6B;white-space:nowrap'>"+at.filter(function(p){return p.costureira;}).length+" peças ›</span></summary><div style='font-size:11px;color:#6B6B6B;margin:8px 0 6px'>⏳ aguardando · 🧵 em andamento · ✅ pronta — toque no nome pra ver as peças</div>"+
       nomesC.map(function(c){ var pp=grupos[c], ag=0, an=0, pr=0; pp.forEach(function(p){ if(p.status==="pronto") pr++; else if(p.status==="em-andamento") an++; else ag++; });
         return "<details style='border-bottom:1px solid #F2F2F2'><summary style='display:flex;justify-content:space-between;align-items:center;padding:9px 0;cursor:pointer;list-style:none;font-size:14px;color:#0A0A0A'><b>"+c+" <span style='font-weight:400;color:#6B6B6B'>("+pp.length+")</span></b><span style='font-size:13px;white-space:nowrap'>⏳ "+ag+" · 🧵 "+an+" · ✅ "+pr+" ›</span></summary>"+
           pp.map(function(p){ return "<div style='display:flex;justify-content:space-between;gap:8px;padding:4px 0 4px 10px;font-size:12px;color:#444'><span>"+p.cliente_nome+" · "+p.peca+"</span><span style='white-space:nowrap'>"+(p.status==="pronto"?"✅":p.status==="em-andamento"?"🧵":"⏳")+"</span></div>"; }).join("")+"<div style='height:6px'></div></details>";
-      }).join("")+"</div>" : "";
+      }).join("")+"</details>" : "";
     document.getElementById("res-c").innerHTML=h||"<div class='vz'><span class='vi2'>🎉</span>Tudo em dia!</div>";
     renderComissoes(pecas);
   } catch(e){
