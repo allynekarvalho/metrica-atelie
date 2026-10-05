@@ -203,7 +203,6 @@ input:focus,select:focus{border-color:#0A0A0A}
   <p class="stitle" style="color:#fff;border-bottom:1px solid rgba(255,255,255,0.2)">Resumo</p>
   <div class="rg" id="res-n"></div>
   <div id="res-c"></div>
-  <div class="cfg-sec" style="margin-top:16px"><div class="cfg-title">📅 Serviços x Recebimentos por mês</div><div id="res-mes"></div></div>
   <div class="cfg-sec" style="margin-top:16px">
     <div class="cfg-title">💰 Fechamento das costureiras</div>
     <div class="fr" style="margin-bottom:6px"><div class="fg"><label>Costureira</label><select id="com-cos" onchange="renderComissoes()"><option value="">Todas</option></select></div><div class="fg"><label>Mês</label><input type="month" id="com-mes" onchange="renderComissoes()"></div></div>
@@ -1632,7 +1631,7 @@ var porMes = {};
           Object.keys(porMesSvc).forEach(function(m){ mesesSet[m]=1; });
         var mesesOrd = Object.keys(mesesSet).sort().reverse();
         var mesesHTML = mesesOrd.length ? mesesOrd.map(function(m){ var lbl = new Date(m+"-01T12:00:00").toLocaleDateString("pt-BR",{month:"long",year:"numeric"}); lbl = lbl.charAt(0).toUpperCase()+lbl.slice(1); return "<div class='pgi' style='display:block'><div style='font-weight:600;margin-bottom:6px'>"+lbl+"</div><div style='display:flex;justify-content:space-between;margin-bottom:2px'><span class='pgd'>Serviços (entrada)</span><span class='pgv' style='color:#fff'>"+fval(porMesSvc[m]||0)+"</span></div><div style='display:flex;justify-content:space-between'><span class='pgd'>Recebido</span><span class='pgv'>"+fval(porMes[m]||0)+"</span></div></div>"; }).join("") : "<div class='vz'>Nenhum registro.</div>";
-        document.getElementById("res-mes").innerHTML = "<div class='pgl'>"+mesesHTML+"</div>";
+        var _rm=document.getElementById("res-mes"); if(_rm) _rm.innerHTML = "<div class='pgl'>"+mesesHTML+"</div>";
     var grupos={}; at.forEach(function(p){ if(!p.costureira) return; var k=String(p.costureira).trim().toLowerCase().replace(/(^|[\s(])\S/g,function(x){return x.toUpperCase();}); (grupos[k]=grupos[k]||[]).push(p); });
     var nomesC=Object.keys(grupos).sort(function(a,b){ return grupos[b].length-grupos[a].length; });
     var h = nomesC.length ? "<details class='lj-card'><summary style='display:flex;justify-content:space-between;align-items:center;cursor:pointer;list-style:none'><span class='lj-t'>🪡 Peças com cada costureira agora</span><span style='font-size:13px;color:#6B6B6B;white-space:nowrap'>"+at.filter(function(p){return p.costureira;}).length+" peças ›</span></summary><div style='font-size:11px;color:#6B6B6B;margin:8px 0 6px'>⏳ aguardando · 🧵 em andamento · ✅ pronta — toque no nome pra ver as peças</div>"+
