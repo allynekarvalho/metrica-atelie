@@ -204,6 +204,15 @@ input:focus,select:focus{border-color:#0A0A0A}
   <div class="rg" id="res-n"></div>
   <div id="res-c"></div>
   <div class="cfg-sec" style="margin-top:16px">
+    <div class="cfg-title">🧾 Despesas do ateliê</div>
+    <div class="lj-card">
+      <div style="display:flex;gap:6px"><input id="dp-desc" placeholder="O que precisa comprar..." style="flex:2;min-width:0;padding:10px;border:1px solid #E8E8E8;border-radius:6px;font-size:14px;color:#0A0A0A;background:#fff"><input id="dp-val" type="number" step="0.01" placeholder="R$" style="flex:1;min-width:0;padding:10px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;color:#0A0A0A;background:#fff"><button class="bm vd" style="padding:0 14px" onclick="dpAdicionar()">+</button></div>
+      <div id="dp-lista" style="margin-top:8px"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:8px"><b style="font-size:13px">💸 Gastos do mês</b><input type="month" id="dp-mes" onchange="renderDespesas()" style="padding:6px;border:1px solid #E8E8E8;border-radius:6px;font-size:12px;color:#0A0A0A;background:#fff"></div>
+      <div id="dp-gastos"></div>
+    </div>
+  </div>
+  <div class="cfg-sec" style="margin-top:16px">
     <div class="cfg-title">💰 Fechamento das costureiras</div>
     <div class="fr" style="margin-bottom:6px"><div class="fg"><label>Costureira</label><select id="com-cos" onchange="renderComissoes()"><option value="">Todas</option></select></div><div class="fg"><label>Mês</label><input type="month" id="com-mes" onchange="renderComissoes()"></div></div>
     <div id="res-com"></div>
@@ -1640,7 +1649,7 @@ var porMes = {};
           pp.map(function(p){ return "<div style='display:flex;justify-content:space-between;gap:8px;padding:4px 0 4px 10px;font-size:12px;color:#444'><span>"+p.cliente_nome+" · "+p.peca+"</span><span style='white-space:nowrap'>"+(p.status==="pronto"?"✅":p.status==="em-andamento"?"🧵":"⏳")+"</span></div>"; }).join("")+"<div style='height:6px'></div></details>";
       }).join("")+"</details>" : "";
     document.getElementById("res-c").innerHTML=h||"<div class='vz'><span class='vi2'>🎉</span>Tudo em dia!</div>";
-    renderComissoes(pecas);
+    renderComissoes(pecas); renderDespesas();
   } catch(e){
     document.getElementById("res-n").innerHTML = "<div style='grid-column:1/-1;padding:20px;color:red'>Erro: "+e.message+"</div>";
   }
@@ -1654,6 +1663,36 @@ function quinzenaAtual(){
   function f(d){ return d.toISOString().split("T")[0]; }
   return {ini:f(ini), fim:f(fim)};
 }
+async function renderDespesas(){
+  var lista=document.getElementById("dp-lista"), gastos=document.getElementById("dp-gastos"); if(!lista) return;
+  var mesEl=document.getElementById("dp-mes"); if(!mesEl.value) mesEl.value=relmMesAtual();
+  var mes=mesEl.value, pt=mes.split("-"), ini=mes+"-01", fim=mes+"-"+String(new Date(parseInt(pt[0]),parseInt(pt[1]),0).getDate()).padStart(2,"0");
+  var ds=[]; try{ ds = await supa("despesas?order=criado_em.desc") || []; }catch(e){ lista.innerHTML="<div style='font-size:12px;color:#8B0000'>Erro ao carregar despesas.</div>"; return; }
+  function dBR(d){ return d ? d.slice(8,10)+"/"+d.slice(5,7) : ""; }
+  var aComprar=ds.filter(function(d){ return !d.comprado; });
+  var doMes=ds.filter(function(d){ return d.comprado && d.data && d.data>=ini && d.data<=fim; }).sort(function(a,b){ return String(b.data).localeCompare(String(a.data)); });
+  lista.innerHTML = "<div style='font-size:13px;font-weight:700;margin:6px 0'>🛒 A comprar ("+aComprar.length+")</div>"+
+    (aComprar.length ? aComprar.map(function(d){ return "<div class='lj-row'><span>"+d.descricao+(d.valor?" <span style='color:#6B6B6B'>· "+fval(d.valor)+"</span>":"")+"</span><span style='display:flex;gap:6px;white-space:nowrap'><button class='bm vd' style='padding:3px 8px;font-size:11px' onclick=\"dpComprei('"+d.id+"')\">✓ Comprei</button><button class='bm' style='padding:3px 7px;font-size:11px' onclick=\"dpExcluir('"+d.id+"')\">✕</button></span></div>"; }).join("") : "<div style='font-size:12px;color:#6B6B6B'>Nada pra comprar 🎉</div>");
+  var tot=doMes.reduce(function(s,d){ return s+(d.valor||0); },0);
+  gastos.innerHTML = (doMes.length ? doMes.map(function(d){ return "<div class='lj-row' style='font-size:13px'><span><span style='color:#6B6B6B'>"+dBR(d.data)+"</span> · "+d.descricao+"</span><span style='display:flex;gap:6px;align-items:center;white-space:nowrap'><b>"+fval(d.valor||0)+"</b><button class='bm' style='padding:2px 7px;font-size:11px' onclick=\"dpExcluir('"+d.id+"')\">✕</button></span></div>"; }).join("") : "<div style='font-size:12px;color:#6B6B6B;padding:6px 0'>Nenhum gasto neste mês.</div>")+
+    "<div style='display:flex;justify-content:space-between;border-top:2px solid #0A0A0A;margin-top:6px;padding-top:8px'><b>Total do mês</b><b style='color:#8B0000'>"+fval(tot)+"</b></div>";
+}
+async function dpAdicionar(){
+  var de=document.getElementById("dp-desc"), ve=document.getElementById("dp-val");
+  var desc=(de.value||"").trim(); if(!desc){ alert("Escreva o que precisa comprar."); return; }
+  var v=parseFloat(String(ve.value).replace(",","."))||null;
+  await supa("despesas",{method:"POST",body:{descricao:desc, valor:v, comprado:false}});
+  de.value=""; ve.value=""; showToast("Adicionado na lista!"); renderDespesas();
+}
+async function dpComprei(id){
+  var r=await supa("despesas?id=eq."+id); var d=r&&r[0]; if(!d) return;
+  var v=prompt("Quanto custou \""+d.descricao+"\"? (R$)", d.valor?Number(d.valor).toFixed(2).replace(".",","):"");
+  if(v===null) return;
+  var val=parseFloat(String(v).replace(/\./g,"").replace(",","."))||0;
+  await supa("despesas?id=eq."+id,{method:"PATCH",body:{comprado:true, valor:val, data:hojeISO()}});
+  showToast("Gasto registrado: "+fval(val)); renderDespesas();
+}
+async function dpExcluir(id){ if(!confirm("Apagar este item?")) return; await supa("despesas?id=eq."+id,{method:"DELETE",prefer:"return=minimal"}); renderDespesas(); }
 var COM_DADOS = {};
 async function renderComissoes(pecas){
   if(!pecas) pecas = await supa("pecas?select=*");
