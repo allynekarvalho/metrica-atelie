@@ -1293,7 +1293,17 @@ async function renderPerfil(){
     document.getElementById("fp-pr").innerHTML = mkEntradasHTML(prontos, true) || "<div class='vz'><span class='vi2'>✅</span>Nenhuma peça pronta.</div>";
     var totalEntregue = entregues.reduce(function(s,p){ return s+(p.valor||0); },0);
     var totEntregueHTML = entregues.length ? "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:14px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center'><div style='font-size:12px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total entregue</div><div style='font-size:18px;font-weight:700;color:#0A0A0A'>"+fval(totalEntregue)+"</div></div>" : "";
-    document.getElementById("fp-e").innerHTML = totEntregueHTML + (mkEntradasHTML(entregues, false) || "<div class='vz'><span class='vi2'>📦</span>Nenhuma entregue.</div>");
+    if(window.CLI_ATIVA_LOJA){
+      var naoPagas = entregues.filter(function(p){ return !p.pago_em; });
+      var pagas = entregues.filter(function(p){ return p.pago_em; });
+      var porMesPg = {}; pagas.forEach(function(p){ var m=p.pago_em.slice(0,7); (porMesPg[m]=porMesPg[m]||[]).push(p); });
+      var mesesPg = Object.keys(porMesPg).sort().reverse();
+      var pagasHTML = mesesPg.length ? "<div style='margin-top:16px'>"+mesesPg.map(function(m){ var pp=porMesPg[m], t=pp.reduce(function(s,p){ return s+(p.valor||0); },0);
+        return "<details style='background:#fff;border-radius:10px;margin-bottom:10px;overflow:hidden'><summary style='display:flex;justify-content:space-between;align-items:center;padding:14px 16px;cursor:pointer;list-style:none;color:#2E5E2E;font-weight:700;font-size:14px'><span>✅ Pagas em "+relmNomeMes(m)+" ("+pp.length+")</span><span style='white-space:nowrap'>"+fval(t)+" ›</span></summary>"+mkEntradasHTML(pp, false)+"</details>"; }).join("")+"</div>" : "";
+      document.getElementById("fp-e").innerHTML = totEntregueHTML + (naoPagas.length ? mkEntradasHTML(naoPagas, false) : "<div class='vz'><span class='vi2'>🎉</span>Nenhuma peça entregue aguardando pagamento.</div>") + pagasHTML;
+    } else {
+      document.getElementById("fp-e").innerHTML = totEntregueHTML + (mkEntradasHTML(entregues, false) || "<div class='vz'><span class='vi2'>📦</span>Nenhuma entregue.</div>");
+    }
 selAtualizar();
   } catch(e) {
     document.getElementById("fp-p").innerHTML = "<div class='vz'>Erro: "+e.message+"</div>";
