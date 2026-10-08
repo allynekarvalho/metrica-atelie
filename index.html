@@ -522,7 +522,7 @@ function relmNomePeca(p){ return p.peca+(RELM.loja && p.observacao ? " ("+p.obse
 function relmBoxHTML(){
   return "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:16px;margin:14px 0 12px;color:#0A0A0A'>"+
     "<div style='display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px'><div style='font-size:14px;font-weight:700'>📅 Relatório do mês</div>"+
-    "<input type='month' id='relm-mes' min='2026-09' value='"+relmMesAtual()+"' onchange='relmRender()' style='padding:8px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;color:#0A0A0A;background:#fff'></div>"+
+    "<input type='month' id='relm-mes' min='2026-09' value='"+relmMesAtual()+"' onchange='window.RELM_ABERTO=true;relmRender()' style='padding:8px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;color:#0A0A0A;background:#fff'></div>"+
     "<div id='relm-res'></div>"+
     "<div style='display:flex;gap:8px;margin-top:12px'><button onclick='relmImprimir()' style='flex:1;padding:11px;border:1px solid #E8E8E8;border-radius:6px;background:#fff;color:#0A0A0A;font-size:13px;font-weight:600;cursor:pointer'>🖨️ Imprimir</button><button onclick='relmWpp()' style='flex:1;padding:11px;border:1px solid #E8E8E8;border-radius:6px;background:#fff;color:#0A0A0A;font-size:13px;font-weight:600;cursor:pointer'>📲 WhatsApp</button></div>"+
     "</div>";
@@ -531,7 +531,10 @@ function relmRender(){
   var box=document.getElementById("relm-res"); if(!box) return; var d=relmDados();
   var ln=function(a,b,c){ return "<div style='display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #F4F4F4;font-size:13px'><span>"+a+"</span><span style='white-space:nowrap;font-weight:600;"+(c?"color:"+c:"")+"'>"+b+"</span></div>"; };
   var h="<div style='font-size:12px;color:#6B6B6B;margin-bottom:6px'>"+relmD(d.ini)+" a "+relmD(d.fim)+" · "+d.pp.length+" peça"+(d.pp.length!==1?"s":"")+"</div>";
+  var aberto = window.RELM_ABERTO ? " open" : ""; window.RELM_ABERTO = false;
+  h+= "<details"+aberto+"><summary style='font-size:13px;font-weight:600;cursor:pointer;padding:6px 0;color:#0A0A0A'>📋 Ver peças ("+d.pp.length+")</summary>";
   h+= d.pp.length ? d.pp.map(function(p){ return ln("<span style='color:#6B6B6B;font-size:11px'>"+relmD(p.data_entrada).slice(0,5)+"</span> · <b>"+p.peca+"</b>"+(p.servico?"<div style='font-size:12px;color:#6B6B6B'>"+p.servico+"</div>":""), relmValTxt(p)); }).join("") : "<div style='font-size:13px;color:#6B6B6B;padding:6px 0'>Nenhuma peça neste mês.</div>";
+  h+= "</details>";
   h+= "<div style='margin-top:6px'>"+ln("<b>Total do mês</b>", fval(d.tot))+(d.pg.length?ln("Pago no mês ("+d.pg.map(function(p){ return relmD(p.data).slice(0,5); }).join(", ")+")", "− "+fval(d.totPg), "#2E5E2E"):"")+ln("<b>Falta pagar do mês</b>", fval(Math.max(d.falta,0)), d.falta>0?"#8B0000":"#2E5E2E")+"</div>";
   box.innerHTML=h;
 }
