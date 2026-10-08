@@ -349,6 +349,19 @@ input:focus,select:focus{border-color:#0A0A0A}
 var SUPA_URL = "https://trzjmdrwjqvuzbzbxbhu.supabase.co";
 var SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyemptZHJ3anF2dXpiemJ4Ymh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDIyOTAsImV4cCI6MjA5ODg3ODI5MH0.YtZIGWAzpKdHrTdvtwUIRsRYJy5Yvxyn7q3GX_s-uLg";
 var CHAVE_PIX_ATELIE = "65996885868";
+var PIX_NOME = "ALLYNE CARVALHO", PIX_CIDADE = "CUIABA";
+function pixChaveFormatada(){ var k=String(CHAVE_PIX_ATELIE).replace(/\D/g,""); return (k.length===11||k.length===10) ? "+55"+k : CHAVE_PIX_ATELIE; }
+function pixCRC16(str){ var crc=0xFFFF; for(var i=0;i<str.length;i++){ crc ^= str.charCodeAt(i)<<8; for(var j=0;j<8;j++){ crc = (crc & 0x8000) ? ((crc<<1) ^ 0x1021) : (crc<<1); crc &= 0xFFFF; } } return crc.toString(16).toUpperCase().padStart(4,"0"); }
+function pixCopiaCola(valor){
+  function f(id, v){ v=String(v); return id + String(v.length).padStart(2,"0") + v; }
+  var conta = f("00","br.gov.bcb.pix") + f("01", pixChaveFormatada());
+  var payload = f("00","01") + f("26",conta) + f("52","0000") + f("53","986") + (valor>0 ? f("54", Number(valor).toFixed(2)) : "") + f("58","BR") + f("59",PIX_NOME) + f("60",PIX_CIDADE) + f("62", f("05","***")) + "6304";
+  return payload + pixCRC16(payload);
+}
+function pixBloco(valor){
+  return ["💳 *Pix copia e cola* (já com o valor de "+fval(valor)+"):", pixCopiaCola(valor), "", "Ou pela chave Pix (celular): "+CHAVE_PIX_ATELIE];
+}
+
 var FILTRO = "todos";
 var CLI_ATIVA = null;
 var CLI_ATIVA_ID = null;
@@ -542,7 +555,9 @@ function relmWpp(){
   var d=relmDados();
   var l=["Olá, "+RELM.nome+"! 😊","","Segue o relatório de "+relmNomeMes(d.mes)+" ("+relmD(d.ini)+" a "+relmD(d.fim)+"):",""];
   if(d.pp.length) d.pp.forEach(function(p){ l.push("• "+relmD(p.data_entrada).slice(0,5)+" · "+relmNomePeca(p)+(p.servico?" — "+p.servico:"")+" · "+relmValTxt(p)); }); else l.push("Nenhuma peça neste mês.");
-  l.push("","Total do mês: "+fval(d.tot)); if(d.pg.length) l.push("Pago no mês: "+fval(d.totPg)); l.push("💰 Falta pagar do mês: "+fval(Math.max(d.falta,0)),"","— Métrica Ateliê");
+  l.push("","Total do mês: "+fval(d.tot)); if(d.pg.length) l.push("Pago no mês: "+fval(d.totPg)); l.push("💰 Falta pagar do mês: "+fval(Math.max(d.falta,0)));
+  if(d.falta>0.009){ l.push(""); pixBloco(d.falta).forEach(function(x){ l.push(x); }); }
+  l.push("","— Métrica Ateliê");
   var tel=String(RELM.tel||"").replace(/\D/g,""); if(tel && tel.length<=11) tel="55"+tel;
   window.open("https://wa.me/"+tel+"?text="+encodeURIComponent(l.join("\n")),"_blank");
 }
@@ -964,7 +979,7 @@ async function selEnviar(){
     linhas.push("");
     var total = 0;
     pp.forEach(function(p){ total += valCli(p); linhas.push("👗 "+p.peca+(p.servico ? " — "+p.servico : "")+(emRetrabalho(p) ? " (retrabalho · sem custo)" : "")+(todasProntas ? "" : " ("+slbl(p.status)+")")); });
-    if(total > 0) linhas.push("", "💰 Total: "+fval(total));
+    if(total > 0){ linhas.push("", "💰 Total: "+fval(total), ""); pixBloco(total).forEach(function(x){ linhas.push(x); }); }
     linhas.push("", todasProntas ? "Quando preferir vir retirar 🌸" : "Qualquer dúvida é só chamar 🌸", "", "— Métrica Ateliê");
     var msg = linhas.join("\n");
     var tel = ((r[1] && r[1][0] && r[1][0].telefone) || "").replace(/\D/g,"");
@@ -1115,7 +1130,7 @@ async function renderAReceber(cont, busca){
 }
 function cobrarCli(id){
   var c = AREC[id]; if(!c) return;
-  var msg = ["Olá, "+c.nome+"! 😊","","Passando pra lembrar do valor das peças já entregues:","","💰 "+fval(c.deve),"","Chave Pix: "+CHAVE_PIX_ATELIE,"","Depois é só me mandar o comprovante por aqui 🙏","","— Métrica Ateliê"].join("\n");
+  var msg = ["Olá, "+c.nome+"! 😊","","Passando pra lembrar do valor das peças já entregues:","","💰 "+fval(c.deve),""].concat(pixBloco(c.deve)).concat(["","Depois é só me mandar o comprovante por aqui 🙏","","— Métrica Ateliê"]).join("\n");
   var tel = c.tel.replace(/\D/g,""); if(tel && tel.length<=11) tel = "55"+tel;
   window.open("https://wa.me/"+tel+"?text="+encodeURIComponent(msg), "_blank");
 }
@@ -1570,7 +1585,7 @@ function abrirWpp(btn){
   var val = btn.dataset.val;
   document.getElementById("mw-cli").textContent = CLI_ATIVA;
   var linhas = ["Olá, "+CLI_ATIVA+"! 😊","","Sua peça está pronta e passou pela conferência final.","","👗 "+btn.closest(".pi").querySelector(".pn").textContent+"","✂️ "+(btn.closest(".pi").querySelector(".ps").textContent||"Serviço concluído")];
-  if(val&&parseFloat(val)>0) linhas.push("","💰 Valor: "+fval(parseFloat(val)));
+  if(val&&parseFloat(val)>0){ linhas.push("","💰 Valor: "+fval(parseFloat(val)),""); pixBloco(parseFloat(val)).forEach(function(x){ linhas.push(x); }); }
   linhas.push("","Quando preferir vir retirar? 🌸","","— Métrica Ateliê");
   var msgWpp = linhas.join("\n");
   document.getElementById("mw-txt").textContent = msgWpp;
@@ -2000,7 +2015,7 @@ async function enviarSaldo(){
     var chave = CHAVE_PIX_ATELIE;
     var breakdown = "📌 Saldo anterior: *"+fval(saldoAnt)+"*\n🧵 Saldo: *"+fval(pecasSumWpp)+"*\n➖➖➖➖➖➖\nSubtotal: *"+fval(subtotalWpp)+"*\n💵 Total pago: *− "+fval(totPg)+"*"+(desconto>0?"\n🏷️ Desconto: *− "+fval(desconto)+"*":"")+"\n➖➖➖➖➖➖\n💰 *TOTAL A PAGAR: "+fval(saldo)+"*";
     var msg = "😉 *Métrica Ateliê | ALLYNE CARVALHO*\nOlá, "+CLI_ATIVA+"!\n\n"+breakdown+
-      "\n\n📋 Chave Pix:\n"+chave+
+      (saldo>0.009 ? "\n\n"+pixBloco(saldo).join("\n") : "\n\n📋 Chave Pix:\n"+chave)+
       "\n\nApós o pagamento, por favor envie o comprovante aqui no WhatsApp. 🙏";
     document.getElementById("mw-cli").textContent = CLI_ATIVA;
     document.getElementById("mw-txt").textContent = msg;
