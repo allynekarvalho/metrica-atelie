@@ -203,6 +203,7 @@ html += "<label class='selw'><input type='checkbox' "+(SEL[p.id]?"checked ":"")+
   if(CLI && CLI.loja && !emRetrabalho(p) && p.valor) html += p.pago_em ? "<div style='display:inline-block;margin:8px 0 0 6px;padding:3px 10px;border-radius:12px;background:#E6F2E6;color:#2E5E2E;font-size:12px;font-weight:700'>✅ PAGA em "+fdata(p.pago_em).slice(0,5)+"</div>" : "<div style='display:inline-block;margin:8px 0 0 6px;padding:3px 10px;border-radius:12px;background:#FBEAEA;color:#8B0000;font-size:12px;font-weight:700'>⏳ AGUARDANDO PAGAMENTO</div>";
   if(emRetrabalho(p)) html += "<div style='margin-top:8px;font-size:13px;font-weight:600;color:#fff'>🔁 Retrabalho · sem custo</div>";
   else if(p.valor) html += "<div style='margin-top:8px;font-size:14px;font-weight:600;color:#fff'>"+fval(p.valor)+"</div>";
+  var fP = window.FALTA_P && window.FALTA_P[p.id]; if(tipo==="entregues" && fP>0.009 && fP<(p.valor||0)-0.009) html += "<div style='font-size:12px;color:#FF8A8A'>Já pago "+fval(p.valor-fP)+" · falta "+fval(fP)+"</div>";
   if(tipo==="pecas") {
     html += "<button class='btn-toggle"+(p.prioridade_cliente?" ativo":"")+"' onclick=\"togglePeca('"+p.id+"','prioridade_cliente')\">"+(p.prioridade_cliente?"⭐ Prioridade":"☆ Marcar como prioridade")+"</button>";
   }
@@ -292,6 +293,26 @@ function relmImprimir(){
 function fotoMini(u){ return (u && /-\d{13}\.jpg$/.test(u)) ? u.replace(/\.jpg$/,"-mini.jpg") : u; }
 function fotoCarregaErro(img){ var full=img.getAttribute("data-full")||img.dataset.url; var n=parseInt(img.getAttribute("data-try")||"0"); if(full && img.src.indexOf("-mini.jpg")>-1 && n===0){ img.setAttribute("data-try","1"); img.src=full; return; } if(n<3){ img.setAttribute("data-try",String(n+1)); setTimeout(function(){ img.src=(full||img.src).split("?")[0]+"?r="+Date.now(); },1500*(n+1)); return; } fotoErro(img); }
 function fotoErro(img){ var d=document.createElement("div"); d.className="pfoto-err"; d.textContent="📷 Foto não carregou"; if(img.dataset&&img.dataset.url){ d.onclick=function(){ window.open(img.dataset.url,"_blank"); }; } img.replaceWith(d); }
+function renderEntregues(entregues, falta){
+  if(!entregues.length) return renderLista(entregues, "Nenhuma peça entregue ainda.", "entregues");
+  var abertas = entregues.filter(function(p){ return (falta[p.id]||0) > 0.009; });
+  var pagas = entregues.filter(function(p){ return !((falta[p.id]||0) > 0.009); });
+  var totAb = abertas.reduce(function(s,p){ return s+falta[p.id]; },0);
+  var h = "";
+  if(abertas.length){
+    h += "<div class='total-box'><div class='tl'>⏳ Entregues · falta pagar</div><div class='tv' style='color:#8B0000'>"+fval(totAb)+"</div></div>";
+    h += renderLista(abertas, "", "entregues");
+  } else {
+    h += "<div class='total-box'><div class='tl'>Entregues</div><div class='tv' style='color:#2E5E2E'>Tudo pago ✓</div></div>";
+  }
+  if(pagas.length){
+    var g = {}; pagas.forEach(function(p){ var m=String(p.data_entrega||p.data_entrada||"").slice(0,7)||"sem-data"; (g[m]=g[m]||[]).push(p); });
+    h += "<div class='secao-titulo' style='margin-top:18px'>✅ Já pagas</div>";
+    h += Object.keys(g).sort().reverse().map(function(m){ var pp=g[m], tot=pp.reduce(function(s,p){ return s+valCli(p); },0);
+      return "<details style='border:1px solid #333;border-radius:10px;margin-bottom:8px'><summary style='display:flex;justify-content:space-between;align-items:center;padding:14px 16px;cursor:pointer;list-style:none;font-size:14px;font-weight:700;color:#fff'><span>✅ "+(m==="sem-data"?"Sem data":relmNomeMes(m))+" <span style='font-weight:400;color:#aaa'>("+pp.length+" peça"+(pp.length!==1?"s":"")+")</span></span><span style='white-space:nowrap'>"+fval(tot)+" ›</span></summary><div style='padding:0 8px 8px'>"+pp.map(function(p){ return renderPeca(p,"entregues"); }).join("")+"</div></details>"; }).join("");
+  }
+  return h;
+}
 function renderComTotal(lista, tituloTotal, vazioMsg, tipo) {
   if(!lista.length) return renderLista(lista, vazioMsg, tipo);
   var total = lista.reduce(function(s,p){ return s+valCli(p); },0);
@@ -367,10 +388,17 @@ function renderTudo() {
   var totPg = PAGAMENTOS.reduce(function(s,p){ return s+(p.valor||0); },0);
   var saldo = totP - totPg - desconto;
   var corP = saldo>0?"#8B0000":"#2E5E2E";
+  var ALP = alocarItens(pecas, saldoAnt, totPg, desconto), FALTA = {}, faltaEnt = 0, faltaAt = 0;
+  ALP.itens.forEach(function(i){ FALTA[i.p.id]=i.falta; if(i.p.status==="entregue") faltaEnt+=i.falta; else faltaAt+=i.falta; });
+  window.FALTA_P = FALTA;
+  var faltaAnt = Math.max(0, +(saldoAnt-ALP.antPago).toFixed(2));
+  var linhaS = function(ico, lbl, v){ return "<div style='display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid #F0F0F0;font-size:14px;color:#0A0A0A'><span>"+ico+" "+lbl+"</span><b style='white-space:nowrap'>"+fval(v)+"</b></div>"; };
+  var separaHTML = saldo>0.009 ? "<div style='margin-top:12px'>"+(faltaAnt>0.009?linhaS("📌","Saldo anterior",faltaAnt):"")+(faltaEnt>0.009?linhaS("🎁","Peças já entregues",faltaEnt):"")+(faltaAt>0.009?linhaS("🧵","Peças ainda no ateliê",faltaAt):"")+"</div>" : "";
   var subtotalP = saldoAnt+pecasSum;
   var linhaP = function(lbl, val, opts){ opts=opts||{}; return "<div style='display:flex;justify-content:space-between;align-items:center;padding:"+(opts.pad||"7px")+" 0'><div style='font-size:"+(opts.fs||"13px")+";color:"+(opts.lc||"#6B6B6B")+";font-weight:"+(opts.lw||"400")+"'>"+lbl+"</div><div style='font-size:"+(opts.fs||"13px")+";font-weight:"+(opts.vw||"600")+";color:"+(opts.vc||"#0A0A0A")+"'>"+val+"</div></div>"; };
   var resumoHTML = "<div style='background:#fff;border-radius:10px;padding:18px 16px;margin-bottom:12px'>"+
     "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>"+(saldo>0.009?"Total a pagar":"Situação")+"</div><div style='font-size:24px;font-weight:700;color:"+corP+"'>"+(saldo>0.009?"R$ "+fmtBR(saldo):"Tudo pago ✓")+"</div></div>"+
+    separaHTML+
     "<details style='margin-top:10px'><summary style='font-size:12px;color:#6B6B6B;cursor:pointer;list-style:none'>Ver como chegamos nesse valor ›</summary><div style='margin-top:8px'>"+
     linhaP("Saldo anterior", fval(saldoAnt)||"R$ 0,00")+
     linhaP("Peças", fval(pecasSum)||"R$ 0,00")+
@@ -396,7 +424,7 @@ var saldoHTML = "<div class='saldo-box'>"+
   document.getElementById("ct-saldo").textContent = saldo>0?fval(saldo):"";
   var html = "<div class='painel' id='painel-pecas'>"+renderComTotal(emAndamento,"Total em andamento","Nenhuma peça em andamento no momento.","pecas")+"</div>"+
     "<div class='painel' id='painel-prontos'>"+renderComTotal(prontos,"Total pronto para retirar","Nenhuma peça pronta para retirar no momento.","prontos")+"</div>"+
-    "<div class='painel' id='painel-entregues'>"+renderComTotal(entregues,"Total entregue","Nenhuma peça entregue ainda.","entregues")+"</div>"+
+    "<div class='painel' id='painel-entregues'>"+renderEntregues(entregues, FALTA)+"</div>"+
     "<div class='painel' id='painel-saldo'>"+saldoHTML+"</div>";
   document.getElementById("body").innerHTML = html;
   document.getElementById("tabs").style.display = "flex";
