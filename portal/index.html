@@ -88,6 +88,18 @@ body{padding-bottom:70px}
 var SUPA_URL = "https://trzjmdrwjqvuzbzbxbhu.supabase.co";
 var SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyemptZHJ3anF2dXpiemJ4Ymh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDIyOTAsImV4cCI6MjA5ODg3ODI5MH0.YtZIGWAzpKdHrTdvtwUIRsRYJy5Yvxyn7q3GX_s-uLg";
 var CHAVE_PIX_ATELIE = "65996885868";
+var PIX_NOME = "ALLYNE CARVALHO", PIX_CIDADE = "CUIABA";
+function pixChaveFormatada(){ var k=String(CHAVE_PIX_ATELIE).replace(/\D/g,""); return (k.length===11||k.length===10) ? "+55"+k : CHAVE_PIX_ATELIE; }
+function pixCRC16(str){ var crc=0xFFFF; for(var i=0;i<str.length;i++){ crc ^= str.charCodeAt(i)<<8; for(var j=0;j<8;j++){ crc = (crc & 0x8000) ? ((crc<<1) ^ 0x1021) : (crc<<1); crc &= 0xFFFF; } } return crc.toString(16).toUpperCase().padStart(4,"0"); }
+function pixCopiaCola(valor){
+  function f(id, v){ v=String(v); return id + String(v.length).padStart(2,"0") + v; }
+  var conta = f("00","br.gov.bcb.pix") + f("01", pixChaveFormatada());
+  var payload = f("00","01") + f("26",conta) + f("52","0000") + f("53","986") + (valor>0 ? f("54", Number(valor).toFixed(2)) : "") + f("58","BR") + f("59",PIX_NOME) + f("60",PIX_CIDADE) + f("62", f("05","***")) + "6304";
+  return payload + pixCRC16(payload);
+}
+function pixBloco(valor){
+  return ["💳 *Pix copia e cola* (já com o valor de "+fval(valor)+"):", pixCopiaCola(valor), "", "Ou pela chave Pix (celular): "+CHAVE_PIX_ATELIE];
+}
 async function supa(path) {
   var res = await fetch(SUPA_URL + "/rest/v1/" + path, {
     headers: {
@@ -326,7 +338,7 @@ linhas.push(todasProntas ? (pp.length>1 ? "Suas peças estão prontas e passaram
 linhas.push("");
 var total = 0;
 pp.forEach(function(p){ total += valCli(p); linhas.push("👗 "+p.peca+(p.servico ? " — "+p.servico : "")+(emRetrabalho(p) ? " (retrabalho · sem custo)" : "")+(todasProntas ? "" : " ("+slbl(p.status)+")")); });
-if(total > 0) linhas.push("", "💰 Total: "+fval(total));
+if(total > 0){ linhas.push("", "💰 Total: "+fval(total), ""); pixBloco(total).forEach(function(x){ linhas.push(x); }); }
 linhas.push("", todasProntas ? "Quando preferir, é só combinar a retirada 🌸" : "Qualquer dúvida é só chamar 🌸", "", "— Métrica Ateliê");
 window.open("https://wa.me/?text="+encodeURIComponent(linhas.join("\n")), "_blank");
 }
