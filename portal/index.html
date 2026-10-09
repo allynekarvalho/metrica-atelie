@@ -358,17 +358,21 @@ function renderTudo() {
   var subtotalP = saldoAnt+pecasSum;
   var linhaP = function(lbl, val, opts){ opts=opts||{}; return "<div style='display:flex;justify-content:space-between;align-items:center;padding:"+(opts.pad||"7px")+" 0'><div style='font-size:"+(opts.fs||"13px")+";color:"+(opts.lc||"#6B6B6B")+";font-weight:"+(opts.lw||"400")+"'>"+lbl+"</div><div style='font-size:"+(opts.fs||"13px")+";font-weight:"+(opts.vw||"600")+";color:"+(opts.vc||"#0A0A0A")+"'>"+val+"</div></div>"; };
   var resumoHTML = "<div style='background:#fff;border-radius:10px;padding:18px 16px;margin-bottom:12px'>"+
+    "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>"+(saldo>0.009?"Total a pagar":"Situação")+"</div><div style='font-size:24px;font-weight:700;color:"+corP+"'>"+(saldo>0.009?"R$ "+fmtBR(saldo):"Tudo pago ✓")+"</div></div>"+
+    "<details style='margin-top:10px'><summary style='font-size:12px;color:#6B6B6B;cursor:pointer;list-style:none'>Ver como chegamos nesse valor ›</summary><div style='margin-top:8px'>"+
     linhaP("Saldo anterior", fval(saldoAnt)||"R$ 0,00")+
     linhaP("Peças", fval(pecasSum)||"R$ 0,00")+
     "<div style='border-top:1px solid #F0F0F0;margin:8px 0'></div>"+
     linhaP("Subtotal", fval(subtotalP)||"R$ 0,00", {lc:"#0A0A0A",lw:"600"})+
     linhaP("Total pago", "− "+(fval(totPg)||"R$ 0,00"), {vc:"#2E5E2E"})+
     (desconto>0?linhaP("Desconto", "− "+fval(desconto), {vc:"#2E5E2E"}):"")+
-    "<div style='border-top:2px solid #0A0A0A;margin:10px 0'></div>"+
-    "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total a pagar</div><div style='font-size:24px;font-weight:700;color:"+corP+"'>R$ "+fmtBR(saldo)+"</div></div>"+
+    "</div></details>"+
     "</div>";
-  var pagsOrd = PAGAMENTOS.slice().sort(function(a,b){ return String(b.data||"").localeCompare(String(a.data||"")); });
-var pgHTML = pagsOrd.length ? "<div class='secao-titulo' style='margin-top:18px'>Pagamentos recebidos</div><div style='background:#fff;border-radius:10px;overflow:hidden;margin-bottom:12px'>"+pagsOrd.map(function(p,i){ return "<div style='display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;"+(i?"border-top:1px solid #F0F0F0;":"")+"'><div style='font-weight:600;color:#2E5E2E;font-size:14px'>+ "+fval(p.valor)+"</div><div style='font-size:11px;color:#6B6B6B;text-align:right'>"+(p.data?fdata(p.data):"")+(p.observacao?" · "+escH(p.observacao):"")+"</div></div>"; }).join("")+"</div>" : "";
+  var pgMesesP = {}; PAGAMENTOS.forEach(function(p){ var m=(p.data||"").slice(0,7)||"sem-data"; (pgMesesP[m]=pgMesesP[m]||[]).push(p); });
+  var pgOrdP = Object.keys(pgMesesP).sort().reverse();
+var pgHTML = PAGAMENTOS.length ? "<div class='secao-titulo' style='margin-top:18px'>Pagamentos já feitos</div>"+pgOrdP.map(function(m){ var pp=pgMesesP[m], t=pp.reduce(function(s,p){ return s+(p.valor||0); },0);
+    return "<details style='background:#fff;border-radius:10px;overflow:hidden;margin-bottom:8px'><summary style='display:flex;justify-content:space-between;align-items:center;padding:14px 16px;cursor:pointer;list-style:none;font-size:14px;font-weight:700;color:#2E5E2E'><span>✅ "+(m==="sem-data"?"Sem data":relmNomeMes(m))+"</span><span style='white-space:nowrap'>"+fval(t)+" ›</span></summary>"+
+      pp.map(function(p){ return "<div style='display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 16px;border-top:1px solid #F0F0F0'><div style='font-weight:600;color:#2E5E2E;font-size:14px'>+ "+fval(p.valor)+"</div><div style='font-size:11px;color:#6B6B6B;text-align:right'>"+(p.data?fdata(p.data):"")+(p.observacao?" · "+escH(p.observacao):"")+"</div></div>"; }).join("")+"</details>"; }).join("") : "";
 var saldoHTML = "<div class='saldo-box'>"+
     resumoHTML+relmBoxHTML()+pgHTML+
     "<div class='pix-row'><div class='pix-chave' id='pix-chave'>"+CHAVE_PIX_ATELIE+"</div><button class='btn-pix' onclick='copiarPix()'>Copiar chave Pix</button></div>"+

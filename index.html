@@ -1379,18 +1379,23 @@ async function renderFinanceiro(){
     var subtotalD = +(saldoAntD+pecasD).toFixed(2);
     var linha = function(lbl, val, opts){ opts=opts||{}; return "<div style='display:flex;justify-content:space-between;align-items:center;padding:"+(opts.pad||"7px")+" 0'><div style='font-size:"+(opts.fs||"13px")+";color:"+(opts.lc||"#6B6B6B")+";font-weight:"+(opts.lw||"400")+"'>"+lbl+"</div><div style='font-size:"+(opts.fs||"13px")+";font-weight:"+(opts.vw||"600")+";color:"+(opts.vc||"#0A0A0A")+"'>"+val+"</div></div>"; };
     var resumoHTML = "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:18px 16px;margin-bottom:12px'>"+
+      "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>"+(saldo>0.009?"Total a pagar":"Situação")+"</div><div style='font-size:26px;font-weight:700;color:"+cor+"'>"+(saldo>0.009?fval(saldo):"Tudo pago ✓")+"</div></div>"+
+      "<details style='margin-top:10px'><summary style='font-size:12px;color:#6B6B6B;cursor:pointer;list-style:none'>Ver como chegamos nesse valor ›</summary><div style='margin-top:8px'>"+
       linha("Saldo anterior", fval(saldoAntD))+
-      linha("Saldo", fval(pecasD))+(lojaCount>0?("<div style='font-size:11px;color:#6B4FA0;padding:2px 0 4px'>🏬 "+lojaCount+" peça"+(lojaCount>1?"s":"")+" com loja ("+fval(lojaSum)+") não "+(lojaCount>1?"entram":"entra")+" neste saldo</div>"):"")+
+      linha("Peças", fval(pecasD))+(lojaCount>0?("<div style='font-size:11px;color:#6B4FA0;padding:2px 0 4px'>🏬 "+lojaCount+" peça"+(lojaCount>1?"s":"")+" com loja ("+fval(lojaSum)+") não "+(lojaCount>1?"entram":"entra")+" neste saldo</div>"):"")+
       "<div style='border-top:1px solid #F0F0F0;margin:8px 0'></div>"+
       linha("Subtotal", fval(subtotalD), {lc:"#0A0A0A",lw:"600"})+
       linha("Total pago", "− "+fval(totPg), {vc:"#2E5E2E"})+
       (desconto>0?linha("Desconto", "− "+fval(desconto), {vc:"#2E5E2E"}):"")+
-      "<div style='border-top:2px solid #0A0A0A;margin:10px 0'></div>"+
-      "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>Total a pagar</div><div style='font-size:26px;font-weight:700;color:"+cor+"'>"+fval(saldo)+"</div></div>"+
+      "</div></details>"+
       "</div>"+
       "<div style='text-align:right;margin:-6px 0 12px;display:flex;justify-content:flex-end;gap:14px'><button onclick='editarSaldoAnt()' style='font-size:11px;color:#6B6B6B;border:none;background:none;cursor:pointer;text-decoration:underline;font-family:DM Sans,sans-serif'>"+(saldoAnt>0?"Editar saldo anterior":"+ Adicionar saldo anterior")+"</button><button onclick='editarDesconto("+subtotalD+")' style='font-size:11px;color:#6B6B6B;border:none;background:none;cursor:pointer;text-decoration:underline;font-family:DM Sans,sans-serif'>"+(desconto>0?"Editar desconto":"+ Adicionar desconto")+"</button></div>";
+    var pgMeses = {}; pags.forEach(function(p){ var m=(p.data||"").slice(0,7)||"sem-data"; (pgMeses[m]=pgMeses[m]||[]).push(p); });
+    var pgOrd = Object.keys(pgMeses).sort().reverse();
     var pgHTML = pags.length
-      ? "<div class='pgl'>"+pags.map(function(p){ return "<div class='pgi'><div><div class='pgv'>+ "+fval(p.valor)+"</div><div class='pgd'>"+(p.data||"")+(p.observacao?" · "+p.observacao:"")+"</div></div><button data-id='"+p.id+"' onclick='excluirPag(this)' style='font-size:11px;color:#B8B8B8;border:none;background:none;cursor:pointer'>✕</button></div>"; }).join("")+"</div>"
+      ? "<div style='font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#B8B8B8;margin:16px 0 8px'>💵 Pagamentos já feitos</div>"+pgOrd.map(function(m){ var pp=pgMeses[m], t=pp.reduce(function(s,p){ return s+(p.valor||0); },0);
+          return "<details class='pgl' style='margin-bottom:8px'><summary style='display:flex;justify-content:space-between;align-items:center;padding:14px 16px;cursor:pointer;list-style:none;font-size:14px;font-weight:700;color:#2E5E2E'><span>✅ "+(m==="sem-data"?"Sem data":relmNomeMes(m))+" <span style='font-weight:400;color:#6B6B6B'>("+pp.length+")</span></span><span style='white-space:nowrap'>"+fval(t)+" ›</span></summary>"+
+            pp.map(function(p){ return "<div class='pgi'><div><div class='pgv'>+ "+fval(p.valor)+"</div><div class='pgd'>"+(p.data?p.data.split("-").reverse().join("/"):"")+(p.observacao?" · "+p.observacao:"")+"</div></div><button data-id='"+p.id+"' onclick='excluirPag(this)' style='font-size:11px;color:#B8B8B8;border:none;background:none;cursor:pointer'>✕</button></div>"; }).join("")+"</details>"; }).join("")
       : "<div class='pgl'><div style='padding:16px;font-size:13px;color:#6B6B6B'>Nenhum pagamento registrado.</div></div>";
     var hojeStr = new Date().toISOString().split("T")[0];
     document.getElementById("fp-f").innerHTML =
