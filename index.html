@@ -1302,7 +1302,11 @@ async function renderPerfil(){
         return "<details style='background:#fff;border-radius:10px;margin-bottom:10px;overflow:hidden'><summary style='display:flex;justify-content:space-between;align-items:center;padding:14px 16px;cursor:pointer;list-style:none;color:#2E5E2E;font-weight:700;font-size:14px'><span>✅ Pagas em "+relmNomeMes(m)+" ("+pp.length+")</span><span style='white-space:nowrap'>"+fval(t)+" ›</span></summary>"+mkEntradasHTML(pp, false)+"</details>"; }).join("")+"</div>" : "";
       document.getElementById("fp-e").innerHTML = totEntregueHTML + (naoPagas.length ? mkEntradasHTML(naoPagas, false) : "<div class='vz'><span class='vi2'>🎉</span>Nenhuma peça entregue aguardando pagamento.</div>") + pagasHTML;
     } else {
-      document.getElementById("fp-e").innerHTML = totEntregueHTML + (mkEntradasHTML(entregues, false) || "<div class='vz'><span class='vi2'>📦</span>Nenhuma entregue.</div>");
+      var porMesEnt = {}; entregues.forEach(function(p){ var d=(p.data_entrega||p.data_entrada||""); var m=d?d.slice(0,7):"sem-data"; (porMesEnt[m]=porMesEnt[m]||[]).push(p); });
+      var mesesEnt = Object.keys(porMesEnt).sort().reverse();
+      var entHTML = mesesEnt.map(function(m){ var pp=porMesEnt[m], t=pp.reduce(function(s,p){ return s+(p.valor||0); },0);
+        return "<details style='background:#fff;border-radius:10px;margin-bottom:10px;overflow:hidden'><summary style='display:flex;justify-content:space-between;align-items:center;padding:14px 16px;cursor:pointer;list-style:none;color:#0A0A0A;font-weight:700;font-size:14px'><span>🎁 "+(m==="sem-data"?"Sem data":relmNomeMes(m))+" <span style='font-weight:400;color:#6B6B6B'>("+pp.length+" peça"+(pp.length!==1?"s":"")+")</span></span><span style='white-space:nowrap'>"+fval(t)+" ›</span></summary>"+mkEntradasHTML(pp, false)+"</details>"; }).join("");
+      document.getElementById("fp-e").innerHTML = totEntregueHTML + (entHTML || "<div class='vz'><span class='vi2'>📦</span>Nenhuma entregue.</div>");
     }
 selAtualizar();
   } catch(e) {
