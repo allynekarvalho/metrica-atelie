@@ -399,14 +399,11 @@ function renderTudo() {
   var resumoHTML = "<div style='background:#fff;border-radius:10px;padding:18px 16px;margin-bottom:12px'>"+
     "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>"+(saldo>0.009?"Total a pagar":"Situação")+"</div><div style='font-size:24px;font-weight:700;color:"+corP+"'>"+(saldo>0.009?"R$ "+fmtBR(saldo):"Tudo pago ✓")+"</div></div>"+
     separaHTML+
-    "<details style='margin-top:10px'><summary style='font-size:12px;color:#6B6B6B;cursor:pointer;list-style:none'>Ver como chegamos nesse valor ›</summary><div style='margin-top:8px'>"+
-    linhaP("Saldo anterior", fval(saldoAnt)||"R$ 0,00")+
-    linhaP("Peças", fval(pecasSum)||"R$ 0,00")+
-    "<div style='border-top:1px solid #F0F0F0;margin:8px 0'></div>"+
-    linhaP("Subtotal", fval(subtotalP)||"R$ 0,00", {lc:"#0A0A0A",lw:"600"})+
+    ((totPg>0.009||desconto>0.009) ? "<details style='margin-top:10px'><summary style='font-size:12px;color:#6B6B6B;cursor:pointer;list-style:none'>Ver como chegamos nesse valor ›</summary><div style='margin-top:8px'>"+
+    linhaP("Total das peças", fval(subtotalP)||"R$ 0,00", {lc:"#0A0A0A",lw:"600"})+
     linhaP("Total pago", "− "+(fval(totPg)||"R$ 0,00"), {vc:"#2E5E2E"})+
     (desconto>0?linhaP("Desconto", "− "+fval(desconto), {vc:"#2E5E2E"}):"")+
-    "</div></details>"+
+    "</div></details>" : "")+
     "</div>";
   var pgMesesP = {}; PAGAMENTOS.forEach(function(p){ var m=(p.data||"").slice(0,7)||"sem-data"; (pgMesesP[m]=pgMesesP[m]||[]).push(p); });
   var pgOrdP = Object.keys(pgMesesP).sort().reverse();
