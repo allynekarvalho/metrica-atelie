@@ -275,7 +275,7 @@ function relmRender(){
   h+= "<div style='margin-top:6px'>"+
     ln("📌 Saldo anterior <span style='font-size:11px;color:#6B6B6B'>(antes de "+relmD(d.ini).slice(0,5)+")</span>", d.anterior<0?"crédito "+fval(-d.anterior):fval(d.anterior), d.anterior>0.009?"#8B0000":"#2E5E2E")+
     ln("👗 Peças de "+nm, fval(d.tot))+
-    (d.pg.length?ln("Pago em "+nm+" ("+d.pg.map(function(p){ return relmD(p.data).slice(0,5); }).join(", ")+")", "− "+fval(d.totPg), "#2E5E2E"):"")+
+    (d.pg.length?ln("✅ Pago em "+nm, "− "+fval(d.totPg), "#2E5E2E"):"")+
     ln("<b>💰 Total a pagar</b>", fval(Math.max(d.totalPagar,0)), d.totalPagar>0.009?"#8B0000":"#2E5E2E")+"</div>";
   box.innerHTML=h;
 }
