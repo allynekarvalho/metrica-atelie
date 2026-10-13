@@ -1391,7 +1391,7 @@ async function renderFinanceiro(){
     var resumoHTML = "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:18px 16px;margin-bottom:12px'>"+
       "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>"+(saldo>0.009?"Total a pagar":"Situação")+"</div><div style='font-size:26px;font-weight:700;color:"+cor+"'>"+(saldo>0.009?fval(saldo):"Tudo pago ✓")+"</div></div>"+
       "<details style='margin-top:10px'><summary style='font-size:12px;color:#6B6B6B;cursor:pointer;list-style:none'>Ver como chegamos nesse valor ›</summary><div style='margin-top:8px'>"+
-      linha("Saldo anterior", fval(saldoAntD))+
+      linha("Saldo anterior (enviado por PDF)", fval(saldoAntD))+
       linha("Peças", fval(pecasD))+(lojaCount>0?("<div style='font-size:11px;color:#6B4FA0;padding:2px 0 4px'>🏬 "+lojaCount+" peça"+(lojaCount>1?"s":"")+" com loja ("+fval(lojaSum)+") não "+(lojaCount>1?"entram":"entra")+" neste saldo</div>"):"")+
       "<div style='border-top:1px solid #F0F0F0;margin:8px 0'></div>"+
       linha("Subtotal", fval(subtotalD), {lc:"#0A0A0A",lw:"600"})+

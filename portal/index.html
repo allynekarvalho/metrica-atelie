@@ -403,7 +403,7 @@ function renderTudo() {
   window.FALTA_P = FALTA;
   var faltaAnt = Math.max(0, +(saldoAnt-ALP.antPago).toFixed(2));
   var linhaS = function(ico, lbl, v){ return "<div style='display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid #F0F0F0;font-size:14px;color:#0A0A0A'><span>"+ico+" "+lbl+"</span><b style='white-space:nowrap'>"+fval(v)+"</b></div>"; };
-  var separaHTML = saldo>0.009 ? "<div style='margin-top:12px'>"+(faltaAnt>0.009?linhaS("📌","Saldo anterior",faltaAnt):"")+(faltaEnt>0.009?linhaS("🎁","Peças já entregues",faltaEnt):"")+(faltaAt>0.009?linhaS("🧵","Peças ainda no ateliê",faltaAt):"")+"</div>" : "";
+  var separaHTML = saldo>0.009 ? "<div style='margin-top:12px'>"+(faltaAnt>0.009?linhaS("📌","Saldo anterior <span style='font-size:12px;color:#6B6B6B'>(enviado por PDF)</span>",faltaAnt):"")+(faltaEnt>0.009?linhaS("🎁","Peças já entregues",faltaEnt):"")+(faltaAt>0.009?linhaS("🧵","Peças ainda no ateliê",faltaAt):"")+"</div>" : "";
   var subtotalP = saldoAnt+pecasSum;
   var linhaP = function(lbl, val, opts){ opts=opts||{}; return "<div style='display:flex;justify-content:space-between;align-items:center;padding:"+(opts.pad||"7px")+" 0'><div style='font-size:"+(opts.fs||"13px")+";color:"+(opts.lc||"#6B6B6B")+";font-weight:"+(opts.lw||"400")+"'>"+lbl+"</div><div style='font-size:"+(opts.fs||"13px")+";font-weight:"+(opts.vw||"600")+";color:"+(opts.vc||"#0A0A0A")+"'>"+val+"</div></div>"; };
   var resumoHTML = "<div style='background:#fff;border-radius:10px;padding:18px 16px;margin-bottom:12px'>"+
