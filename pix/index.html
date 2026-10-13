@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pagar com Pix · Métrica Ateliê</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  body{margin:0;background:#0A0A0A;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;display:flex;justify-content:center}
+  .w{max-width:420px;width:100%;padding:28px 16px 40px;text-align:center}
+  .marca{font-family:Georgia,serif;letter-spacing:4px;font-size:20px}
+  .sub{font-size:11px;letter-spacing:2px;color:#999;margin-top:4px}
+  .card{background:#fff;color:#0A0A0A;border-radius:14px;padding:22px 18px;margin-top:24px}
+  .lbl{font-size:13px;color:#6B6B6B;text-transform:uppercase;letter-spacing:1px}
+  .val{font-size:34px;font-weight:700;margin:6px 0 18px}
+  button{width:100%;padding:16px;border:none;border-radius:10px;background:#2E5E2E;color:#fff;font-size:17px;font-weight:700;cursor:pointer}
+  .ok{background:#0A0A0A}
+  .passos{font-size:14px;color:#444;text-align:left;margin:16px 0 0;line-height:1.6}
+  #qr{display:flex;justify-content:center;margin:18px 0 6px}
+  .cod{font-size:10px;color:#999;word-break:break-all;margin-top:10px}
+  .nome{font-size:13px;color:#6B6B6B;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="marca">MÉTRICA</div><div class="sub">ALLYNE CARVALHO · ATELIÊ</div>
+  <div class="card">
+    <div class="lbl">Valor a pagar</div>
+    <div class="val" id="val">—</div>
+    <button id="bt" onclick="copiar()">📋 Copiar código Pix</button>
+    <div class="passos">1. Toque no botão verde acima<br>2. Abra o app do seu banco → <b>Pix</b> → <b>Pix copia e cola</b><br>3. Cole o código e confirme ✅</div>
+    <div id="qr"></div>
+    <div class="nome">Recebedor: ALLYNE CARVALHO</div>
+    <div class="cod" id="cod"></div>
+  </div>
+  <div class="sub" style="margin-top:18px">Depois é só enviar o comprovante pelo WhatsApp 🙏</div>
+</div>
+<script>
+var CHAVE="+5565996885868", NOME="ALLYNE CARVALHO", CIDADE="CUIABA";
+function crc(s){ var c=0xFFFF; for(var i=0;i<s.length;i++){ c^=s.charCodeAt(i)<<8; for(var j=0;j<8;j++){ c=(c&0x8000)?((c<<1)^0x1021):(c<<1); c&=0xFFFF; } } return c.toString(16).toUpperCase().padStart(4,"0"); }
+function f(id,v){ v=String(v); return id+String(v.length).padStart(2,"0")+v; }
+var v=parseFloat((new URLSearchParams(location.search).get("v")||"").replace(",","."))||0;
+var p=f("00","01")+f("26",f("00","br.gov.bcb.pix")+f("01",CHAVE))+f("52","0000")+f("53","986")+(v>0?f("54",v.toFixed(2)):"")+f("58","BR")+f("59",NOME)+f("60",CIDADE)+f("62",f("05","***"))+"6304";
+var COD=p+crc(p);
+document.getElementById("val").textContent = v>0 ? "R$ "+v.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}) : "Valor livre";
+document.getElementById("cod").textContent = COD;
+try{ new QRCode(document.getElementById("qr"),{text:COD,width:180,height:180}); }catch(e){}
+function copiar(){
+  var b=document.getElementById("bt");
+  function feito(){ b.textContent="✅ Copiado! Agora cole no app do banco"; b.className="ok"; }
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(COD).then(feito,velho); } else velho();
+  function velho(){ var t=document.createElement("textarea"); t.value=COD; document.body.appendChild(t); t.select(); try{document.execCommand("copy"); feito();}catch(e){ prompt("Copie o código:",COD); } t.remove(); }
+}
+</script>
+</body>
+</html>
