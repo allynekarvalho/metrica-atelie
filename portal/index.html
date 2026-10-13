@@ -248,7 +248,11 @@ function relmDados(){
   var pp=RELM.pecas.filter(function(p){ return dentro(p.data_entrada); }).sort(function(a,b){ return String(a.data_entrada).localeCompare(String(b.data_entrada)); });
   var pg=RELM.pags.filter(function(p){ return dentro(p.data); }).sort(function(a,b){ return String(a.data).localeCompare(String(b.data)); });
   var tot=pp.reduce(function(s,p){ return s+valCli(p); },0), totPg=pg.reduce(function(s,p){ return s+(p.valor||0); },0);
-  return {mes:mes, ini:ini, fim:fim, pp:pp, pg:pg, tot:tot, totPg:totPg, falta:tot-totPg};
+  var antP=RELM.pecas.filter(function(p){ return p.data_entrada && p.data_entrada<ini; }).reduce(function(s,p){ return s+valCli(p); },0);
+  var antPg=RELM.pags.filter(function(p){ return p.data && p.data<ini; }).reduce(function(s,p){ return s+(p.valor||0); },0);
+  var anterior=+((RELM.ant||0)+antP-antPg-(RELM.desc||0)).toFixed(2);
+  var totalPagar=+(anterior+tot-totPg).toFixed(2);
+  return {mes:mes, ini:ini, fim:fim, pp:pp, pg:pg, tot:tot, totPg:totPg, anterior:anterior, totalPagar:totalPagar, falta:totalPagar};
 }
 function relmValTxt(p){ return emRetrabalho(p) ? "retrabalho · sem custo" : fval(p.valor||0); }
 function relmBoxHTML(){
@@ -267,14 +271,19 @@ function relmRender(){
   h+= "<details"+aberto+"><summary style='font-size:13px;font-weight:600;cursor:pointer;padding:6px 0;color:#0A0A0A'>📋 Ver peças ("+d.pp.length+")</summary>";
   h+= d.pp.length ? d.pp.map(function(p){ return ln("<span style='color:#6B6B6B;font-size:11px'>"+relmD(p.data_entrada).slice(0,5)+"</span> · <b>"+p.peca+"</b>"+(p.servico?"<div style='font-size:12px;color:#6B6B6B'>"+p.servico+"</div>":""), relmValTxt(p)); }).join("") : "<div style='font-size:13px;color:#6B6B6B;padding:6px 0'>Nenhuma peça neste mês.</div>";
   h+= "</details>";
-  h+= "<div style='margin-top:6px'>"+ln("<b>Total do mês</b>", fval(d.tot))+(d.pg.length?ln("Pago no mês ("+d.pg.map(function(p){ return relmD(p.data).slice(0,5); }).join(", ")+")", "− "+fval(d.totPg), "#2E5E2E"):"")+ln("<b>Falta pagar do mês</b>", fval(Math.max(d.falta,0)), d.falta>0?"#8B0000":"#2E5E2E")+"</div>";
+  var nm=relmNomeMes(d.mes).split(" ")[0];
+  h+= "<div style='margin-top:6px'>"+
+    ln("📌 Saldo anterior <span style='font-size:11px;color:#6B6B6B'>(antes de "+relmD(d.ini).slice(0,5)+")</span>", d.anterior<0?"crédito "+fval(-d.anterior):fval(d.anterior), d.anterior>0.009?"#8B0000":"#2E5E2E")+
+    ln("👗 Peças de "+nm, fval(d.tot))+
+    (d.pg.length?ln("Pago em "+nm+" ("+d.pg.map(function(p){ return relmD(p.data).slice(0,5); }).join(", ")+")", "− "+fval(d.totPg), "#2E5E2E"):"")+
+    ln("<b>💰 Total a pagar</b>", fval(Math.max(d.totalPagar,0)), d.totalPagar>0.009?"#8B0000":"#2E5E2E")+"</div>";
   box.innerHTML=h;
 }
 function relmWpp(){
   var d=relmDados();
   var l=["Olá, "+RELM.nome+"! 😊","","Segue o relatório de "+relmNomeMes(d.mes)+" ("+relmD(d.ini)+" a "+relmD(d.fim)+"):",""];
   if(d.pp.length) d.pp.forEach(function(p){ l.push("• "+relmD(p.data_entrada).slice(0,5)+" · "+p.peca+(p.servico?" — "+p.servico:"")+" · "+relmValTxt(p)); }); else l.push("Nenhuma peça neste mês.");
-  l.push("","Total do mês: "+fval(d.tot)); if(d.pg.length) l.push("Pago no mês: "+fval(d.totPg)); l.push("💰 Falta pagar do mês: "+fval(Math.max(d.falta,0)),"","— Métrica Ateliê");
+  var nmW=relmNomeMes(d.mes).split(" ")[0]; l.push("","📌 Saldo anterior: "+(d.anterior<0?"crédito "+fval(-d.anterior):fval(d.anterior)),"👗 Peças de "+nmW+": "+fval(d.tot)); if(d.pg.length) l.push("✅ Pago em "+nmW+": "+fval(d.totPg)); l.push("💰 Total a pagar: "+fval(Math.max(d.totalPagar,0)),"","— Métrica Ateliê");
   var tel=String(RELM.tel||"").replace(/\D/g,""); if(tel && tel.length<=11) tel="55"+tel;
   window.open("https://wa.me/"+tel+"?text="+encodeURIComponent(l.join("\n")),"_blank");
 }
@@ -285,9 +294,10 @@ function relmImprimir(){
     "<div class='barra'><button onclick='window.close()'>✕ Fechar</button><button class='bimp' onclick='window.print()'>🖨️ Imprimir</button></div>"+
     "<h1>Métrica Ateliê · Relatório do mês</h1><p><b>"+RELM.nome+"</b> · "+relmNomeMes(d.mes)+" ("+relmD(d.ini)+" a "+relmD(d.fim)+")</p>"+
     "<table><tr><th>Data</th><th>Peça / serviço</th><th class='v'>Valor</th></tr>"+linhas+"</table>"+
-    "<table class='tt' style='margin-top:10px'><tr><td>Total do mês ("+d.pp.length+" peça"+(d.pp.length!==1?"s":"")+")</td><td class='v'><b>"+fval(d.tot)+"</b></td></tr>"+
+    "<table class='tt' style='margin-top:10px'><tr><td>Saldo anterior (antes de "+relmD(d.ini)+")</td><td class='v'>"+(d.anterior<0?"crédito "+fval(-d.anterior):fval(d.anterior))+"</td></tr>"+
+    "<tr><td>Peças do mês ("+d.pp.length+" peça"+(d.pp.length!==1?"s":"")+")</td><td class='v'>"+fval(d.tot)+"</td></tr>"+
     (d.pg.length?"<tr><td>Pago no mês</td><td class='v'>− "+fval(d.totPg)+"</td></tr>":"")+
-    "<tr><td><b>Falta pagar do mês</b></td><td class='v'><b>"+fval(Math.max(d.falta,0))+"</b></td></tr></table></body></html>";
+    "<tr><td><b>Total a pagar</b></td><td class='v'><b>"+fval(Math.max(d.totalPagar,0))+"</b></td></tr></table></body></html>";
   var w=window.open("","_blank"); if(!w){ alert("Libere pop-ups para imprimir."); return; } w.document.write(html); w.document.close();
 }
 function fotoMini(u){ return (u && /-\d{13}\.jpg$/.test(u)) ? u.replace(/\.jpg$/,"-mini.jpg") : u; }
@@ -427,7 +437,7 @@ var saldoHTML = "<div class='saldo-box'>"+
   document.getElementById("tabs").style.display = "flex";
   var primeira = ABA_ATUAL || (emAndamento.length?"pecas":prontos.length?"prontos":entregues.length?"entregues":"saldo");
   mudarAba(primeira);
-RELM={pecas:TODAS_PECAS, pags:PAGAMENTOS, nome:CLI.nome, tel:""}; relmRender();
+RELM={pecas:TODAS_PECAS, pags:PAGAMENTOS, nome:CLI.nome, tel:"", ant:CLI.saldo_anterior||0, desc:CLI.desconto||0}; relmRender();
 selAtualizar();
 }
 async function init() {
