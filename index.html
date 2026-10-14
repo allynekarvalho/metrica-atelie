@@ -300,7 +300,7 @@ input:focus,select:focus{border-color:#0A0A0A}
       </div>
     </div>
     <div class="fr">
-      <div class="fg"><label>Valor cliente (R$)</label><div class="vw"><span class="vp">R$</span><input type="number" id="np-val" class="vi" placeholder="0,00" min="0" step="0.01"></div></div>
+      <div class="fg"><label>Valor cliente (R$)</label><div class="vw"><span class="vp">R$</span><input type="number" id="np-val" class="vi" placeholder="0,00" min="0" step="0.01"></div><label id="np-semcusto-lbl" style="display:inline-block;font-size:12px;font-weight:600;color:#6B6B6B;border:1px solid #DDD;border-radius:14px;padding:5px 10px;margin-top:6px;text-transform:none;letter-spacing:0;cursor:pointer;background:#fff"><input type="checkbox" id="np-semcusto" onchange="semCustoToggle('np')" style="display:none">🎁 Sem custo</label></div>
       <div class="fg"><label>Valor costureira (R$)</label><div class="vw"><span class="vp">R$</span><input type="number" id="np-valcos" class="vi" placeholder="0,00" min="0" step="0.01" oninput="calcCom()"></div></div>
     </div>
     <div class="fr">
@@ -541,7 +541,7 @@ function relmDados(){
   var totalPagar=+(anterior+tot-totPg).toFixed(2);
   return {mes:mes, ini:ini, fim:fim, pp:pp, pg:pg, tot:tot, totPg:totPg, anterior:anterior, totalPagar:totalPagar, falta:totalPagar};
 }
-function relmValTxt(p){ if(emRetrabalho(p)) return "retrabalho · sem custo"; var t=fval(p.valor||0); if(RELM.loja && RELM._falta){ var f=RELM._falta[p.id]; if(f!==undefined) t += (f<=0.009?" ✓ pago"+(p.pago_em?" "+relmD(p.pago_em).slice(0,5):""):(f<(p.valor||0)-0.009?" (falta "+fval(f)+")":" · em aberto")); } return t; }
+function relmValTxt(p){ if(p.sem_custo) return "sem custo"; if(emRetrabalho(p)) return "retrabalho · sem custo"; var t=fval(p.valor||0); if(RELM.loja && RELM._falta){ var f=RELM._falta[p.id]; if(f!==undefined) t += (f<=0.009?" ✓ pago"+(p.pago_em?" "+relmD(p.pago_em).slice(0,5):""):(f<(p.valor||0)-0.009?" (falta "+fval(f)+")":" · em aberto")); } return t; }
 function relmNomePeca(p){ return p.peca+(RELM.loja && p.observacao ? " ("+p.observacao+")" : ""); }
 function relmBoxHTML(){
   return "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:16px;margin:14px 0 12px;color:#0A0A0A'>"+
@@ -993,6 +993,7 @@ async function salvarLote(){
     closeMod("mod-lote"); showToast(ids.length+" peça"+(ids.length>1?"s":"")+" atualizada"+(ids.length>1?"s":"")+" ✓"); renderPerfil();
   }catch(e){ showToast("Erro ao salvar. Tente de novo."); }
 }
+function semCustoToggle(pref){ var c=document.getElementById(pref+"-semcusto"), v=document.getElementById(pref+"-val"); if(!c||!v) return; var l=document.getElementById(pref+"-semcusto-lbl"); if(c.checked){ v.value=""; v.placeholder="Sem custo"; v.disabled=true; if(l){ l.style.background="#2E5E2E"; l.style.color="#fff"; l.style.borderColor="#2E5E2E"; l.textContent=""; l.appendChild(c); l.appendChild(document.createTextNode("✓ Sem custo")); } } else { v.placeholder="0,00"; v.disabled=false; if(l){ l.style.background="#fff"; l.style.color="#6B6B6B"; l.style.borderColor="#DDD"; l.textContent=""; l.appendChild(c); l.appendChild(document.createTextNode("🎁 Sem custo")); } } }
 function selIds(){ return Array.prototype.map.call(document.querySelectorAll("#tela-perfil .selp-cb:checked"), function(c){ return c.value; }); }
 function selAtualizar(){
   var bar = document.getElementById("sel-bar"); if(!bar) return;
@@ -1012,14 +1013,14 @@ function imprimirSel(){ var ids = selIds(); if(!ids.length) return; window.IMPR_
 async function selEnviar(){
   var ids = selIds(); if(!ids.length) return;
   try {
-    var r = await Promise.all([ supa("pecas?id=in.("+ids.join(",")+")&select=peca,servico,valor,status,retrabalho_data,data_retorno"), supa("clientes?id=eq."+CLI_ATIVA_ID+"&select=telefone") ]);
+    var r = await Promise.all([ supa("pecas?id=in.("+ids.join(",")+")&select=peca,servico,valor,status,retrabalho_data,data_retorno,sem_custo"), supa("clientes?id=eq."+CLI_ATIVA_ID+"&select=telefone") ]);
     var pp = r[0] || [];
     var todasProntas = pp.every(function(p){ return p.status === "pronto"; });
     var linhas = ["Olá, "+CLI_ATIVA+"! 😊", ""];
     linhas.push(todasProntas ? (pp.length>1 ? "Suas peças estão prontas e passaram pela conferência final:" : "Sua peça está pronta e passou pela conferência final:") : "Segue a situação das suas peças:");
     linhas.push("");
     var total = 0;
-    pp.forEach(function(p){ total += valCli(p); linhas.push("👗 "+p.peca+(p.servico ? " — "+p.servico : "")+(emRetrabalho(p) ? " (retrabalho · sem custo)" : "")+(todasProntas ? "" : " ("+slbl(p.status)+")")); });
+    pp.forEach(function(p){ total += valCli(p); linhas.push("👗 "+p.peca+(p.servico ? " — "+p.servico : "")+(emRetrabalho(p) ? " (retrabalho · sem custo)" : (p.sem_custo ? " (sem custo)" : ""))+(todasProntas ? "" : " ("+slbl(p.status)+")")); });
     if(total > 0){ linhas.push("", "💰 Total: "+fval(total), ""); pixBloco(total).forEach(function(x){ linhas.push(x); }); }
     linhas.push("", todasProntas ? "Quando preferir vir retirar 🌸" : "Qualquer dúvida é só chamar 🌸", "", "— Métrica Ateliê");
     var msg = linhas.join("\n");
@@ -1376,7 +1377,7 @@ pp.map(function(p){ return mkPecaHTML(p, comAcoes); }).join("")+
 }
 function mkPecaHTML(p, comAcoes){
   var fotoHTML = p.foto_url ? "<img src='"+fotoMini(p.foto_url)+"' class='pfoto' loading='lazy' decoding='async' data-url='"+p.foto_url+"' data-full='"+p.foto_url+"' onerror='fotoCarregaErro(this)' onclick='verFoto(this.dataset.url)'>" : "";
-  var html = "<div class='pi'>"+(comAcoes ? "<label class='selw'><input type='checkbox' class='selp-cb' value='"+p.id+"' onchange='selAtualizar()'><span></span></label>" : "")+"<div class='pin'>"+fotoHTML+"<div class='pn' style='text-transform:uppercase'>"+p.peca+"</div>"+(emRetrabalho(p)?"<div class='ps' style='color:#2E5E2E;font-weight:700'>🔁 Retrabalho · sem custo p/ cliente</div>":"")+(p.observacao?"<div class='ps' style='font-style:italic;color:royalblue'>"+p.observacao+"</div>":"")+(p.marca?"<div class='ps' style='text-transform:uppercase;font-weight:700;color:#6B6B6B'>"+p.marca+"</div>":"")+(p.pago_por?"<div class='ps' style='color:#6B4FA0;font-weight:700'>🏬 "+p.pago_por+(p.loja_pago?" · pago":" · a receber")+"</div>":"")+(p.servico?p.servico.split(" + ").map(function(sv){ return "<div class='ps'>• "+sv+"</div>"; }).join(""):"<div class='ps'>—</div>")+(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+fmtBR(p.valor)+"</div>":"")+"<div class='pc'>"+(p.numero_comanda?"🎫 Nº "+String(p.numero_comanda).padStart(4,"0")+" · ":"")+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div>"+((p.data_pronto||p.data_entrega)?"<div class='pc' style='color:#2E5E2E'>"+(p.data_pronto?"✅ Pronta "+fdata(p.data_pronto):"")+(p.data_pronto&&p.data_entrega?" · ":"")+(p.data_entrega?"🎁 Entregue "+fdata(p.data_entrega):"")+"</div>":"")+(window.CLI_ATIVA_LOJA?(p.pago_em?"<div style='display:inline-block;margin-top:6px;padding:3px 10px;border-radius:12px;background:#E6F2E6;color:#2E5E2E;font-size:12px;font-weight:700'>✅ PAGA em "+fdata(p.pago_em)+"</div>":"<div style='display:inline-block;margin-top:6px;padding:3px 10px;border-radius:12px;background:#FBEAEA;color:#8B0000;font-size:12px;font-weight:700'>⏳ AGUARDANDO PAGAMENTO</div>"):"")+(p.retrabalho_costureira?"<div class='ps' style='color:#B8860B;font-weight:600'>🔁 Retrabalho: "+p.retrabalho_costureira+(p.retrabalho_valor_costureira?" · R$ "+fmtBR(p.retrabalho_valor_costureira):"")+"</div>":"")+(p.prioridade_cliente?"<div class='ps' style='color:#B8860B;font-weight:700'>⭐ Cliente marcou como prioridade</div>":"")+(p.confirmado_cliente_em?"<div class='ps' style='color:#2E5E2E;font-weight:600'>✓ Cliente confirmou recebimento em "+fdata(p.confirmado_cliente_em.split("T")[0])+"</div>":"")+"</div><div class='pd'><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
+  var html = "<div class='pi'>"+(comAcoes ? "<label class='selw'><input type='checkbox' class='selp-cb' value='"+p.id+"' onchange='selAtualizar()'><span></span></label>" : "")+"<div class='pin'>"+fotoHTML+"<div class='pn' style='text-transform:uppercase'>"+p.peca+"</div>"+(emRetrabalho(p)?"<div class='ps' style='color:#2E5E2E;font-weight:700'>🔁 Retrabalho · sem custo p/ cliente</div>":"")+(p.observacao?"<div class='ps' style='font-style:italic;color:royalblue'>"+p.observacao+"</div>":"")+(p.marca?"<div class='ps' style='text-transform:uppercase;font-weight:700;color:#6B6B6B'>"+p.marca+"</div>":"")+(p.pago_por?"<div class='ps' style='color:#6B4FA0;font-weight:700'>🏬 "+p.pago_por+(p.loja_pago?" · pago":" · a receber")+"</div>":"")+(p.servico?p.servico.split(" + ").map(function(sv){ return "<div class='ps'>• "+sv+"</div>"; }).join(""):"<div class='ps'>—</div>")+(p.sem_custo?"<div style='display:inline-block;font-size:12px;font-weight:700;color:#2E5E2E;background:#E6F2E6;border-radius:10px;padding:2px 8px;margin-top:4px'>🎁 SEM CUSTO</div>":(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+fmtBR(p.valor)+"</div>":""))+"<div class='pc'>"+(p.numero_comanda?"🎫 Nº "+String(p.numero_comanda).padStart(4,"0")+" · ":"")+(p.costureira?"🪡 "+p.costureira:"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div>"+((p.data_pronto||p.data_entrega)?"<div class='pc' style='color:#2E5E2E'>"+(p.data_pronto?"✅ Pronta "+fdata(p.data_pronto):"")+(p.data_pronto&&p.data_entrega?" · ":"")+(p.data_entrega?"🎁 Entregue "+fdata(p.data_entrega):"")+"</div>":"")+(window.CLI_ATIVA_LOJA?(p.pago_em?"<div style='display:inline-block;margin-top:6px;padding:3px 10px;border-radius:12px;background:#E6F2E6;color:#2E5E2E;font-size:12px;font-weight:700'>✅ PAGA em "+fdata(p.pago_em)+"</div>":"<div style='display:inline-block;margin-top:6px;padding:3px 10px;border-radius:12px;background:#FBEAEA;color:#8B0000;font-size:12px;font-weight:700'>⏳ AGUARDANDO PAGAMENTO</div>"):"")+(p.retrabalho_costureira?"<div class='ps' style='color:#B8860B;font-weight:600'>🔁 Retrabalho: "+p.retrabalho_costureira+(p.retrabalho_valor_costureira?" · R$ "+fmtBR(p.retrabalho_valor_costureira):"")+"</div>":"")+(p.prioridade_cliente?"<div class='ps' style='color:#B8860B;font-weight:700'>⭐ Cliente marcou como prioridade</div>":"")+(p.confirmado_cliente_em?"<div class='ps' style='color:#2E5E2E;font-weight:600'>✓ Cliente confirmou recebimento em "+fdata(p.confirmado_cliente_em.split("T")[0])+"</div>":"")+"</div><div class='pd'><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
   if(comAcoes){
     var id = p.id;
     var acoes = "<button class='bm' data-id='"+id+"' data-peca='"+p.peca+"' data-serv='"+(p.servico||"")+"' data-cos='"+(p.costureira||"").replace(/'/g,"&#39;")+"' onclick='abrirSt(this)'>Status</button>";
@@ -1562,7 +1563,7 @@ function abrirNovaPeca(){
   FOTO_FILE=null;
   initSvc();
   document.getElementById("npeca-cli-nome").textContent = CLI_ATIVA;
-  ["np-peca","np-marca","np-serv","np-val","np-valcos","np-com","np-prazo","np-obs"].forEach(function(id){ document.getElementById(id).value=""; });
+  ["np-peca","np-marca","np-serv","np-val","np-valcos","np-com","np-prazo","np-obs"].forEach(function(id){ document.getElementById(id).value=""; }); var _sc=document.getElementById("np-semcusto"); if(_sc){ _sc.checked=false; semCustoToggle("np"); }
   document.getElementById("np-cos").innerHTML=optsCostureiras("");
 
   document.getElementById("np-prev").style.display="none";
@@ -1580,7 +1581,8 @@ async function salvarPeca(){
   try {
     var cos = document.getElementById("np-cos").value;
     var serv = document.getElementById("np-serv").value.trim();
-    var val = parseFloat(document.getElementById("np-val").value)||0;
+    var semCusto = document.getElementById("np-semcusto").checked;
+    var val = semCusto ? 0 : (parseFloat(document.getElementById("np-val").value)||0);
     var valCos = parseFloat(document.getElementById("np-valcos").value)||0;
     var com = parseFloat(document.getElementById("np-com").value)||0;
     var prazo = document.getElementById("np-prazo").value||null;
@@ -1588,7 +1590,7 @@ async function salvarPeca(){
     var hoje = new Date().toISOString().split("T")[0];
     var marca = document.getElementById("np-marca").value.trim(); var obs = document.getElementById("np-obs").value.trim();
 if(marca) registrarMarca(marca);
-    var body = {cliente_id:CLI_ATIVA_ID, cliente_nome:CLI_ATIVA, peca:peca, marca:marca, servico:serv, costureira:cos, prazo:prazo, status:prio, valor:val, valor_costureira:valCos, comissao:com, data_entrada:hoje, observacao:obs};
+    var body = {cliente_id:CLI_ATIVA_ID, cliente_nome:CLI_ATIVA, peca:peca, marca:marca, servico:serv, costureira:cos, prazo:prazo, status:prio, valor:val, sem_custo:semCusto, valor_costureira:valCos, comissao:com, data_entrada:hoje, observacao:obs};
     var res = await supa("pecas", {method:"POST", body:body});
     if(FOTO_FILE && res && res[0]){
       btn.textContent = "Enviando foto...";
@@ -1950,7 +1952,7 @@ if(p.status==="entregue" && !ED_SO_EDITAR){ abrirRetorno(p); return; } RETRABALH
 document.getElementById("ed-peca").value = p.peca||"";
 document.getElementById("ed-marca").value = p.marca||"";
 document.getElementById("ed-serv").value = p.servico||"";
-document.getElementById("ed-val").value = p.valor||"";
+document.getElementById("ed-val").value = p.valor||""; document.getElementById("ed-semcusto").checked=!!p.sem_custo; semCustoToggle("ed");
 document.getElementById("ed-valcos").value = p.valor_costureira||"";
 document.getElementById("ed-com").value = p.comissao||"";
 document.getElementById("ed-cos").innerHTML = optsCostureiras(p.costureira||""); document.getElementById("ed-obs").value = p.observacao||"";
@@ -1976,7 +1978,7 @@ document.getElementById("mod-editar").classList.add("open");
 }
 async function salvarEdicao() {
 var id = document.getElementById("ed-id").value;
-var val = parseFloat(document.getElementById("ed-val").value)||0;
+var semCustoEd = document.getElementById("ed-semcusto").checked; var val = semCustoEd ? 0 : (parseFloat(document.getElementById("ed-val").value)||0);
 var valCos = parseFloat(document.getElementById("ed-valcos").value)||0;
 var com = parseFloat(document.getElementById("ed-com").value)||0;
 var marcaEd = document.getElementById("ed-marca").value.trim(); var hoje = new Date().toISOString().split("T")[0];
@@ -1990,7 +1992,7 @@ data_entrada: document.getElementById("ed-data").value||null,
 data_pronto: document.getElementById("ed-pronto").value||null,
 data_entrega: document.getElementById("ed-entrega").value||null,
 status: ED_SO_EDITAR ? ED_STATUS_ORIG : (ED_STATUS_ORIG==="entregue"||ED_STATUS_ORIG==="pronto")?"aguardando":(ED_STATUS_ORIG==="urgente"?"aguardando":ED_STATUS_ORIG),
-valor: val,
+valor: val, sem_custo: semCustoEd,
 valor_costureira: valCos,
 comissao: com, data_retorno: ((ED_STATUS_ORIG==="entregue"&&!ED_SO_EDITAR)?(DATA_RETORNO_ESCOLHIDA||hoje):undefined)
 };
@@ -2142,7 +2144,7 @@ valoresAtualizarBotao(); if(OCULTO) valoresMascarar();
     <div class="fg"><label>Marca (opcional)</label><input id="ed-marca" list="marcas-dl" placeholder="Ex: Zara, Farm..." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
     <div class="fg"><label>Serviço</label><textarea id="ed-serv" style="height:80px;resize:none;width:100%;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-family:DM Sans,sans-serif;font-size:14px" placeholder="Descrição do serviço"></textarea></div>
     <div class="fr">
-      <div class="fg"><label>Valor cliente (R$)</label><div class="vw"><span class="vp">R$</span><input type="number" id="ed-val" class="vi" placeholder="0,00" min="0" step="0.01"></div></div>
+      <div class="fg"><label>Valor cliente (R$)</label><div class="vw"><span class="vp">R$</span><input type="number" id="ed-val" class="vi" placeholder="0,00" min="0" step="0.01"></div><label id="ed-semcusto-lbl" style="display:inline-block;font-size:12px;font-weight:600;color:#6B6B6B;border:1px solid #DDD;border-radius:14px;padding:5px 10px;margin-top:6px;text-transform:none;letter-spacing:0;cursor:pointer;background:#fff"><input type="checkbox" id="ed-semcusto" onchange="semCustoToggle('ed')" style="display:none">🎁 Sem custo</label></div>
       <div class="fg"><label>Valor costureira (R$)</label><div class="vw"><span class="vp">R$</span><input type="number" id="ed-valcos" class="vi" placeholder="0,00" min="0" step="0.01" oninput="calcComEd()"></div></div>
     </div>
     <div class="fr">

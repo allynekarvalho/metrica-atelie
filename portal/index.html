@@ -202,6 +202,7 @@ html += "<label class='selw'><input type='checkbox' "+(SEL[p.id]?"checked ":"")+
   html += "<span class='badge "+p.status+"'>"+slbl(p.status)+"</span>";
   if(CLI && CLI.loja && !emRetrabalho(p) && p.valor) html += p.pago_em ? "<div style='display:inline-block;margin:8px 0 0 6px;padding:3px 10px;border-radius:12px;background:#E6F2E6;color:#2E5E2E;font-size:12px;font-weight:700'>✅ PAGA em "+fdata(p.pago_em).slice(0,5)+"</div>" : "<div style='display:inline-block;margin:8px 0 0 6px;padding:3px 10px;border-radius:12px;background:#FBEAEA;color:#8B0000;font-size:12px;font-weight:700'>⏳ AGUARDANDO PAGAMENTO</div>";
   if(emRetrabalho(p)) html += "<div style='margin-top:8px;font-size:13px;font-weight:600;color:#fff'>🔁 Retrabalho · sem custo</div>";
+  else if(p.sem_custo) html += "<div style='margin-top:8px;font-size:13px;font-weight:700;color:#8FD18F'>🎁 Sem custo</div>";
   else if(p.valor) html += "<div style='margin-top:8px;font-size:14px;font-weight:600;color:#fff'>"+fval(p.valor)+"</div>";
   var fP = window.FALTA_P && window.FALTA_P[p.id]; if(tipo==="entregues" && fP>0.009 && fP<(p.valor||0)-0.009) html += "<div style='font-size:12px;color:#FF8A8A'>Já pago "+fval(p.valor-fP)+" · falta "+fval(fP)+"</div>";
   if(tipo==="pecas") {
@@ -254,7 +255,7 @@ function relmDados(){
   var totalPagar=+(anterior+tot-totPg).toFixed(2);
   return {mes:mes, ini:ini, fim:fim, pp:pp, pg:pg, tot:tot, totPg:totPg, anterior:anterior, totalPagar:totalPagar, falta:totalPagar};
 }
-function relmValTxt(p){ return emRetrabalho(p) ? "retrabalho · sem custo" : fval(p.valor||0); }
+function relmValTxt(p){ return p.sem_custo ? "sem custo" : emRetrabalho(p) ? "retrabalho · sem custo" : fval(p.valor||0); }
 function relmBoxHTML(){
   return "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:16px;margin:14px 0 12px;color:#0A0A0A'>"+
     "<div style='display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px'><div style='font-size:14px;font-weight:700'>📅 Relatório do mês</div>"+
@@ -368,7 +369,7 @@ var linhas = ["Olá! 😊", ""];
 linhas.push(todasProntas ? (pp.length>1 ? "Suas peças estão prontas e passaram pela conferência final:" : "Sua peça está pronta e passou pela conferência final:") : "Segue a situação das suas peças:");
 linhas.push("");
 var total = 0;
-pp.forEach(function(p){ total += valCli(p); linhas.push("👗 "+p.peca+(p.servico ? " — "+p.servico : "")+(emRetrabalho(p) ? " (retrabalho · sem custo)" : "")+(todasProntas ? "" : " ("+slbl(p.status)+")")); });
+pp.forEach(function(p){ total += valCli(p); linhas.push("👗 "+p.peca+(p.servico ? " — "+p.servico : "")+(emRetrabalho(p) ? " (retrabalho · sem custo)" : (p.sem_custo ? " (sem custo)" : ""))+(todasProntas ? "" : " ("+slbl(p.status)+")")); });
 if(total > 0){ linhas.push("", "💰 Total: "+fval(total), ""); pixBloco(total).forEach(function(x){ linhas.push(x); }); }
 linhas.push("", todasProntas ? "Quando preferir, é só combinar a retirada 🌸" : "Qualquer dúvida é só chamar 🌸", "", "— Métrica Ateliê");
 window.open("https://wa.me/?text="+encodeURIComponent(linhas.join("\n")), "_blank");
@@ -376,7 +377,7 @@ window.open("https://wa.me/?text="+encodeURIComponent(linhas.join("\n")), "_blan
 function selImprimir(){
 var pp = selPecas(); if(!pp.length) return;
 var total = pp.reduce(function(s,p){ return s+valCli(p); },0);
-var linhas = pp.map(function(p){ return "<tr><td style='width:70px'>"+(p.foto_url?"<img src='"+escH(p.foto_url)+"' style='width:60px;height:60px;object-fit:cover;border-radius:6px'>":"")+"</td><td><b>"+escH(p.peca)+"</b>"+(p.servico?"<div class='s'>"+escH(p.servico)+"</div>":"")+"</td><td>"+escH(slbl(p.status))+"</td><td class='v'>"+(emRetrabalho(p)?"Retrabalho · sem custo":(p.valor?fval(p.valor):""))+"</td></tr>"; }).join("");
+var linhas = pp.map(function(p){ return "<tr><td style='width:70px'>"+(p.foto_url?"<img src='"+escH(p.foto_url)+"' style='width:60px;height:60px;object-fit:cover;border-radius:6px'>":"")+"</td><td><b>"+escH(p.peca)+"</b>"+(p.servico?"<div class='s'>"+escH(p.servico)+"</div>":"")+"</td><td>"+escH(slbl(p.status))+"</td><td class='v'>"+(emRetrabalho(p)?"Retrabalho · sem custo":(p.sem_custo?"Sem custo":(p.valor?fval(p.valor):"")))+"</td></tr>"; }).join("");
 var html = "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Peças</title><style>body{font-family:Arial,sans-serif;margin:20px;color:#000}h1{font-size:18px;margin:0 0 2px}p{font-size:12px;color:#555;margin:0 0 14px}table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:8px 6px;border-bottom:1px solid #ccc;text-align:left;vertical-align:middle}th{font-size:11px;text-transform:uppercase;color:#555}.s{font-size:12px;color:#555;margin-top:2px}.v{text-align:right;white-space:nowrap}button{margin-top:16px;padding:10px 18px;font-size:14px}@media print{button{display:none}}</style></head><body><h1>Métrica Ateliê</h1><p>"+new Date().toLocaleDateString("pt-BR")+"</p><table><tr><th></th><th>Peça</th><th>Situação</th><th class='v'>Valor</th></tr>"+linhas+(total>0?"<tr><td colspan='3'><b>Total</b></td><td class='v'><b>"+fval(total)+"</b></td></tr>":"")+"</table><button onclick='window.print()'>🖨️ Imprimir / salvar PDF</button></body></html>";
 var blob = new Blob([html], {type:"text/html"});
 var url = URL.createObjectURL(blob);
