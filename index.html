@@ -148,7 +148,7 @@ input:focus,select:focus{border-color:#0A0A0A}
 <button class="tab" onclick="goTab('config',this)">Config</button>
 </div>
 </header>
-<div id="sel-bar" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:150;background:#0A0A0A;border-top:1px solid #2E2E2E;padding:10px 14px;gap:8px;align-items:center"><span id="sel-n" style="flex:1;font-size:13px;color:#fff;font-weight:600"></span><button class="bm" onclick="selTodas()">Todas</button><button class="bm" onclick="imprimirSel()">🖨️ Imprimir</button><button class="bm vd" onclick="selEnviar()">💬 Enviar</button><button class="bm" onclick="selLimpar()">✕</button></div>
+<div id="sel-bar" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:150;background:#0A0A0A;border-top:1px solid #2E2E2E;padding:10px 14px;gap:8px;align-items:center;flex-wrap:wrap"><span id="sel-n" style="flex:1;font-size:13px;color:#fff;font-weight:600"></span><button class="bm" onclick="selTodas()">Todas</button><button class="bm" onclick="abrirLote()">✏️ Alterar</button><button class="bm" onclick="imprimirSel()">🖨️ Imprimir</button><button class="bm vd" onclick="selEnviar()">💬 Enviar</button><button class="bm" onclick="selLimpar()">✕</button></div>
 <div class="toast" id="toast"></div>
 <datalist id="marcas-dl"></datalist><datalist id="lojas-dl"></datalist>
 <div class="sc active" id="tela-clientes">
@@ -336,6 +336,12 @@ input:focus,select:focus{border-color:#0A0A0A}
     <button class="btn-s" onclick="closeMod('mod-st')">Cancelar</button>
   </div>
 </div>
+<div class="mov" id="mod-lote"><div class="mo"><div class="mh"></div><h2 style="color:#0A0A0A">Alterar peças selecionadas</h2><p class="msub" id="lote-n"></p>
+<div class="fg"><label>✂️ Costureira</label><select id="lote-cos"></select></div>
+<div class="fg"><label>📅 Prazo de entrega</label><input type="date" id="lote-prazo"></div>
+<div class="fg"><label>🎁 Entregue em <span style="font-size:11px;color:#6B6B6B">(marca como entregue)</span></label><input type="date" id="lote-entrega"></div>
+<p style="font-size:12px;color:#6B6B6B;margin:0 0 12px">Só muda o que você preencher. O que ficar em branco continua como está.</p>
+<button class="btn-p" onclick="salvarLote()">Salvar nas peças</button><button class="btn-s" onclick="closeMod('mod-lote')">Cancelar</button></div></div>
 <!-- MODAL DATA ENTREGA --><div class="mov" id="mod-ent-data"><div class="mo"><div class="mh"></div><h2>Data de entrega</h2><div class="fg"><label>Data</label><input type="date" id="ent-data"></div><button class="btn-p" onclick="confirmarEntrega()">Confirmar entrega</button><button class="btn-s" onclick="closeMod('mod-ent-data')">Cancelar</button></div></div><!-- MODAL RETORNO --><div class="mov" id="mod-retorno"><div class="mo"><div class="mh"></div><h2>Retorno para reajuste</h2><div class="fg"><label>Motivo do retorno</label><select id="ret-motivo" onchange="toggleRetNovo()"><option value="refazer">Refazer o que foi feito</option><option value="novo">Novo serviço</option></select></div><div class="fg" id="ret-novo-wrap" style="display:none"><label>Novo serviço</label><input id="ret-novo" placeholder="Ex: Ajuste na barra"><label style="margin-top:10px">Valor do novo serviço (soma no saldo da cliente)</label><div class="vw"><span class="vp">R$</span><input type="number" id="ret-novo-val" class="vi" placeholder="0,00" min="0" step="0.01"></div></div><div id="ret-refazer-wrap"><div class="fg"><label>Quem vai refazer</label><select id="ret-cos"></select></div><div class="fr"><div class="fg"><label>Valor costureira (retrabalho)</label><div class="vw"><span class="vp">R$</span><input type="number" id="ret-valcos" class="vi" placeholder="0,00" min="0" step="0.01" oninput="calcComRet()"></div></div><div class="fg"><label>Comissão 45%</label><div class="vw"><span class="vp">R$</span><input type="number" id="ret-com" class="vi" placeholder="0,00" readonly style="background:#F5F5F5;color:#B8B8B8"></div></div></div><p style="font-size:11px;color:#6B6B6B;margin:-6px 0 4px">A costureira original e a comissão da peça continuam registradas como estavam.</p></div><div class="fg"><label>Data do retorno</label><input type="date" id="ret-data"></div><button class="btn-p" onclick="confirmarRetorno()">Continuar</button><button class="btn-s" onclick="closeMod('mod-retorno')">Cancelar</button></div></div><!-- MODAL WHATSAPP -->
 <div class="mov" id="mod-wpp">
   <div class="mo">
@@ -962,6 +968,30 @@ function agCalendario(id){
   var l = document.createElement("a"); l.href = url; l.download = "agendamento.ics";
   document.body.appendChild(l); l.click(); document.body.removeChild(l);
   setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+}
+
+function abrirLote(){
+  var ids = selIds(); if(!ids.length) return;
+  document.getElementById("lote-n").textContent = ids.length+" peça"+(ids.length>1?"s":"")+" selecionada"+(ids.length>1?"s":"");
+  document.getElementById("lote-cos").innerHTML = optsCostureiras("").replace("Selecionar...","— não mudar —");
+  document.getElementById("lote-prazo").value = ""; document.getElementById("lote-entrega").value = "";
+  document.getElementById("mod-lote").classList.add("open");
+}
+async function salvarLote(){
+  var ids = selIds(); if(!ids.length) return;
+  var body = {}, cos = document.getElementById("lote-cos").value, prazo = document.getElementById("lote-prazo").value, ent = document.getElementById("lote-entrega").value;
+  if(cos) body.costureira = cos;
+  if(prazo) body.prazo = prazo;
+  if(ent){ body.data_entrega = ent; body.status = "entregue"; }
+  if(!Object.keys(body).length){ showToast("Preencha pelo menos um campo."); return; }
+  try{
+    if(ent){
+      var semPronto = await supa("pecas?id=in.("+ids.join(",")+")&data_pronto=is.null&select=id");
+      if(semPronto && semPronto.length) await supa("pecas?id=in.("+semPronto.map(function(x){ return x.id; }).join(",")+")", {method:"PATCH", body:{data_pronto: ent}});
+    }
+    await supa("pecas?id=in.("+ids.join(",")+")", {method:"PATCH", body: body});
+    closeMod("mod-lote"); showToast(ids.length+" peça"+(ids.length>1?"s":"")+" atualizada"+(ids.length>1?"s":"")+" ✓"); renderPerfil();
+  }catch(e){ showToast("Erro ao salvar. Tente de novo."); }
 }
 function selIds(){ return Array.prototype.map.call(document.querySelectorAll("#tela-perfil .selp-cb:checked"), function(c){ return c.value; }); }
 function selAtualizar(){
