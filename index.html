@@ -136,6 +136,7 @@ input:focus,select:focus{border-color:#0A0A0A}
   <div class="hl">
     <img src="https://allynekarvalho.github.io/metrica-atelie/logo.png" alt="Métrica">
     <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê</p></div>
+    <button id="bt-olho" onclick="toggleValores()" title="Mostrar/ocultar valores" style="margin-left:auto;background:none;border:1px solid #2E2E2E;border-radius:20px;color:#fff;font-size:18px;padding:6px 12px;cursor:pointer">👁️</button>
   </div>
   <div class="tabs">
     <button class="tab active" onclick="goTab('clientes',this)">Clientes</button>
@@ -2075,6 +2076,31 @@ document.getElementById("np-valcos").addEventListener("input", calcCom);populate
 populateMarcasDL();
 renderLista();
 carregarAvisoAgenda();
+
+// ===== Ocultar valores (pra mostrar peças sem a costureira ver o preço) =====
+var OCULTO = false; try{ OCULTO = localStorage.getItem("ocultarValores")==="1"; }catch(e){}
+var VAL_ORIG = new WeakMap(), VAL_RE = /R\$\s?[\d.]+(,\d{1,2})?/g, VAL_AGEND = false;
+function valoresMascarar(){
+  VAL_AGEND = false; if(!OCULTO) return;
+  var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null), n;
+  while((n = w.nextNode())){
+    var pn = n.parentNode; if(!pn || /^(SCRIPT|STYLE|TEXTAREA)$/.test(pn.nodeName)) continue;
+    var s = n.nodeValue; VAL_RE.lastIndex = 0;
+    if(VAL_RE.test(s)){ VAL_RE.lastIndex = 0; if(!VAL_ORIG.has(n)) VAL_ORIG.set(n, s); n.nodeValue = s.replace(VAL_RE, "R$ •••"); }
+  }
+}
+function valoresMostrar(){
+  var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null), n;
+  while((n = w.nextNode())){ if(VAL_ORIG.has(n)){ n.nodeValue = VAL_ORIG.get(n); VAL_ORIG.delete(n); } }
+}
+function valoresAtualizarBotao(){ var b=document.getElementById("bt-olho"); if(b){ b.textContent = OCULTO ? "🙈" : "👁️"; b.style.background = OCULTO ? "#8B0000" : "none"; } }
+function toggleValores(){
+  OCULTO = !OCULTO; try{ localStorage.setItem("ocultarValores", OCULTO?"1":"0"); }catch(e){}
+  if(OCULTO) valoresMascarar(); else valoresMostrar();
+  valoresAtualizarBotao(); showToast(OCULTO ? "Valores ocultos 🙈" : "Valores visíveis 👁️");
+}
+new MutationObserver(function(){ if(OCULTO && !VAL_AGEND){ VAL_AGEND = true; requestAnimationFrame(valoresMascarar); } }).observe(document.body, {childList:true, subtree:true, characterData:true});
+valoresAtualizarBotao(); if(OCULTO) valoresMascarar();
 </script>
 <!-- MODAL EDITAR PEÇA -->
 <div class="mov" id="mod-editar">
