@@ -306,9 +306,10 @@ function fotoCarregaErro(img){ var full=img.getAttribute("data-full")||img.datas
 function fotoErro(img){ var d=document.createElement("div"); d.className="pfoto-err"; d.textContent="📷 Foto não carregou"; if(img.dataset&&img.dataset.url){ d.onclick=function(){ window.open(img.dataset.url,"_blank"); }; } img.replaceWith(d); }
 function renderEntregues(entregues, falta){
   if(!entregues.length) return renderLista(entregues, "Nenhuma peça entregue ainda.", "entregues");
-  var abertas = entregues.filter(function(p){ return (falta[p.id]||0) > 0.009; });
-  var pagas = entregues.filter(function(p){ return !((falta[p.id]||0) > 0.009); });
-  var totAb = abertas.reduce(function(s,p){ return s+falta[p.id]; },0);
+  function semValor(p){ return !(p.valor>0) && !p.sem_custo && !emRetrabalho(p); }
+  var abertas = entregues.filter(function(p){ return (falta[p.id]||0) > 0.009 || semValor(p); });
+  var pagas = entregues.filter(function(p){ return !((falta[p.id]||0) > 0.009) && !semValor(p); });
+  var totAb = abertas.reduce(function(s,p){ return s+(falta[p.id]||0); },0);
   var h = "";
   if(abertas.length){
     h += "<div class='total-box'><div class='tl'>⏳ Entregues · falta pagar</div><div class='tv' style='color:#8B0000'>"+fval(totAb)+"</div></div>";
