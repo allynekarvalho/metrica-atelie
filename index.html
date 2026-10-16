@@ -1177,14 +1177,14 @@ async function receberCli(id){
   var c = AREC[id]; if(!c) return;
   var rp = await pedirPagamento("Quanto "+c.nome+" pagou?", c.deve.toFixed(2).replace(".",","));
   if(!rp) return; var val = rp.valor;
-  await supa("pagamentos", {method:"POST", body:{cliente_id:id, cliente_nome:c.nome, valor:val, forma:rp.forma, observacao:"", data:new Date().toISOString().split("T")[0]}});
+  await supa("pagamentos", {method:"POST", body:{cliente_id:id, cliente_nome:c.nome, valor:val, forma:rp.forma, observacao:rp.obs||"", data:new Date().toISOString().split("T")[0]}});
   showToast("Pagamento de "+fval(val)+" registrado!");
   renderLista();
 }
 
 window.EXTRATO_ACOES = true;
 
-var FORMAS_PAG = ["Pix","Dinheiro","Cartão débito","Cartão crédito","Transferência"];
+var FORMAS_PAG = ["Pix","Dinheiro","Cartão débito","Cartão crédito","Transferência","Permuta (roupas)"];
 function pedirPagamento(titulo, valorPadrao){
   return new Promise(function(resolve){
     var ov = document.createElement("div");
@@ -1195,12 +1195,13 @@ function pedirPagamento(titulo, valorPadrao){
       "<input id='pp-val' type='text' inputmode='decimal' value='"+(valorPadrao||"")+"' style='width:100%;padding:12px;border:1px solid #DDD;border-radius:8px;font-size:17px;box-sizing:border-box;color:#0A0A0A;background:#fff'>"+
       "<div style='font-size:12px;color:#6B6B6B;margin:12px 0 6px'>Forma de pagamento</div>"+
       "<div id='pp-formas' style='display:flex;flex-wrap:wrap;gap:6px'>"+FORMAS_PAG.map(function(f,i){ return "<button type='button' data-f='"+f+"' style='padding:8px 12px;border-radius:16px;border:1px solid "+(i===0?"#0A0A0A":"#DDD")+";background:"+(i===0?"#0A0A0A":"#fff")+";color:"+(i===0?"#fff":"#0A0A0A")+";font-size:13px;cursor:pointer'>"+f+"</button>"; }).join("")+"</div>"+
+      "<div id='pp-obs-w' style='display:none'><div style='font-size:12px;color:#6B6B6B;margin:12px 0 4px'>O que você pegou da loja?</div><input id='pp-obs' placeholder='Ex: vestido azul, blusa off' style='width:100%;padding:12px;border:1px solid #DDD;border-radius:8px;font-size:14px;box-sizing:border-box;color:#0A0A0A;background:#fff'></div>"+
       "<div style='display:flex;gap:8px;margin-top:16px'><button id='pp-cancel' style='flex:1;padding:12px;border:1px solid #DDD;border-radius:8px;background:#fff;color:#0A0A0A;font-size:14px'>Cancelar</button><button id='pp-ok' style='flex:1;padding:12px;border:none;border-radius:8px;background:#2E5E2E;color:#fff;font-size:14px;font-weight:700'>✓ Registrar</button></div></div>";
     document.body.appendChild(ov);
     var forma = FORMAS_PAG[0];
-    ov.querySelectorAll("#pp-formas button").forEach(function(b){ b.onclick=function(){ forma=b.dataset.f; ov.querySelectorAll("#pp-formas button").forEach(function(x){ var on=x===b; x.style.background=on?"#0A0A0A":"#fff"; x.style.color=on?"#fff":"#0A0A0A"; x.style.borderColor=on?"#0A0A0A":"#DDD"; }); }; });
+    ov.querySelectorAll("#pp-formas button").forEach(function(b){ b.onclick=function(){ forma=b.dataset.f; ov.querySelector("#pp-obs-w").style.display = forma.indexOf("Permuta")===0 ? "block" : "none"; ov.querySelectorAll("#pp-formas button").forEach(function(x){ var on=x===b; x.style.background=on?"#0A0A0A":"#fff"; x.style.color=on?"#fff":"#0A0A0A"; x.style.borderColor=on?"#0A0A0A":"#DDD"; }); }; });
     ov.querySelector("#pp-cancel").onclick=function(){ ov.remove(); resolve(null); };
-    ov.querySelector("#pp-ok").onclick=function(){ var val=parseFloat(String(ov.querySelector("#pp-val").value).replace(/\./g,"").replace(",","."))||0; if(!val){ alert("Valor inválido."); return; } ov.remove(); resolve({valor:val, forma:forma}); };
+    ov.querySelector("#pp-ok").onclick=function(){ var val=parseFloat(String(ov.querySelector("#pp-val").value).replace(/\./g,"").replace(",","."))||0; if(!val){ alert("Valor inválido."); return; } var ob=(ov.querySelector("#pp-obs").value||"").trim(); ov.remove(); resolve({valor:val, forma:forma, obs:(forma.indexOf("Permuta")===0 && ob) ? ob : ""}); };
   });
 }
 async function pagarPeca(pecaId){
@@ -1213,7 +1214,7 @@ async function pagarPeca(pecaId){
     var falta = it ? it.falta : (pc.valor||0);
     var rp = await pedirPagamento("Pagamento de "+pc.peca+(pc.observacao?" ("+pc.observacao+")":""), Number(falta).toFixed(2).replace(".",","));
     if(!rp) return; var val = rp.valor;
-    var pg = await supa("pagamentos",{method:"POST",body:{cliente_id:pc.cliente_id, cliente_nome:pc.cliente_nome, valor:val, forma:rp.forma, observacao:"Peça: "+pc.peca+(pc.observacao?" ("+pc.observacao+")":""), data:hojeISO(), peca_id:pecaId}});
+    var pg = await supa("pagamentos",{method:"POST",body:{cliente_id:pc.cliente_id, cliente_nome:pc.cliente_nome, valor:val, forma:rp.forma, observacao:(rp.obs?rp.obs+" · ":"")+"Peça: "+pc.peca+(pc.observacao?" ("+pc.observacao+")":""), data:hojeISO(), peca_id:pecaId}});
     await supa("pecas?id=eq."+pecaId,{method:"PATCH",body:{pago_em:hojeISO(), pagamento_id:(pg&&pg[0]&&pg[0].id)||null}});
     showToast("✓ "+pc.peca+" paga ("+fval(val)+")");
     atualizarTelaPag();
@@ -1298,7 +1299,7 @@ async function ljRecebi(id, deve){
   var c=LJ.cli[id]; if(!c) return;
   var rp=await pedirPagamento("Quanto "+c.nome+" pagou?", Math.max(parseFloat(deve)||0,0).toFixed(2).replace(".",","));
   if(!rp) return; var val=rp.valor;
-  await supa("pagamentos",{method:"POST",body:{cliente_id:id, cliente_nome:c.nome, valor:val, forma:rp.forma, observacao:"", data:hojeISO()}});
+  await supa("pagamentos",{method:"POST",body:{cliente_id:id, cliente_nome:c.nome, valor:val, forma:rp.forma, observacao:rp.obs||"", data:hojeISO()}});
   showToast("Pagamento de "+fval(val)+" registrado!"); renderLojas();
 }
 function filtrar(f,btn){
