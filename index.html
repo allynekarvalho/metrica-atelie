@@ -1013,7 +1013,7 @@ function imprimirSel(){ var ids = selIds(); if(!ids.length) return; window.IMPR_
 async function selEnviar(){
   var ids = selIds(); if(!ids.length) return;
   try {
-    var r = await Promise.all([ supa("pecas?id=in.("+ids.join(",")+")&select=peca,servico,valor,status,retrabalho_data,data_retorno,sem_custo"), supa("clientes?id=eq."+CLI_ATIVA_ID+"&select=telefone") ]);
+    var r = await Promise.all([ supa("pecas?id=in.("+ids.join(",")+")&select=peca,servico,valor,status,retrabalho_data,data_retorno,sem_custo,foto_url"), supa("clientes?id=eq."+CLI_ATIVA_ID+"&select=telefone") ]);
     var pp = r[0] || [];
     var todasProntas = pp.every(function(p){ return p.status === "pronto"; });
     var linhas = ["Olá, "+CLI_ATIVA+"! 😊", ""];
@@ -1026,10 +1026,7 @@ async function selEnviar(){
     var msg = linhas.join("\n");
     var tel = ((r[1] && r[1][0] && r[1][0].telefone) || "").replace(/\D/g,"");
     if(tel && tel.length <= 11) tel = "55"+tel;
-    document.getElementById("mw-cli").textContent = CLI_ATIVA;
-    document.getElementById("mw-txt").textContent = msg;
-    document.getElementById("wpp-open").href = "https://wa.me/"+tel+"?text="+encodeURIComponent(msg);
-    document.getElementById("mod-wpp").classList.add("open");
+    abrirEnvioImagem(pp, total, msg, tel);
   } catch(e){ showToast("Erro ao montar mensagem."); }
 }
 function calcComSt(){
@@ -2139,6 +2136,60 @@ function toggleValores(){
 }
 new MutationObserver(function(){ if(OCULTO && !VAL_AGEND){ VAL_AGEND = true; requestAnimationFrame(valoresMascarar); } }).observe(document.body, {childList:true, subtree:true, characterData:true});
 valoresAtualizarBotao(); if(OCULTO) valoresMascarar();
+// ===== Enviar lista de peças como imagem (com fotos, total, Pix e assinatura) =====
+function _escI(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/'/g,"&#39;"); }
+function _carregarH2C(){ return window.html2canvas ? Promise.resolve() : new Promise(function(ok,err){ var s=document.createElement("script"); s.src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"; s.onload=ok; s.onerror=err; document.head.appendChild(s); }); }
+function _listaImgHTML(pp, total){
+  var linhas = pp.map(function(p){
+    var v = emRetrabalho(p) ? "Retrabalho · sem custo" : (p.sem_custo ? "Sem custo" : (p.valor ? fval(p.valor) : ""));
+    return "<tr><td style='width:74px;padding:8px 6px;border-bottom:1px solid #ddd'>"+(p.foto_url?"<img crossorigin='anonymous' src='"+_escI(p.foto_url)+"' style='width:64px;height:64px;object-fit:cover;border-radius:8px;display:block'>":"")+"</td>"+
+      "<td style='padding:8px 6px;border-bottom:1px solid #ddd'><b style='text-transform:uppercase'>"+_escI(p.peca)+"</b>"+(p.servico?"<div style='font-size:13px;color:#555;margin-top:2px'>"+_escI(p.servico)+"</div>":"")+"</td>"+
+      "<td style='padding:8px 6px;border-bottom:1px solid #ddd;font-size:13px;white-space:nowrap'>"+_escI(slbl(p.status))+"</td>"+
+      "<td style='padding:8px 6px;border-bottom:1px solid #ddd;text-align:right;white-space:nowrap'>"+v+"</td></tr>";
+  }).join("");
+  return "<div style='font-size:20px;font-weight:700'>Métrica Ateliê</div><div style='font-size:13px;color:#666;margin:2px 0 14px'>"+new Date().toLocaleDateString("pt-BR")+"</div>"+
+    "<table style='width:100%;border-collapse:collapse;font-size:15px'><tr><th></th><th style='text-align:left;font-size:11px;color:#666;padding:6px'>PEÇA</th><th style='text-align:left;font-size:11px;color:#666;padding:6px'>SITUAÇÃO</th><th style='text-align:right;font-size:11px;color:#666;padding:6px'>VALOR</th></tr>"+linhas+
+    (total>0?"<tr><td colspan='3' style='padding:10px 6px;font-weight:700'>Total</td><td style='padding:10px 6px;text-align:right;font-weight:700;white-space:nowrap'>"+fval(total)+"</td></tr>":"")+"</table>"+
+    (total>0?"<div style='margin-top:16px;font-size:16px'>💳 <b>Pix (celular):</b> "+CHAVE_PIX_ATELIE+"</div>":"")+
+    "<div style='margin-top:14px;font-size:15px'>Qualquer dúvida é só chamar 🌸</div><div style='margin-top:8px;font-size:15px'>— Métrica Ateliê</div>";
+}
+var _IMG_ENVIO = null;
+async function abrirEnvioImagem(pp, total, msg, tel){
+  var ov = document.getElementById("img-share");
+  if(!ov){ ov=document.createElement("div"); ov.id="img-share"; ov.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px"; document.body.appendChild(ov); }
+  ov.innerHTML = "<div style='background:#fff;color:#0A0A0A;border-radius:14px;padding:18px;max-width:420px;width:100%;text-align:center;font-family:Arial,sans-serif'>Gerando a imagem da lista...</div>";
+  ov.style.display = "flex"; _IMG_ENVIO = {msg:msg, tel:tel, file:null};
+  try{
+    await _carregarH2C();
+    var box = document.createElement("div");
+    box.style.cssText = "position:fixed;left:-10000px;top:0;width:560px;background:#fff;color:#000;padding:24px;font-family:Arial,sans-serif";
+    box.innerHTML = _listaImgHTML(pp, total); document.body.appendChild(box);
+    await Promise.all(Array.prototype.map.call(box.querySelectorAll("img"), function(im){ return im.complete ? 1 : new Promise(function(r){ im.onload=r; im.onerror=function(){ im.remove(); r(); }; }); }));
+    var cv = await html2canvas(box, {useCORS:true, scale:2, backgroundColor:"#ffffff"}); box.remove();
+    var blob = await new Promise(function(r){ cv.toBlob(r, "image/jpeg", 0.88); });
+    _IMG_ENVIO.file = new File([blob], "pecas-metrica.jpg", {type:"image/jpeg"});
+    var url = URL.createObjectURL(blob);
+    ov.innerHTML = "<div style='background:#fff;color:#0A0A0A;border-radius:14px;padding:14px;max-width:440px;width:100%;max-height:92vh;overflow:auto;font-family:Arial,sans-serif'>"+
+      "<img src='"+url+"' style='width:100%;border:1px solid #eee;border-radius:8px'>"+
+      "<button onclick='compartilharImagemLista()' style='width:100%;margin-top:12px;padding:14px;border:none;border-radius:8px;background:#25D366;color:#fff;font-size:16px;font-weight:700'>📲 Enviar imagem</button>"+
+      "<button onclick='enviarSoTextoLista()' style='width:100%;margin-top:8px;padding:12px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#0A0A0A;font-size:14px'>💬 Enviar só texto</button>"+
+      "<button onclick=\"document.getElementById('img-share').style.display='none'\" style='width:100%;margin-top:8px;padding:10px;border:none;background:none;color:#6B6B6B;font-size:14px'>Fechar</button></div>";
+  }catch(e){ enviarSoTextoLista(); }
+}
+async function compartilharImagemLista(){
+  var f = _IMG_ENVIO && _IMG_ENVIO.file; if(!f) return;
+  if(navigator.canShare && navigator.canShare({files:[f]})){
+    try{ await navigator.share({files:[f]}); document.getElementById("img-share").style.display="none"; }catch(e){}
+  } else {
+    var a=document.createElement("a"); a.href=URL.createObjectURL(f); a.download=f.name; document.body.appendChild(a); a.click(); a.remove();
+    alert("A imagem foi baixada. Agora é só anexar no WhatsApp da cliente.");
+  }
+}
+function enviarSoTextoLista(){
+  var d=_IMG_ENVIO||{}; var tel=String(d.tel||"").replace(/\D/g,""); if(tel && tel.length<=11) tel="55"+tel;
+  window.open("https://wa.me/"+tel+"?text="+encodeURIComponent(d.msg||""),"_blank");
+  var ov=document.getElementById("img-share"); if(ov) ov.style.display="none";
+}
 </script>
 <!-- MODAL EDITAR PEÇA -->
 <div class="mov" id="mod-editar">
