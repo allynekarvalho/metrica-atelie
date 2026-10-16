@@ -98,7 +98,7 @@ function pixCopiaCola(valor){
   return payload + pixCRC16(payload);
 }
 function pixBloco(valor){
-  return ["💳 *Pagar com Pix* ("+fval(valor)+"), é só tocar no link:", "https://allynekarvalho.github.io/metrica-atelie/pix/?v="+Number(valor).toFixed(2)];
+  return ["💳 *Pix (celular):* "+CHAVE_PIX_ATELIE];
 }
 async function supa(path) {
   var res = await fetch(SUPA_URL + "/rest/v1/" + path, {
