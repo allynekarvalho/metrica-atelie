@@ -1175,16 +1175,34 @@ function cobrarCli(id){
 }
 async function receberCli(id){
   var c = AREC[id]; if(!c) return;
-  var v = prompt("Quanto "+c.nome+" pagou? (R$)", c.deve.toFixed(2).replace(".",","));
-  if(v===null) return;
-  var val = parseFloat(String(v).replace(/\./g,"").replace(",","."))||0;
-  if(!val){ alert("Valor inválido."); return; }
-  await supa("pagamentos", {method:"POST", body:{cliente_id:id, cliente_nome:c.nome, valor:val, observacao:"", data:new Date().toISOString().split("T")[0]}});
+  var rp = await pedirPagamento("Quanto "+c.nome+" pagou?", c.deve.toFixed(2).replace(".",","));
+  if(!rp) return; var val = rp.valor;
+  await supa("pagamentos", {method:"POST", body:{cliente_id:id, cliente_nome:c.nome, valor:val, forma:rp.forma, observacao:"", data:new Date().toISOString().split("T")[0]}});
   showToast("Pagamento de "+fval(val)+" registrado!");
   renderLista();
 }
 
 window.EXTRATO_ACOES = true;
+
+var FORMAS_PAG = ["Pix","Dinheiro","Cartão débito","Cartão crédito","Transferência"];
+function pedirPagamento(titulo, valorPadrao){
+  return new Promise(function(resolve){
+    var ov = document.createElement("div");
+    ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px";
+    ov.innerHTML = "<div style='background:#fff;color:#0A0A0A;border-radius:14px;padding:18px;max-width:380px;width:100%;font-family:DM Sans,sans-serif'>"+
+      "<div style='font-size:15px;font-weight:700;margin-bottom:12px'>"+titulo+"</div>"+
+      "<div style='font-size:12px;color:#6B6B6B;margin-bottom:4px'>Valor (R$)</div>"+
+      "<input id='pp-val' type='text' inputmode='decimal' value='"+(valorPadrao||"")+"' style='width:100%;padding:12px;border:1px solid #DDD;border-radius:8px;font-size:17px;box-sizing:border-box;color:#0A0A0A;background:#fff'>"+
+      "<div style='font-size:12px;color:#6B6B6B;margin:12px 0 6px'>Forma de pagamento</div>"+
+      "<div id='pp-formas' style='display:flex;flex-wrap:wrap;gap:6px'>"+FORMAS_PAG.map(function(f,i){ return "<button type='button' data-f='"+f+"' style='padding:8px 12px;border-radius:16px;border:1px solid "+(i===0?"#0A0A0A":"#DDD")+";background:"+(i===0?"#0A0A0A":"#fff")+";color:"+(i===0?"#fff":"#0A0A0A")+";font-size:13px;cursor:pointer'>"+f+"</button>"; }).join("")+"</div>"+
+      "<div style='display:flex;gap:8px;margin-top:16px'><button id='pp-cancel' style='flex:1;padding:12px;border:1px solid #DDD;border-radius:8px;background:#fff;color:#0A0A0A;font-size:14px'>Cancelar</button><button id='pp-ok' style='flex:1;padding:12px;border:none;border-radius:8px;background:#2E5E2E;color:#fff;font-size:14px;font-weight:700'>✓ Registrar</button></div></div>";
+    document.body.appendChild(ov);
+    var forma = FORMAS_PAG[0];
+    ov.querySelectorAll("#pp-formas button").forEach(function(b){ b.onclick=function(){ forma=b.dataset.f; ov.querySelectorAll("#pp-formas button").forEach(function(x){ var on=x===b; x.style.background=on?"#0A0A0A":"#fff"; x.style.color=on?"#fff":"#0A0A0A"; x.style.borderColor=on?"#0A0A0A":"#DDD"; }); }; });
+    ov.querySelector("#pp-cancel").onclick=function(){ ov.remove(); resolve(null); };
+    ov.querySelector("#pp-ok").onclick=function(){ var val=parseFloat(String(ov.querySelector("#pp-val").value).replace(/\./g,"").replace(",","."))||0; if(!val){ alert("Valor inválido."); return; } ov.remove(); resolve({valor:val, forma:forma}); };
+  });
+}
 async function pagarPeca(pecaId){
   try{
     var r = await supa("pecas?id=eq."+pecaId); var pc = r && r[0]; if(!pc) return;
@@ -1193,10 +1211,9 @@ async function pagarPeca(pecaId){
     var al = alocarItens((pecasCli||[]).filter(function(x){ return !x.pago_por; }), c0.saldo_anterior||0, (pgs||[]).reduce(function(s,x){ return s+(x.valor||0); },0), c0.desconto||0);
     var it = al.itens.filter(function(i){ return i.p.id===pecaId; })[0];
     var falta = it ? it.falta : (pc.valor||0);
-    var v = prompt("Pagamento de "+pc.peca+(pc.observacao?" ("+pc.observacao+")":"")+"\nValor (R$):", Number(falta).toFixed(2).replace(".",","));
-    if(v===null) return;
-    var val = parseFloat(String(v).replace(/\./g,"").replace(",","."))||0; if(!val){ alert("Valor inválido."); return; }
-    var pg = await supa("pagamentos",{method:"POST",body:{cliente_id:pc.cliente_id, cliente_nome:pc.cliente_nome, valor:val, observacao:"Peça: "+pc.peca+(pc.observacao?" ("+pc.observacao+")":""), data:hojeISO(), peca_id:pecaId}});
+    var rp = await pedirPagamento("Pagamento de "+pc.peca+(pc.observacao?" ("+pc.observacao+")":""), Number(falta).toFixed(2).replace(".",","));
+    if(!rp) return; var val = rp.valor;
+    var pg = await supa("pagamentos",{method:"POST",body:{cliente_id:pc.cliente_id, cliente_nome:pc.cliente_nome, valor:val, forma:rp.forma, observacao:"Peça: "+pc.peca+(pc.observacao?" ("+pc.observacao+")":""), data:hojeISO(), peca_id:pecaId}});
     await supa("pecas?id=eq."+pecaId,{method:"PATCH",body:{pago_em:hojeISO(), pagamento_id:(pg&&pg[0]&&pg[0].id)||null}});
     showToast("✓ "+pc.peca+" paga ("+fval(val)+")");
     atualizarTelaPag();
@@ -1279,10 +1296,9 @@ function ljImprimir(id){ if(ljRelm(id)){ relmImprimir(); RELM.mes=null; } }
 function ljWpp(id){ if(ljRelm(id)){ relmWpp(); RELM.mes=null; } }
 async function ljRecebi(id, deve){
   var c=LJ.cli[id]; if(!c) return;
-  var v=prompt("Quanto "+c.nome+" pagou? (R$)", Math.max(parseFloat(deve)||0,0).toFixed(2).replace(".",","));
-  if(v===null) return;
-  var val=parseFloat(String(v).replace(/\./g,"").replace(",","."))||0; if(!val){ alert("Valor inválido."); return; }
-  await supa("pagamentos",{method:"POST",body:{cliente_id:id, cliente_nome:c.nome, valor:val, observacao:"", data:hojeISO()}});
+  var rp=await pedirPagamento("Quanto "+c.nome+" pagou?", Math.max(parseFloat(deve)||0,0).toFixed(2).replace(".",","));
+  if(!rp) return; var val=rp.valor;
+  await supa("pagamentos",{method:"POST",body:{cliente_id:id, cliente_nome:c.nome, valor:val, forma:rp.forma, observacao:"", data:hojeISO()}});
   showToast("Pagamento de "+fval(val)+" registrado!"); renderLojas();
 }
 function filtrar(f,btn){
@@ -1434,14 +1450,14 @@ async function renderFinanceiro(){
     var pgHTML = pags.length
       ? "<div style='font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#B8B8B8;margin:16px 0 8px'>💵 Pagamentos já feitos</div>"+pgOrd.map(function(m){ var pp=pgMeses[m], t=pp.reduce(function(s,p){ return s+(p.valor||0); },0);
           return "<details class='pgl' style='margin-bottom:8px'><summary style='display:flex;justify-content:space-between;align-items:center;padding:14px 16px;cursor:pointer;list-style:none;font-size:14px;font-weight:700;color:#2E5E2E'><span>✅ "+(m==="sem-data"?"Sem data":relmNomeMes(m))+" <span style='font-weight:400;color:#6B6B6B'>("+pp.length+")</span></span><span style='white-space:nowrap'>"+fval(t)+" ›</span></summary>"+
-            pp.map(function(p){ return "<div class='pgi'><div><div class='pgv'>+ "+fval(p.valor)+"</div><div class='pgd'>"+(p.data?p.data.split("-").reverse().join("/"):"")+(p.observacao?" · "+p.observacao:"")+"</div></div><button data-id='"+p.id+"' onclick='excluirPag(this)' style='font-size:11px;color:#B8B8B8;border:none;background:none;cursor:pointer'>✕</button></div>"; }).join("")+"</details>"; }).join("")
+            pp.map(function(p){ return "<div class='pgi'><div><div class='pgv'>+ "+fval(p.valor)+"</div><div class='pgd'>"+(p.data?p.data.split("-").reverse().join("/"):"")+(p.forma?" · "+p.forma:"")+(p.observacao?" · "+p.observacao:"")+"</div></div><button data-id='"+p.id+"' onclick='excluirPag(this)' style='font-size:11px;color:#B8B8B8;border:none;background:none;cursor:pointer'>✕</button></div>"; }).join("")+"</details>"; }).join("")
       : "<div class='pgl'><div style='padding:16px;font-size:13px;color:#6B6B6B'>Nenhum pagamento registrado.</div></div>";
     var hojeStr = new Date().toISOString().split("T")[0];
     document.getElementById("fp-f").innerHTML =
       resumoHTML+
       "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:8px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px'><div style='flex:1'><div style='font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6B6B6B;margin-bottom:3px'>Chave Pix</div><div style='font-size:13px;color:#0A0A0A;word-break:break-all'>"+CHAVE_PIX_ATELIE+"</div></div><button onclick='copiarPixFin()' style='background:transparent;color:#0A0A0A;border:1px solid #E8E8E8;border-radius:5px;padding:8px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;white-space:nowrap'>Copiar</button></div>"+
       pgHTML+
-      "<div class='rp'><div class='rpl'>Registrar pagamento</div><div class='rpw' style='margin-bottom:8px'><div class='vw' style='flex:1'><span class='vp'>R$</span><input type='number' id='pv-inp' class='vi' placeholder='0,00' min='0' step='0.01' style='width:100%'></div><input type='date' id='pd-inp' value='"+hojeStr+"' style='flex:1;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;font-family:DM Sans,sans-serif;color:#0A0A0A'></div><div class='rpw'><input id='po-inp' placeholder='Obs.' style='flex:1;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;font-family:DM Sans,sans-serif'><button onclick='regPag()' style='padding:0 14px;background:#0A0A0A;color:#fff;border:none;border-radius:6px;font-size:18px;cursor:pointer'>✓</button></div></div>"; RELM={pecas:pecas, pags:pags, nome:CLI_ATIVA, tel:(cli[0]&&cli[0].telefone)||"", ant:(cli[0]&&cli[0].saldo_anterior)||0, desc:(cli[0]&&cli[0].desconto)||0}; document.getElementById("fp-f").insertAdjacentHTML("beforeend", relmBoxHTML()); relmRender(); } catch(e){
+      "<div class='rp'><div class='rpl'>Registrar pagamento</div><div class='rpw' style='margin-bottom:8px'><div class='vw' style='flex:1'><span class='vp'>R$</span><input type='number' id='pv-inp' class='vi' placeholder='0,00' min='0' step='0.01' style='width:100%'></div><input type='date' id='pd-inp' value='"+hojeStr+"' style='flex:1;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;font-family:DM Sans,sans-serif;color:#0A0A0A'></div><div class='rpw' style='margin-bottom:8px'><select id='pf-inp' style='flex:1;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;font-family:DM Sans,sans-serif;color:#0A0A0A;background:#fff'>"+FORMAS_PAG.map(function(f){ return "<option>"+f+"</option>"; }).join("")+"</select></div><div class='rpw'><input id='po-inp' placeholder='Obs.' style='flex:1;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-size:13px;font-family:DM Sans,sans-serif'><button onclick='regPag()' style='padding:0 14px;background:#0A0A0A;color:#fff;border:none;border-radius:6px;font-size:18px;cursor:pointer'>✓</button></div></div>"; RELM={pecas:pecas, pags:pags, nome:CLI_ATIVA, tel:(cli[0]&&cli[0].telefone)||"", ant:(cli[0]&&cli[0].saldo_anterior)||0, desc:(cli[0]&&cli[0].desconto)||0}; document.getElementById("fp-f").insertAdjacentHTML("beforeend", relmBoxHTML()); relmRender(); } catch(e){
     document.getElementById("fp-f").innerHTML = "<div class='vz'>Erro: "+e.message+"</div>";
   }
 }
@@ -1528,7 +1544,8 @@ async function regPag(){
   var hoje = new Date().toISOString().split("T")[0];
   var dataInp = document.getElementById("pd-inp");
   var data = (dataInp && dataInp.value) ? dataInp.value : hoje;
-  await supa("pagamentos", {method:"POST", body:{cliente_id:CLI_ATIVA_ID, cliente_nome:CLI_ATIVA, valor:val, observacao:obs, data:data}});
+  var formaEl = document.getElementById("pf-inp");
+  await supa("pagamentos", {method:"POST", body:{cliente_id:CLI_ATIVA_ID, cliente_nome:CLI_ATIVA, valor:val, forma:(formaEl&&formaEl.value)||null, observacao:obs, data:data}});
   showToast("Pagamento registrado!");
   renderFinanceiro();
 }
