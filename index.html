@@ -1026,7 +1026,10 @@ async function selEnviar(){
     var msg = linhas.join("\n");
     var tel = ((r[1] && r[1][0] && r[1][0].telefone) || "").replace(/\D/g,"");
     if(tel && tel.length <= 11) tel = "55"+tel;
-    abrirEnvioImagem(pp, total, msg, tel);
+    document.getElementById("mw-cli").textContent = CLI_ATIVA;
+    document.getElementById("mw-txt").textContent = msg;
+    document.getElementById("wpp-open").href = "https://wa.me/"+tel+"?text="+encodeURIComponent(msg);
+    document.getElementById("mod-wpp").classList.add("open");
   } catch(e){ showToast("Erro ao montar mensagem."); }
 }
 function calcComSt(){
