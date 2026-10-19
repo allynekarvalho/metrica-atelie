@@ -1017,7 +1017,7 @@ async function selEnviar(){
     var token = cli[0] && cli[0].token_portal;
     if(!token){ showToast("Token não encontrado."); return; }
     var link = "https://allynekarvalho.github.io/metrica-atelie/portal/"+token;
-    var msg = "😉 *Métrica Ateliê | ALLYNE CARVALHO*\nOlá, "+CLI_ATIVA+"!\n\nAqui está o link para ver suas peças com fotos e valores:\n"+link;
+    var msg = link;
     var tel = ((cli[0] && cli[0].telefone) || "").replace(/\D/g,"");
     if(tel && tel.length <= 11) tel = "55"+tel;
     document.getElementById("mw-cli").textContent = CLI_ATIVA;
@@ -1680,7 +1680,7 @@ async function copiarLinkPortal(){
     var token = cli[0]&&cli[0].token_portal;
     if(!token){ showToast("Token não encontrado."); return; }
     var link = "https://allynekarvalho.github.io/metrica-atelie/portal/"+token;
-    var msg = "😉 *Métrica Ateliê | ALLYNE CARVALHO*\nOlá, "+CLI_ATIVA+"!\n\nAqui está o link para acompanhar suas peças:\n"+link;
+    var msg = link;
     document.getElementById("mw-cli").textContent = CLI_ATIVA;
     document.getElementById("mw-txt").textContent = msg;
     document.getElementById("wpp-open").href = "https://wa.me/?text="+encodeURIComponent(msg);
