@@ -1016,7 +1016,7 @@ async function selEnviar(){
     var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID+"&select=telefone,token_portal");
     var token = cli[0] && cli[0].token_portal;
     if(!token){ showToast("Token não encontrado."); return; }
-    var link = "https://allynekarvalho.github.io/metrica-atelie/portal/"+token;
+    var link = "https://allynekarvalho.github.io/metrica-atelie/portal/?token="+token;
     var msg = link;
     var tel = ((cli[0] && cli[0].telefone) || "").replace(/\D/g,"");
     if(tel && tel.length <= 11) tel = "55"+tel;
@@ -1679,7 +1679,7 @@ async function copiarLinkPortal(){
     var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID);
     var token = cli[0]&&cli[0].token_portal;
     if(!token){ showToast("Token não encontrado."); return; }
-    var link = "https://allynekarvalho.github.io/metrica-atelie/portal/"+token;
+    var link = "https://allynekarvalho.github.io/metrica-atelie/portal/?token="+token;
     var msg = link;
     document.getElementById("mw-cli").textContent = CLI_ATIVA;
     document.getElementById("mw-txt").textContent = msg;
