@@ -1013,18 +1013,12 @@ function imprimirSel(){ var ids = selIds(); if(!ids.length) return; window.IMPR_
 async function selEnviar(){
   var ids = selIds(); if(!ids.length) return;
   try {
-    var r = await Promise.all([ supa("pecas?id=in.("+ids.join(",")+")&select=peca,servico,valor,status,retrabalho_data,data_retorno,sem_custo,foto_url"), supa("clientes?id=eq."+CLI_ATIVA_ID+"&select=telefone") ]);
-    var pp = r[0] || [];
-    var todasProntas = pp.every(function(p){ return p.status === "pronto"; });
-    var linhas = ["Olá, "+CLI_ATIVA+"! 😊", ""];
-    linhas.push(todasProntas ? (pp.length>1 ? "Suas peças estão prontas e passaram pela conferência final:" : "Sua peça está pronta e passou pela conferência final:") : "Segue a situação das suas peças:");
-    linhas.push("");
-    var total = 0;
-    pp.forEach(function(p){ total += valCli(p); linhas.push("👗 "+p.peca+(p.servico ? " — "+p.servico : "")+(emRetrabalho(p) ? " (retrabalho · sem custo)" : (p.sem_custo ? " (sem custo)" : ""))+(todasProntas ? "" : " ("+slbl(p.status)+")")); });
-    if(total > 0){ linhas.push("", "💰 Total: "+fval(total), ""); pixBloco(total).forEach(function(x){ linhas.push(x); }); }
-    linhas.push("", todasProntas ? "Quando preferir vir retirar 🌸" : "Qualquer dúvida é só chamar 🌸", "", "— Métrica Ateliê");
-    var msg = linhas.join("\n");
-    var tel = ((r[1] && r[1][0] && r[1][0].telefone) || "").replace(/\D/g,"");
+    var cli = await supa("clientes?id=eq."+CLI_ATIVA_ID+"&select=telefone,token_portal");
+    var token = cli[0] && cli[0].token_portal;
+    if(!token){ showToast("Token não encontrado."); return; }
+    var link = "https://allynekarvalho.github.io/metrica-atelie/portal/"+token;
+    var msg = "😉 *Métrica Ateliê | ALLYNE CARVALHO*\nOlá, "+CLI_ATIVA+"!\n\nAqui está o link para ver suas peças com fotos e valores:\n"+link;
+    var tel = ((cli[0] && cli[0].telefone) || "").replace(/\D/g,"");
     if(tel && tel.length <= 11) tel = "55"+tel;
     document.getElementById("mw-cli").textContent = CLI_ATIVA;
     document.getElementById("mw-txt").textContent = msg;
