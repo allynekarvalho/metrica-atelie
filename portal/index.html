@@ -451,7 +451,9 @@ RELM={pecas:TODAS_PECAS, pags:PAGAMENTOS, nome:CLI.nome, tel:"", ant:CLI.saldo_a
 selAtualizar();
 }
 async function init() {
-  var token = new URLSearchParams(window.location.search).get('token');
+  var _qs = new URLSearchParams(window.location.search);
+  var token = _qs.get('token');
+  if(!token && _qs.get('c')){ try { var _b=atob(_qs.get('c').replace(/-/g,"+").replace(/_/g,"/")), _h=""; for(var _i=0;_i<_b.length;_i++) _h+=("0"+_b.charCodeAt(_i).toString(16)).slice(-2); token=_h.substr(0,8)+"-"+_h.substr(8,4)+"-"+_h.substr(12,4)+"-"+_h.substr(16,4)+"-"+_h.substr(20); } catch(e){} }
   if(!token) {
     document.getElementById("body").innerHTML = "<div class='erro'>Link inválido.</div>";
     return;
