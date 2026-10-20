@@ -85,6 +85,7 @@ body{padding-bottom:70px}
     <button class="tab" data-tab="prontos" onclick="mudarAba('prontos')">Prontos<span class="tcount" id="ct-prontos"></span></button>
     <button class="tab" data-tab="entregues" onclick="mudarAba('entregues')">Entregues<span class="tcount" id="ct-entregues"></span></button>
     <button class="tab" data-tab="saldo" onclick="mudarAba('saldo')">Saldo<span class="tcount" id="ct-saldo"></span></button>
+    <button class="tab" data-tab="medidas" onclick="mudarAba('medidas')">Medidas<span class="tcount">📏</span></button>
   </div>
 </div>
 <div class="body" id="body">
@@ -195,6 +196,15 @@ function copiarPix() {
 }
 var ABA_ATUAL = null;
 var TODAS_PECAS = [];
+function medidasHTML(){
+  var c = CLI || {};
+  var L = [["Ombro 1","med_ombro1"],["Ombro 2","med_ombro2"],["Busto","med_busto"],["Cintura","med_cintura"],["Cint. Baixa","med_cint_baixa"],["Quadril","med_quadril"],["Comp. Corpo","med_comp_corpo"],["Corpo Costas","med_corpo_costas"],["Comp. Blusa","med_comp_blusa"],["Comp. Calça","med_comp_calca"],["Comp. Vestido 1","med_comp_vestido1"],["Comp. Vestido 2","med_comp_vestido2"],["Comp. Manga","med_comp_manga"]];
+  var linhas = L.filter(function(x){ return c[x[1]] != null && c[x[1]] !== ""; }).map(function(x){
+    return "<div style='display:flex;justify-content:space-between;padding:13px 4px;border-bottom:1px solid #2E2E2E;font-size:15px'><span style='color:#B8B8B8'>"+x[0]+"</span><b>"+String(c[x[1]]).replace(".",",")+" cm</b></div>";
+  }).join("");
+  if(!linhas) return "<div style='text-align:center;color:#6B6B6B;padding:40px 20px;font-size:14px'>📏 Suas medidas ainda não foram registradas.</div>";
+  return "<div style='padding:16px 20px'><div style='background:#161616;border:1px solid #2E2E2E;border-radius:12px;padding:6px 16px'>"+linhas+"</div></div>";
+}
 function mudarAba(nome) {
   ABA_ATUAL = nome;
   document.querySelectorAll(".tab").forEach(function(t){ t.classList.toggle("active", t.dataset.tab===nome); });
@@ -442,7 +452,8 @@ var saldoHTML = "<div class='saldo-box'>"+
   var html = "<div class='painel' id='painel-pecas'>"+renderComTotal(emAndamento,"Total em andamento","Nenhuma peça em andamento no momento.","pecas")+"</div>"+
     "<div class='painel' id='painel-prontos'>"+renderComTotal(prontos,"Total pronto para retirar","Nenhuma peça pronta para retirar no momento.","prontos")+"</div>"+
     "<div class='painel' id='painel-entregues'>"+renderEntregues(entregues, FALTA)+"</div>"+
-    "<div class='painel' id='painel-saldo'>"+saldoHTML+"</div>";
+    "<div class='painel' id='painel-saldo'>"+saldoHTML+"</div>"+
+    "<div class='painel' id='painel-medidas'>"+medidasHTML()+"</div>";
   document.getElementById("body").innerHTML = html;
   document.getElementById("tabs").style.display = "flex";
   var primeira = ABA_ATUAL || (emAndamento.length?"pecas":prontos.length?"prontos":entregues.length?"entregues":"saldo");
