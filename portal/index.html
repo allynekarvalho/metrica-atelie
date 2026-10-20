@@ -468,6 +468,8 @@ async function init() {
     document.getElementById("cli-nome").textContent = CLI.nome;
     document.getElementById("cli-sub").textContent = "Acompanhamento das suas peças";
     TODAS_PECAS = await supa("pecas?cliente_id=eq."+CLI.id+"&order=data_entrada.desc,criado_em.desc");
+    // valor alterado há menos de 15 min: cliente ainda vê o valor anterior
+    (TODAS_PECAS||[]).forEach(function(p){ if(p.valor_alterado_em && p.valor_publico != null && (Date.now() - new Date(p.valor_alterado_em).getTime()) < 15*60*1000) p.valor = p.valor_publico; });
     PAGAMENTOS = await supa("pagamentos?cliente_id=eq."+CLI.id);
     if(!TODAS_PECAS.length) {
       document.getElementById("body").innerHTML = "<div class='empty'><span class='empty-ico'>🧵</span>Nenhuma peça no momento.</div>";
