@@ -1412,6 +1412,18 @@ function mkPecaHTML(p, comAcoes){
 function verFoto(url){
   window.open(url, "_blank");
 }
+// Conta atual: só o que ainda está em aberto (o que já foi quitado fica no histórico)
+function contaAtualHTML(ALP, faltaAnt){
+  var abertos = ALP.itens.filter(function(i){ return i.falta > 0.009; });
+  var h = "<div style='margin-top:12px;border-top:1px solid #F0F0F0;padding-top:8px'><div style='font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#9A9A9A;margin-bottom:4px'>Peças desta conta</div>";
+  if(faltaAnt > 0.009) h += "<div style='display:flex;justify-content:space-between;gap:10px;padding:7px 0;font-size:13px;color:#0A0A0A'><span>📌 Saldo anterior <span style='font-size:11px;color:#6B6B6B'>(enviado por PDF)</span></span><b style='white-space:nowrap'>"+fval(faltaAnt)+"</b></div>";
+  abertos.forEach(function(i){
+    var p = i.p, d = p.data_entrada ? p.data_entrada.slice(8,10)+"/"+p.data_entrada.slice(5,7) : "";
+    var ico = p.status === "entregue" ? "🎁" : (p.status === "pronto" ? "✅" : "🧵");
+    h += "<div style='display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-top:1px solid #F7F7F7;font-size:13px;color:#0A0A0A'><span>"+ico+" <span style='text-transform:uppercase'>"+p.peca+"</span>"+(d?" <span style='font-size:11px;color:#9A9A9A'>"+d+"</span>":"")+"</span><b style='white-space:nowrap'>"+fval(i.falta)+(i.pago>0.009?"<div style='font-size:10px;font-weight:400;color:#9A9A9A;text-align:right'>de "+fval(i.v)+"</div>":"")+"</b></div>";
+  });
+  return h + "<div style='font-size:11px;color:#9A9A9A;margin-top:6px'>🎁 entregue · ✅ pronta · 🧵 no ateliê</div></div>";
+}
 async function renderFinanceiro(){
   document.getElementById("fp-f").innerHTML = "<div class='loading'>Carregando...</div>";
   try {
@@ -1436,11 +1448,11 @@ async function renderFinanceiro(){
     ALP.itens.forEach(function(i){ if(i.p.status==="entregue") faltaEnt+=i.falta; else faltaAt+=i.falta; });
     var faltaAnt = Math.max(0, +(saldoAnt-ALP.antPago).toFixed(2));
     var linhaS = function(ico, lbl, v){ return "<div style='display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid #F0F0F0;font-size:14px;color:#0A0A0A'><span>"+ico+" "+lbl+"</span><b style='white-space:nowrap'>"+fval(v)+"</b></div>"; };
-    var separaHTML = saldo>0.009 ? "<div style='margin-top:12px'>"+(faltaAnt>0.009?linhaS("📌","Saldo anterior <span style='font-size:12px;color:#6B6B6B'>(enviado por PDF)</span>",faltaAnt):"")+(faltaEnt>0.009?linhaS("🎁","Peças já entregues",faltaEnt):"")+(faltaAt>0.009?linhaS("🧵","Peças ainda no ateliê",faltaAt):"")+"</div>" : "";
+    var separaHTML = saldo>0.009 ? contaAtualHTML(ALP, faltaAnt) : "<div style='margin-top:10px;font-size:13px;color:#2E5E2E'>Conta zerada. Novas peças começam uma conta nova. 🌸</div>";
     var resumoHTML = "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:18px 16px;margin-bottom:12px'>"+
       "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>"+(saldo>0.009?"Total a pagar":"Situação")+"</div><div style='font-size:26px;font-weight:700;color:"+cor+"'>"+(saldo>0.009?fval(saldo):"Tudo pago ✓")+"</div></div>"+
       separaHTML+
-      "<details style='margin-top:10px'><summary style='font-size:12px;color:#6B6B6B;cursor:pointer;list-style:none'>Ver como chegamos nesse valor ›</summary><div style='margin-top:8px'>"+
+      "<details style='margin-top:12px'><summary style='font-size:12px;color:#9A9A9A;cursor:pointer;list-style:none'>📜 Histórico completo (contas anteriores) ›</summary><div style='margin-top:8px'>"+
       linha("Saldo anterior (enviado por PDF)", fval(saldoAntD))+
       linha("Peças", fval(pecasD))+(lojaCount>0?("<div style='font-size:11px;color:#6B4FA0;padding:2px 0 4px'>🏬 "+lojaCount+" peça"+(lojaCount>1?"s":"")+" com loja ("+fval(lojaSum)+") não "+(lojaCount>1?"entram":"entra")+" neste saldo</div>"):"")+
       "<div style='border-top:1px solid #F0F0F0;margin:8px 0'></div>"+

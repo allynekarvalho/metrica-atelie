@@ -406,6 +406,18 @@ setTimeout(function(){ URL.revokeObjectURL(url); }, 10000);
 }
 var CLI = null;
 var PAGAMENTOS = [];
+// Conta atual: só o que ainda está em aberto (o que já foi quitado fica no histórico)
+function contaAtualHTML(ALP, faltaAnt){
+  var abertos = ALP.itens.filter(function(i){ return i.falta > 0.009; });
+  var h = "<div style='margin-top:12px;border-top:1px solid #F0F0F0;padding-top:8px'><div style='font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#9A9A9A;margin-bottom:4px'>Peças desta conta</div>";
+  if(faltaAnt > 0.009) h += "<div style='display:flex;justify-content:space-between;gap:10px;padding:7px 0;font-size:13px;color:#0A0A0A'><span>📌 Saldo anterior <span style='font-size:11px;color:#6B6B6B'>(enviado por PDF)</span></span><b style='white-space:nowrap'>"+fval(faltaAnt)+"</b></div>";
+  abertos.forEach(function(i){
+    var p = i.p, d = p.data_entrada ? p.data_entrada.slice(8,10)+"/"+p.data_entrada.slice(5,7) : "";
+    var ico = p.status === "entregue" ? "🎁" : (p.status === "pronto" ? "✅" : "🧵");
+    h += "<div style='display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-top:1px solid #F7F7F7;font-size:13px;color:#0A0A0A'><span>"+ico+" <span style='text-transform:uppercase'>"+p.peca+"</span>"+(d?" <span style='font-size:11px;color:#9A9A9A'>"+d+"</span>":"")+"</span><b style='white-space:nowrap'>"+fval(i.falta)+(i.pago>0.009?"<div style='font-size:10px;font-weight:400;color:#9A9A9A;text-align:right'>de "+fval(i.v)+"</div>":"")+"</b></div>";
+  });
+  return h + "<div style='font-size:11px;color:#9A9A9A;margin-top:6px'>🎁 entregue · ✅ pronta · 🧵 no ateliê</div></div>";
+}
 function renderTudo() {
   var pecas = TODAS_PECAS;
   var emAndamento = pecas.filter(function(p){ return p.status !== "entregue" && p.status !== "pronto"; });
@@ -423,13 +435,13 @@ function renderTudo() {
   window.FALTA_P = FALTA;
   var faltaAnt = Math.max(0, +(saldoAnt-ALP.antPago).toFixed(2));
   var linhaS = function(ico, lbl, v){ return "<div style='display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid #F0F0F0;font-size:14px;color:#0A0A0A'><span>"+ico+" "+lbl+"</span><b style='white-space:nowrap'>"+fval(v)+"</b></div>"; };
-  var separaHTML = saldo>0.009 ? "<div style='margin-top:12px'>"+(faltaAnt>0.009?linhaS("📌","Saldo anterior <span style='font-size:12px;color:#6B6B6B'>(enviado por PDF)</span>",faltaAnt):"")+(faltaEnt>0.009?linhaS("🎁","Peças já entregues",faltaEnt):"")+(faltaAt>0.009?linhaS("🧵","Peças ainda no ateliê",faltaAt):"")+"</div>" : "";
+  var separaHTML = saldo>0.009 ? contaAtualHTML(ALP, faltaAnt) : "";
   var subtotalP = saldoAnt+pecasSum;
   var linhaP = function(lbl, val, opts){ opts=opts||{}; return "<div style='display:flex;justify-content:space-between;align-items:center;padding:"+(opts.pad||"7px")+" 0'><div style='font-size:"+(opts.fs||"13px")+";color:"+(opts.lc||"#6B6B6B")+";font-weight:"+(opts.lw||"400")+"'>"+lbl+"</div><div style='font-size:"+(opts.fs||"13px")+";font-weight:"+(opts.vw||"600")+";color:"+(opts.vc||"#0A0A0A")+"'>"+val+"</div></div>"; };
   var resumoHTML = "<div style='background:#fff;border-radius:10px;padding:18px 16px;margin-bottom:12px'>"+
     "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>"+(saldo>0.009?"Total a pagar":"Situação")+"</div><div style='font-size:24px;font-weight:700;color:"+corP+"'>"+(saldo>0.009?"R$ "+fmtBR(saldo):"Tudo pago ✓")+"</div></div>"+
     separaHTML+
-    ((totPg>0.009||desconto>0.009) ? "<details style='margin-top:10px'><summary style='font-size:12px;color:#6B6B6B;cursor:pointer;list-style:none'>Ver como chegamos nesse valor ›</summary><div style='margin-top:8px'>"+
+    ((totPg>0.009||desconto>0.009) ? "<details style='margin-top:10px'><summary style='font-size:12px;color:#9A9A9A;cursor:pointer;list-style:none'>📜 Histórico completo ›</summary><div style='margin-top:8px'>"+
     linhaP("Total das peças", fval(subtotalP)||"R$ 0,00", {lc:"#0A0A0A",lw:"600"})+
     linhaP("Total pago", "− "+(fval(totPg)||"R$ 0,00"), {vc:"#2E5E2E"})+
     (desconto>0?linhaP("Desconto", "− "+fval(desconto), {vc:"#2E5E2E"}):"")+
