@@ -406,17 +406,21 @@ setTimeout(function(){ URL.revokeObjectURL(url); }, 10000);
 }
 var CLI = null;
 var PAGAMENTOS = [];
-// Conta atual: só o que ainda está em aberto (o que já foi quitado fica no histórico)
+// Conta atual: resumo simples do que está em aberto (o que já foi quitado fica no histórico)
 function contaAtualHTML(ALP, faltaAnt){
-  var abertos = ALP.itens.filter(function(i){ return i.falta > 0.009; });
-  var h = "<div style='margin-top:12px;border-top:1px solid #F0F0F0;padding-top:8px'><div style='font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#9A9A9A;margin-bottom:4px'>Peças desta conta</div>";
-  if(faltaAnt > 0.009) h += "<div style='display:flex;justify-content:space-between;gap:10px;padding:7px 0;font-size:13px;color:#0A0A0A'><span>📌 Saldo anterior <span style='font-size:11px;color:#6B6B6B'>(enviado por PDF)</span></span><b style='white-space:nowrap'>"+fval(faltaAnt)+"</b></div>";
-  abertos.forEach(function(i){
-    var p = i.p, d = p.data_entrada ? p.data_entrada.slice(8,10)+"/"+p.data_entrada.slice(5,7) : "";
-    var ico = p.status === "entregue" ? "🎁" : (p.status === "pronto" ? "✅" : "🧵");
-    h += "<div style='display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-top:1px solid #F7F7F7;font-size:13px;color:#0A0A0A'><span>"+ico+" <span style='text-transform:uppercase'>"+p.peca+"</span>"+(d?" <span style='font-size:11px;color:#9A9A9A'>"+d+"</span>":"")+"</span><b style='white-space:nowrap'>"+fval(i.falta)+(i.pago>0.009?"<div style='font-size:10px;font-weight:400;color:#9A9A9A;text-align:right'>de "+fval(i.v)+"</div>":"")+"</b></div>";
-  });
-  return h + "<div style='font-size:11px;color:#9A9A9A;margin-top:6px'>🎁 entregue · ✅ pronta · 🧵 no ateliê</div></div>";
+  var g = {andamento:0, pronto:0, entregue:0}, abertos = ALP.itens.filter(function(i){ return i.falta > 0.009; });
+  abertos.forEach(function(i){ var st = i.p.status; g[st==="entregue"?"entregue":(st==="pronto"?"pronto":"andamento")] += i.falta; });
+  var total = (faltaAnt||0) + g.andamento + g.pronto + g.entregue;
+  var ln = function(ico, lbl, v){ return v > 0.009 ? "<div style='display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid #F0F0F0;font-size:15px;color:#0A0A0A'><span>"+ico+" "+lbl+"</span><b style='white-space:nowrap'>"+fval(v)+"</b></div>" : ""; };
+  var lista = abertos.map(function(i){ var p=i.p; return "<div style='display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:12px;color:#555'><span style='text-transform:uppercase'>"+p.peca+"</span><span style='white-space:nowrap'>"+fval(i.falta)+"</span></div>"; }).join("");
+  return "<div style='margin-top:12px'>"+
+    ln("📌","Saldo anterior", faltaAnt||0)+
+    ln("🧵","Peças em andamento", g.andamento)+
+    ln("✅","Peças prontas", g.pronto)+
+    ln("🎁","Peças entregues", g.entregue)+
+    "<div style='display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px;border-top:2px solid #0A0A0A;font-size:16px;font-weight:700;color:#0A0A0A'><span>Total</span><span>"+fval(total)+"</span></div>"+
+    (abertos.length ? "<details style='margin-top:6px'><summary style='font-size:12px;color:#9A9A9A;cursor:pointer;list-style:none'>Ver peças ›</summary><div style='margin-top:4px'>"+lista+"</div></details>" : "")+
+    "</div>";
 }
 function renderTudo() {
   var pecas = TODAS_PECAS;
