@@ -1480,7 +1480,7 @@ async function renderFinanceiro(){
       "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>"+(saldo>0.009?"Total a pagar":"Situação")+"</div><div style='font-size:26px;font-weight:700;color:"+cor+"'>"+(saldo>0.009?fval(saldo):"Tudo pago ✓")+"</div></div>"+
       separaHTML+
       "<details style='margin-top:12px'><summary style='font-size:12px;color:#9A9A9A;cursor:pointer;list-style:none'>📜 Histórico completo (contas anteriores) ›</summary><div style='margin-top:8px'>"+
-      linha("Saldo anterior (enviado por PDF)", fval(saldoAntD))+
+      (saldoAntD?linha("Saldo anterior (enviado por PDF)", fval(saldoAntD)):"")+
       linha("Peças", fval(pecasD))+(lojaCount>0?("<div style='font-size:11px;color:#6B4FA0;padding:2px 0 4px'>🏬 "+lojaCount+" peça"+(lojaCount>1?"s":"")+" com loja ("+fval(lojaSum)+") não "+(lojaCount>1?"entram":"entra")+" neste saldo</div>"):"")+
       "<div style='border-top:1px solid #F0F0F0;margin:8px 0'></div>"+
       linha("Subtotal", fval(subtotalD), {lc:"#0A0A0A",lw:"600"})+
@@ -2145,7 +2145,7 @@ async function enviarSaldo(){
     var saldo = totP-totPg-desconto;
     var subtotalWpp = +(saldoAnt+pecasSumWpp).toFixed(2);
     var chave = CHAVE_PIX_ATELIE;
-    var breakdown = "📌 Saldo anterior: *"+fval(saldoAnt)+"*\n🧵 Saldo: *"+fval(pecasSumWpp)+"*\n➖➖➖➖➖➖\nSubtotal: *"+fval(subtotalWpp)+"*\n💵 Total pago: *− "+fval(totPg)+"*"+(desconto>0?"\n🏷️ Desconto: *− "+fval(desconto)+"*":"")+"\n➖➖➖➖➖➖\n💰 *TOTAL A PAGAR: "+fval(saldo)+"*";
+    var breakdown = (saldoAnt?"📌 Saldo anterior: *"+fval(saldoAnt)+"*\n":"")+"🧵 Saldo: *"+fval(pecasSumWpp)+"*\n➖➖➖➖➖➖\nSubtotal: *"+fval(subtotalWpp)+"*\n💵 Total pago: *− "+fval(totPg)+"*"+(desconto>0?"\n🏷️ Desconto: *− "+fval(desconto)+"*":"")+"\n➖➖➖➖➖➖\n💰 *TOTAL A PAGAR: "+fval(saldo)+"*";
     var msg = "😉 *Métrica Ateliê | ALLYNE CARVALHO*\nOlá, "+CLI_ATIVA+"!\n\n"+breakdown+
       (saldo>0.009 ? "\n\n"+pixBloco(saldo).join("\n") : "\n\n📋 Chave Pix:\n"+chave)+
       "\n\nApós o pagamento, por favor envie o comprovante aqui no WhatsApp. 🙏";
