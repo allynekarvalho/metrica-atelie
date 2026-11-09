@@ -407,6 +407,29 @@ setTimeout(function(){ URL.revokeObjectURL(url); }, 10000);
 var CLI = null;
 var PAGAMENTOS = [];
 // Conta atual: resumo simples do que está em aberto (o que já foi quitado fica no histórico)
+function contaSimplesHTML(pecas, pags, saldoAnt, desconto){
+  // conta simples: começa no último pagamento que deixou a conta zerada (ou com crédito)
+  var ev = [];
+  pecas.forEach(function(p){ ev.push({d:(p.data_entrada||String(p.criado_em||"").slice(0,10)), t:0, v:Number(p.valor)||0, p:p}); });
+  pags.forEach(function(g){ ev.push({d:(g.data||String(g.criado_em||"").slice(0,10)), t:1, v:Number(g.valor)||0}); });
+  ev.sort(function(a,b){ return a.d<b.d?-1:a.d>b.d?1:a.t-b.t; });
+  var bal = (saldoAnt||0)-(desconto||0), cut = -1, cutBal = 0;
+  ev.forEach(function(e,ix){ bal += e.t ? -e.v : e.v; if(e.t && bal <= 0.009){ cut = ix; cutBal = bal; } });
+  var g = {andamento:0, pronto:0, entregue:0}, pago = 0, itens = [];
+  ev.forEach(function(e,ix){ if(ix<=cut) return; if(e.t){ pago += e.v; return; } var st=e.p.status; g[st==="entregue"?"entregue":(st==="pronto"?"pronto":"andamento")] += e.v; itens.push(e.p); });
+  var ini = cut>=0 ? cutBal : ((saldoAnt||0)-(desconto||0)), total = ini + g.andamento + g.pronto + g.entregue - pago;
+  var ln = function(ico, lbl, v, neg){ return Math.abs(v) > 0.009 ? "<div style='display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid #F0F0F0;font-size:15px;color:"+(neg?"#2E5E2E":"#0A0A0A")+"'><span>"+ico+" "+lbl+"</span><b style='white-space:nowrap'>"+(neg?"− ":"")+fval(Math.abs(v))+"</b></div>" : ""; };
+  var lista = itens.map(function(p){ return "<div style='display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:12px;color:#555'><span style='text-transform:uppercase'>"+p.peca+"</span><span style='white-space:nowrap'>"+fval(p.valor||0)+"</span></div>"; }).join("");
+  return "<div style='margin-top:12px'>"+
+    (cut>=0 ? ln("💚","Crédito (pagou a mais)", ini, true) : ln("📌","Saldo anterior", saldoAnt||0) + ln("🏷️","Desconto", desconto||0, true))+
+    ln("🧵","Peças em andamento", g.andamento)+
+    ln("✅","Peças prontas", g.pronto)+
+    ln("🎁","Peças entregues", g.entregue)+
+    ln("💵","Já pagou", pago, true)+
+    "<div style='display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px;border-top:2px solid #0A0A0A;font-size:16px;font-weight:700;color:#0A0A0A'><span>Falta pagar</span><span>"+fval(Math.max(0,total))+"</span></div>"+
+    (itens.length ? "<details style='margin-top:6px'><summary style='font-size:12px;color:#9A9A9A;cursor:pointer;list-style:none'>Ver peças ›</summary><div style='margin-top:4px'>"+lista+"</div></details>" : "")+
+    "</div>";
+}
 function contaAtualHTML(ALP, faltaAnt){
   var g = {andamento:0, pronto:0, entregue:0}, abertos = ALP.itens.filter(function(i){ return i.falta > 0.009; });
   abertos.forEach(function(i){ var st = i.p.status; g[st==="entregue"?"entregue":(st==="pronto"?"pronto":"andamento")] += i.falta; });
@@ -439,7 +462,7 @@ function renderTudo() {
   window.FALTA_P = FALTA;
   var faltaAnt = Math.max(0, +(saldoAnt-ALP.antPago).toFixed(2));
   var linhaS = function(ico, lbl, v){ return "<div style='display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid #F0F0F0;font-size:14px;color:#0A0A0A'><span>"+ico+" "+lbl+"</span><b style='white-space:nowrap'>"+fval(v)+"</b></div>"; };
-  var separaHTML = saldo>0.009 ? contaAtualHTML(ALP, faltaAnt) : "";
+  var separaHTML = saldo>0.009 ? contaSimplesHTML(pecas, PAGAMENTOS, saldoAnt, desconto) : "";
   var subtotalP = saldoAnt+pecasSum;
   var linhaP = function(lbl, val, opts){ opts=opts||{}; return "<div style='display:flex;justify-content:space-between;align-items:center;padding:"+(opts.pad||"7px")+" 0'><div style='font-size:"+(opts.fs||"13px")+";color:"+(opts.lc||"#6B6B6B")+";font-weight:"+(opts.lw||"400")+"'>"+lbl+"</div><div style='font-size:"+(opts.fs||"13px")+";font-weight:"+(opts.vw||"600")+";color:"+(opts.vc||"#0A0A0A")+"'>"+val+"</div></div>"; };
   var resumoHTML = "<div style='background:#fff;border-radius:10px;padding:18px 16px;margin-bottom:12px'>"+
