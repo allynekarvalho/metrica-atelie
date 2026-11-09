@@ -1488,7 +1488,7 @@ async function renderFinanceiro(){
       (desconto>0?linha("Desconto", "− "+fval(desconto), {vc:"#2E5E2E"}):"")+
       "</div></details>"+
       "</div>"+
-      "<div style='text-align:right;margin:-6px 0 12px;display:flex;justify-content:flex-end;gap:14px'><button onclick='editarSaldoAnt()' style='font-size:11px;color:#6B6B6B;border:none;background:none;cursor:pointer;text-decoration:underline;font-family:DM Sans,sans-serif'>"+(saldoAnt>0?"Editar saldo anterior":"+ Adicionar saldo anterior")+"</button><button onclick='editarDesconto("+subtotalD+")' style='font-size:11px;color:#6B6B6B;border:none;background:none;cursor:pointer;text-decoration:underline;font-family:DM Sans,sans-serif'>"+(desconto>0?"Editar desconto":"+ Adicionar desconto")+"</button></div>";
+      "<div style='text-align:right;margin:-6px 0 12px;display:flex;justify-content:flex-end;gap:14px'><button onclick='editarDesconto("+subtotalD+")' style='font-size:11px;color:#6B6B6B;border:none;background:none;cursor:pointer;text-decoration:underline;font-family:DM Sans,sans-serif'>"+(desconto>0?"Editar desconto":"+ Adicionar desconto")+"</button></div>";
     var pgMeses = {}; pags.forEach(function(p){ var m=(p.data||"").slice(0,7)||"sem-data"; (pgMeses[m]=pgMeses[m]||[]).push(p); });
     var pgOrd = Object.keys(pgMeses).sort().reverse();
     var pgHTML = pags.length
