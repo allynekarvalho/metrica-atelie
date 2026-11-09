@@ -1420,14 +1420,14 @@ function contaSimplesHTML(pecas, pags, saldoAnt, desconto){
   pags.forEach(function(g){ ev.push({d:(g.data||String(g.criado_em||"").slice(0,10)), t:1, v:Number(g.valor)||0}); });
   ev.sort(function(a,b){ return a.d<b.d?-1:a.d>b.d?1:a.t-b.t; });
   var bal = (saldoAnt||0)-(desconto||0), cut = -1, cutBal = 0;
-  ev.forEach(function(e,ix){ bal += e.t ? -e.v : e.v; if(e.t && bal <= 0.009){ cut = ix; cutBal = bal; } });
+  // conta direta: todas as peças − tudo que pagou (sem crédito / sem corte)
   var g = {andamento:0, pronto:0, entregue:0}, pago = 0, itens = [];
   ev.forEach(function(e,ix){ if(ix<=cut) return; if(e.t){ pago += e.v; return; } var st=e.p.status; g[st==="entregue"?"entregue":(st==="pronto"?"pronto":"andamento")] += e.v; itens.push(e.p); });
   var ini = cut>=0 ? cutBal : ((saldoAnt||0)-(desconto||0)), total = ini + g.andamento + g.pronto + g.entregue - pago;
   var ln = function(ico, lbl, v, neg){ return Math.abs(v) > 0.009 ? "<div style='display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid #F0F0F0;font-size:15px;color:"+(neg?"#2E5E2E":"#0A0A0A")+"'><span>"+ico+" "+lbl+"</span><b style='white-space:nowrap'>"+(neg?"− ":"")+fval(Math.abs(v))+"</b></div>" : ""; };
   var lista = itens.map(function(p){ return "<div style='display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:12px;color:#555'><span style='text-transform:uppercase'>"+p.peca+"</span><span style='white-space:nowrap'>"+fval(p.valor||0)+"</span></div>"; }).join("");
   return "<div style='margin-top:12px'>"+
-    (cut>=0 ? ln("💚","Crédito (pagou a mais)", ini, true) : ln("📌","Saldo anterior", saldoAnt||0) + ln("🏷️","Desconto", desconto||0, true))+
+    ln("📌","Saldo anterior", saldoAnt||0) + ln("🏷️","Desconto", desconto||0, true)+
     ln("🧵","Peças em andamento", g.andamento)+
     ln("✅","Peças prontas", g.pronto)+
     ln("🎁","Peças entregues", g.entregue)+
