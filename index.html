@@ -137,7 +137,7 @@ input:focus,select:focus{border-color:#0A0A0A}
 <header>
   <div class="hl">
     <img src="https://allynekarvalho.github.io/metrica-atelie/logo.png" alt="Métrica">
-    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 11/11 17:50</span></p></div>
+    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 11/11 18:50</span></p></div>
     <button id="bt-olho" onclick="toggleValores()" title="Mostrar/ocultar valores" style="margin-left:auto;background:none;border:1px solid #2E2E2E;border-radius:20px;color:#fff;font-size:18px;padding:6px 12px;cursor:pointer">👁️</button>
   </div>
   <div class="tabs">
@@ -217,8 +217,8 @@ input:focus,select:focus{border-color:#0A0A0A}
   </div>
   <div class="cfg-sec" style="margin-top:16px">
     <div class="cfg-title">💰 Fechamento das costureiras</div>
-    <div class="fr" style="margin-bottom:6px"><div class="fg"><label>Costureira</label><select id="com-cos" onchange="renderComissoes()"><option value="">Todas</option></select></div><div class="fg"><label>Mês</label><input type="month" id="com-mes" onchange="renderComissoes()"></div></div>
-    <div class="fg" style="margin-bottom:6px"><label>Nº das comandas (opcional)</label><div style="position:relative"><input id="com-nums" inputmode="numeric" placeholder="Ex: 789, 902, 661" oninput="comNumsDigitando()" style="padding-right:34px"><button type="button" id="com-nums-x" onclick="document.getElementById('com-nums').value='';renderComissoes()" style="display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:#B8B8B8;font-size:20px;cursor:pointer;padding:4px 8px;line-height:1">✕</button></div><div style="font-size:11px;color:#6B6B6B;margin-top:4px">Digite as comandas que a costureira entregou. O fechamento soma só essas, de qualquer mês.</div></div>
+    <div class="fr" style="margin-bottom:6px"><div class="fg"><label>Costureira</label><select id="com-cos" onchange="comTrocarCost()"><option value="">Todas</option></select></div><div class="fg"><label>Mês</label><input type="month" id="com-mes" onchange="renderComissoes()"></div></div>
+    <div class="fg" style="margin-bottom:6px"><label>Nº das comandas (opcional)</label><div style="position:relative"><input id="com-nums" inputmode="numeric" placeholder="Ex: 789, 902, 661" oninput="comNumsDigitando()" style="padding-right:34px"><button type="button" id="com-nums-x" onclick="document.getElementById('com-nums').value='';comSalvarNums();renderComissoes()" style="display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:#B8B8B8;font-size:20px;cursor:pointer;padding:4px 8px;line-height:1">✕</button></div><div style="font-size:11px;color:#6B6B6B;margin-top:4px">Digite as comandas que a costureira entregou. O fechamento soma só essas, de qualquer mês. Fica salvo para cada costureira.</div></div>
     <div id="res-com"></div>
   </div>
   <button class="btn-p" onclick="fazerBackup()" style="margin-top:16px">☁️ Fazer backup no Google Sheets</button>
@@ -1931,6 +1931,7 @@ async function renderComissoes(pecas){
   // seletor
   var sel = document.getElementById("com-cos"), atual = sel.value;
   var nomes = Object.keys(porCost); (typeof COSTUREIRAS!=="undefined"?COSTUREIRAS:[]).forEach(function(c){ c=nomeCost(c); if(nomes.indexOf(c)<0) nomes.push(c); });
+  pecas.forEach(function(p){ [p.costureira, p.retrabalho_costureira].forEach(function(c){ if(c && String(c).trim()){ c=nomeCost(c); if(nomes.indexOf(c)<0) nomes.push(c); } }); });
   nomes.sort();
   sel.innerHTML = "<option value=''>Todas</option>"+nomes.map(function(c){ return "<option"+(c===atual?" selected":"")+">"+c+"</option>"; }).join("");
   function dBR(d){ return d ? d.slice(8,10)+"/"+d.slice(5,7) : ""; }
@@ -1969,10 +1970,26 @@ async function renderComissoes(pecas){
   box.innerHTML = html;
 }
 var _comNumsT=null;
-function comNumsDigitando(){ clearTimeout(_comNumsT); _comNumsT=setTimeout(function(){ renderComissoes(); }, 600); }
+function comNumsDigitando(){ clearTimeout(_comNumsT); _comNumsT=setTimeout(function(){ comSalvarNums(); renderComissoes(); }, 600); }
+var COM_NUMS_SALVOS = null;
+async function comCarregarNums(){ if(COM_NUMS_SALVOS) return COM_NUMS_SALVOS; COM_NUMS_SALVOS = {}; try{ (await supa("fechamento_comandas?select=*")||[]).forEach(function(r){ COM_NUMS_SALVOS[r.costureira]=r.nums||""; }); }catch(e){} return COM_NUMS_SALVOS; }
+function comSalvarNums(){
+  var c = document.getElementById("com-cos").value; if(!c) return;
+  var v = (document.getElementById("com-nums").value||"").trim();
+  if(!COM_NUMS_SALVOS) COM_NUMS_SALVOS = {};
+  if(COM_NUMS_SALVOS[c]===v) return;
+  COM_NUMS_SALVOS[c] = v;
+  supa("fechamento_comandas",{method:"POST", prefer:"resolution=merge-duplicates,return=minimal", body:{costureira:c, nums:v, atualizado_em:new Date().toISOString()}}).then(function(){ showToast("Comandas da "+c+" salvas"); }).catch(function(e){ showToast("Erro ao salvar comandas"); });
+}
+async function comTrocarCost(){
+  var c = document.getElementById("com-cos").value;
+  var sv = await comCarregarNums();
+  document.getElementById("com-nums").value = c ? (sv[c]||"") : "";
+  renderComissoes();
+}
 function comNumsLista(){ var el=document.getElementById("com-nums"); var v=(el&&el.value)||""; var out=[]; (v.match(/\d+/g)||[]).forEach(function(x){ var n=parseInt(x,10); if(n && out.indexOf(n)<0) out.push(n); }); return out; }
 function comGrupos(itens){ var m={}, ordem=[]; itens.forEach(function(it){ var k=it.num==null?"s":String(it.num); if(!m[k]){ m[k]={num:it.num, cli:it.cli, val:0, itens:[]}; ordem.push(k); } m[k].itens.push(it); m[k].val+=it.val; }); return ordem.map(function(k){ return m[k]; }).sort(function(a,b){ return (a.num||1e9)-(b.num||1e9); }); }
-function comSelecionar(c){ document.getElementById("com-cos").value = c; renderComissoes(); var b=document.getElementById("res-com"); if(b) b.scrollIntoView({behavior:"smooth", block:"start"}); }
+function comSelecionar(c){ document.getElementById("com-cos").value = c; comTrocarCost(); var b=document.getElementById("res-com"); if(b) b.scrollIntoView({behavior:"smooth", block:"start"}); }
 async function comRegistrarPag(c){
   var v = parseFloat(String(document.getElementById("com-pg-val").value).replace(",","."))||0;
   if(!v){ alert("Digite o valor."); return; }
