@@ -137,7 +137,7 @@ input:focus,select:focus{border-color:#0A0A0A}
 <header>
   <div class="hl">
     <img src="https://allynekarvalho.github.io/metrica-atelie/logo.png" alt="Métrica">
-    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 11/11 19:05</span></p></div>
+    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 11/11 19:15</span></p></div>
     <button id="bt-olho" onclick="toggleValores()" title="Mostrar/ocultar valores" style="margin-left:auto;background:none;border:1px solid #2E2E2E;border-radius:20px;color:#fff;font-size:18px;padding:6px 12px;cursor:pointer">👁️</button>
   </div>
   <div class="tabs">
@@ -218,7 +218,7 @@ input:focus,select:focus{border-color:#0A0A0A}
   <div class="cfg-sec" style="margin-top:16px">
     <div class="cfg-title">💰 Fechamento das costureiras</div>
     <div class="fr" style="margin-bottom:6px"><div class="fg"><label>Costureira</label><select id="com-cos" onchange="comTrocarCost()"><option value="">Todas</option></select></div><div class="fg"><label>Mês</label><input type="month" id="com-mes" onchange="renderComissoes()"></div></div>
-    <div class="fg" style="margin-bottom:6px"><label>Nº das comandas (opcional)</label><div style="position:relative"><input id="com-nums" inputmode="numeric" placeholder="Ex: 789, 902, 661" oninput="comNumsDigitando()" style="padding-right:34px"><button type="button" id="com-nums-x" onclick="document.getElementById('com-nums').value='';comSalvarNums();renderComissoes()" style="display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:#B8B8B8;font-size:20px;cursor:pointer;padding:4px 8px;line-height:1">✕</button></div><div style="font-size:11px;color:#6B6B6B;margin-top:4px">Digite as comandas que a costureira entregou. O fechamento soma só essas, de qualquer mês. Fica salvo para cada costureira.</div></div>
+    <div class="fg" style="margin-bottom:6px"><label>Nº das comandas (opcional)</label><div style="position:relative"><input id="com-nums" inputmode="numeric" placeholder="Ex: 789, 902, 475r" oninput="comNumsDigitando()" style="padding-right:34px"><button type="button" id="com-nums-x" onclick="document.getElementById('com-nums').value='';comSalvarNums();renderComissoes()" style="display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:#B8B8B8;font-size:20px;cursor:pointer;padding:4px 8px;line-height:1">✕</button></div><div style="font-size:11px;color:#6B6B6B;margin-top:4px">Digite as comandas que a costureira entregou. O fechamento soma só essas, de qualquer mês. Coloque <b>r</b> depois do número (ex: 475r) para somar só o retorno daquela comanda. Fica salvo para cada costureira.</div></div>
     <div id="res-com"></div>
   </div>
   <button class="btn-p" onclick="fazerBackup()" style="margin-top:16px">☁️ Fazer backup no Google Sheets</button>
@@ -1907,7 +1907,7 @@ async function renderComissoes(pecas){
   var NUMS = comNumsLista(); var porNum = NUMS.length>0;
   var bx=document.getElementById("com-nums-x"); if(bx) bx.style.display = porNum?"block":"none";
   function noMes(d){ return d && d>=ini && d<=fim; }
-  function entra(d, num){ return porNum ? (num!=null && NUMS.indexOf(Number(num))>=0) : noMes(d); }
+  function entra(d, num, ret){ if(!porNum) return noMes(d); if(num==null || NUMS.indexOf(Number(num))<0) return false; if(!ret && (window.COM_SO_RET||[]).indexOf(Number(num))>=0) return false; return true; }
   var pags = []; try { pags = await supa("pagamentos_costureiras?mes_ref=eq."+mes+"&order=data") || []; } catch(e){ pags = []; }
   var porCost = {};
   function nomeCost(c){ return String(c||"").trim().toLowerCase().replace(/(^|[\s(])\S/g, function(x){ return x.toUpperCase(); }); }
@@ -1921,7 +1921,7 @@ async function renderComissoes(pecas){
       add(p.costureira, {dia:dia, num:p.numero_comanda, cli:p.cliente_nome||"", peca:p.peca, serv:p.servico, val:vc, com:+(vc*0.45).toFixed(2), semData:!p.data_pronto && !!dia, andamento:!dia});
     }
     var rv = Number(p.retrabalho_valor_costureira)||0;
-    if(p.retrabalho_costureira && rv>0 && entra(p.retrabalho_data, p.numero_comanda)){
+    if(p.retrabalho_costureira && rv>0 && entra(p.retrabalho_data, p.numero_comanda, true)){
       add(p.retrabalho_costureira, {dia:p.retrabalho_data, num:p.numero_comanda, cli:p.cliente_nome||"", peca:p.peca+" (retrabalho)", serv:"", val:rv, com:+(rv*0.45).toFixed(2)});
     }
   });
@@ -1987,7 +1987,7 @@ async function comTrocarCost(){
   document.getElementById("com-nums").value = c ? (sv[c]||"") : "";
   renderComissoes();
 }
-function comNumsLista(){ var el=document.getElementById("com-nums"); var v=(el&&el.value)||""; var out=[]; (v.match(/\d+/g)||[]).forEach(function(x){ var n=parseInt(x,10); if(n && out.indexOf(n)<0) out.push(n); }); return out; }
+function comNumsLista(){ var el=document.getElementById("com-nums"); var v=(el&&el.value)||""; var out=[]; window.COM_SO_RET=[]; (v.match(/\d+\s*r?/gi)||[]).forEach(function(x){ var n=parseInt(x,10); if(!n) return; if(/r/i.test(x)){ if(COM_SO_RET.indexOf(n)<0) COM_SO_RET.push(n); } if(out.indexOf(n)<0) out.push(n); }); out.forEach(function(n){ if(COM_SO_RET.indexOf(n)>=0 && (v.match(new RegExp("(^|[^\\d])"+n+"(?![\\dr])","i")))) COM_SO_RET.splice(COM_SO_RET.indexOf(n),1); }); return out; }
 function comGrupos(itens){ var m={}, ordem=[]; itens.forEach(function(it){ var k=it.num==null?"s":String(it.num); if(!m[k]){ m[k]={num:it.num, cli:it.cli, val:0, itens:[]}; ordem.push(k); } m[k].itens.push(it); m[k].val+=it.val; }); return ordem.map(function(k){ return m[k]; }).sort(function(a,b){ return (a.num||1e9)-(b.num||1e9); }); }
 function comSelecionar(c){ document.getElementById("com-cos").value = c; comTrocarCost(); var b=document.getElementById("res-com"); if(b) b.scrollIntoView({behavior:"smooth", block:"start"}); }
 async function comRegistrarPag(c){
