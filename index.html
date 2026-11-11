@@ -137,7 +137,7 @@ input:focus,select:focus{border-color:#0A0A0A}
 <header>
   <div class="hl">
     <img src="https://allynekarvalho.github.io/metrica-atelie/logo.png" alt="Métrica">
-    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 11/11 19:25</span></p></div>
+    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 11/11 19:40</span></p></div>
     <button id="bt-olho" onclick="toggleValores()" title="Mostrar/ocultar valores" style="margin-left:auto;background:none;border:1px solid #2E2E2E;border-radius:20px;color:#fff;font-size:18px;padding:6px 12px;cursor:pointer">👁️</button>
   </div>
   <div class="tabs">
@@ -414,7 +414,7 @@ async function carregarServicosDB(){
     initSvc(); var tc=document.getElementById("tela-config"); if(tc && tc.classList.contains("active")) renderConfig();
   }catch(e){ console.warn("servicos", e); }
 }
-function saveMarcas(){ localStorage.setItem("metrica_marcas", JSON.stringify(MARCAS)); } function saveCostureiras(){ localStorage.setItem("metrica_costureiras", JSON.stringify(COSTUREIRAS)); } function optsCostureiras(sel){ return "<option value=''>Selecionar...</option>"+COSTUREIRAS.map(function(c){ return "<option"+(c===sel?" selected":"")+">"+c+"</option>"; }).join(""); } function saveLojas(){ localStorage.setItem("metrica_lojas", JSON.stringify(LOJAS)); }
+function saveMarcas(){ localStorage.setItem("metrica_marcas", JSON.stringify(MARCAS)); } function saveCostureiras(){ localStorage.setItem("metrica_costureiras", JSON.stringify(COSTUREIRAS)); } function optsCostureiras(sel){ var achou=false; var k=String(sel||"").trim().toLowerCase(); var html=COSTUREIRAS.map(function(c){ var m = k && String(c).trim().toLowerCase()===k && !achou; if(m) achou=true; return "<option"+(m?" selected":"")+" value='"+String(m?sel:c).replace(/'/g,"&#39;")+"'>"+c+"</option>"; }).join(""); if(k && !achou) html="<option selected value='"+String(sel).replace(/'/g,"&#39;")+"'>"+sel+"</option>"+html; return "<option value=''>Selecionar...</option>"+html; } function saveLojas(){ localStorage.setItem("metrica_lojas", JSON.stringify(LOJAS)); }
 function registrarLoja(nome){if(!nome)return;nome=nome.trim();if(!nome)return;var existe=LOJAS.some(function(l){return l.toLowerCase()===nome.toLowerCase();});if(!existe){LOJAS.push(nome);saveLojas();populateLojasDL();}}function populateLojasDL(){var dl=document.getElementById("lojas-dl");if(!dl)return;dl.innerHTML=LOJAS.slice().sort().map(function(l){return "<option value='"+l.replace(/'/g,"&#39;")+"'>";}).join("");}function registrarMarca(nome){
 if(!nome) return;
 nome = nome.trim();
