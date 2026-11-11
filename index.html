@@ -120,6 +120,8 @@ input:focus,select:focus{border-color:#0A0A0A}
 .cfg-row{display:flex;align-items:center;gap:8px;background:#1C1C1C;border:1px solid #2E2E2E;border-radius:8px;padding:8px 10px;margin-bottom:8px}
 .cfg-row input{flex:1;padding:8px 10px;font-size:13px}
 .cfg-row .vw{flex:0 0 100px}
+.cfg-svc .vw,.cfg-add .vw{flex:0 0 84px}.cfg-svc input{min-width:0}
+.cfg-svc-h{display:flex;gap:8px;font-size:11px;color:#B8B8B8;padding:0 10px 4px;text-transform:uppercase;letter-spacing:.5px}.cfg-svc-h span:first-child{flex:1}.cfg-svc-h span:nth-child(2),.cfg-svc-h span:nth-child(3){flex:0 0 84px}.cfg-svc-h span:last-child{flex:0 0 26px}
 .cfg-del{background:transparent;border:none;color:#B8B8B8;font-size:16px;cursor:pointer;padding:0 6px}
 .cfg-add{display:flex;gap:8px;margin-top:6px}
 .eprint{padding:10px 14px;border-top:1px solid #E8E8E8}
@@ -239,10 +241,12 @@ input:focus,select:focus{border-color:#0A0A0A}
   <p class="stitle" style="color:#fff;border-bottom:1px solid rgba(255,255,255,0.2)">Configurações</p>
   <div class="cfg-sec">
     <div class="cfg-title">Serviços e valores</div>
+    <p style="font-size:12px;color:#B8B8B8;margin:-4px 0 10px">Cadastre cada serviço separado. Ao escolher 2 ou mais na peça, o app soma o valor da cliente e o da costureira.</p>
     <div id="cfg-servicos"></div>
     <div class="cfg-add">
       <input id="cfg-sv-nome" placeholder="Nome do serviço">
-      <div class="vw"><span class="vp">R$</span><input type="number" id="cfg-sv-val" class="vi" placeholder="0" min="0" step="0.01"></div>
+      <div class="vw"><span class="vp">R$</span><input type="number" id="cfg-sv-val" class="vi" placeholder="Cliente" min="0" step="0.01"></div>
+      <div class="vw"><span class="vp">R$</span><input type="number" id="cfg-sv-vc" class="vi" placeholder="Costur." min="0" step="0.01"></div>
       <button onclick="addServico()" style="padding:0 14px;background:#fff;color:#0A0A0A;border:1px solid #E8E8E8;border-radius:6px;font-size:20px;cursor:pointer">+</button>
     </div>
   </div>
@@ -387,6 +391,28 @@ var SERVICOS = JSON.parse(localStorage.getItem("metrica_servicos") || "null");
 if(!SERVICOS){ SERVICOS = SVC_BASE_PADRAO.slice(); localStorage.setItem("metrica_servicos", JSON.stringify(SERVICOS)); }
 var MARCAS = JSON.parse(localStorage.getItem("metrica_marcas") || "[]"); var COSTUREIRAS_PADRAO=["Ana","Maria","Lucia","Allyne (eu)"]; var COSTUREIRAS = JSON.parse(localStorage.getItem("metrica_costureiras") || "null"); if(!COSTUREIRAS){ COSTUREIRAS = COSTUREIRAS_PADRAO.slice(); localStorage.setItem("metrica_costureiras", JSON.stringify(COSTUREIRAS)); } var LOJAS = JSON.parse(localStorage.getItem("metrica_lojas") || "[]");
 function saveServicos(){ localStorage.setItem("metrica_servicos", JSON.stringify(SERVICOS)); }
+function _svcRow(r){ return {id:r.id, n:r.nome, v:Number(r.valor)||0, vc:Number(r.valor_costureira)||0}; }
+async function carregarServicosDB(){
+  try{
+    var rows = await supa("servicos?select=*&order=ordem.asc,nome.asc");
+    if(!rows) return;
+    if(!localStorage.getItem("metrica_svc_migrado")){
+      var locais = JSON.parse(localStorage.getItem("metrica_servicos")||"[]");
+      for(var i=0;i<locais.length;i++){
+        var l=locais[i]; if(!l||!l.n||l.n.indexOf("+")>=0) continue; if(SVC_BASE_PADRAO.some(function(d){ return d.n===l.n && d.v===l.v; })) continue;
+        var achou = rows.filter(function(r){ return normPal(r.nome.trim())===normPal(l.n.trim()); })[0];
+        try{
+          if(achou){ if(l.v>0 && Number(achou.valor)!==l.v){ await supa("servicos?id=eq."+achou.id,{method:"PATCH",body:{valor:l.v}}); } }
+          else { await supa("servicos",{method:"POST",body:{nome:l.n.trim(), valor:l.v||0, valor_costureira:0, ordem:100+i}}); }
+        }catch(e){}
+      }
+      localStorage.setItem("metrica_svc_migrado","1");
+      rows = await supa("servicos?select=*&order=ordem.asc,nome.asc") || rows;
+    }
+    SERVICOS = rows.map(_svcRow); saveServicos();
+    initSvc(); var tc=document.getElementById("tela-config"); if(tc && tc.classList.contains("active")) renderConfig();
+  }catch(e){ console.warn("servicos", e); }
+}
 function saveMarcas(){ localStorage.setItem("metrica_marcas", JSON.stringify(MARCAS)); } function saveCostureiras(){ localStorage.setItem("metrica_costureiras", JSON.stringify(COSTUREIRAS)); } function optsCostureiras(sel){ return "<option value=''>Selecionar...</option>"+COSTUREIRAS.map(function(c){ return "<option"+(c===sel?" selected":"")+">"+c+"</option>"; }).join(""); } function saveLojas(){ localStorage.setItem("metrica_lojas", JSON.stringify(LOJAS)); }
 function registrarLoja(nome){if(!nome)return;nome=nome.trim();if(!nome)return;var existe=LOJAS.some(function(l){return l.toLowerCase()===nome.toLowerCase();});if(!existe){LOJAS.push(nome);saveLojas();populateLojasDL();}}function populateLojasDL(){var dl=document.getElementById("lojas-dl");if(!dl)return;dl.innerHTML=LOJAS.slice().sort().map(function(l){return "<option value='"+l.replace(/'/g,"&#39;")+"'>";}).join("");}function registrarMarca(nome){
 if(!nome) return;
@@ -735,7 +761,7 @@ function togSvc(i){
   var btn = document.querySelector(".stag[data-i='"+i+"']");
   var idx = SEL.findIndex(function(x){ return x.n===s.n; });
   if(idx>=0){ SEL.splice(idx,1); btn.classList.remove("sel"); }
-  else{ SEL.push({n:s.n,v:s.v}); btn.classList.add("sel"); }
+  else{ SEL.push({n:s.n,v:s.v,vc:s.vc||0}); btn.classList.add("sel"); }
   updSvc();
 }
 function updSvc(){
@@ -744,6 +770,8 @@ function updSvc(){
   var d = 0;
   var tot = +(sub*(1-d)).toFixed(2);
   document.getElementById("np-val").value = tot>0?tot:"";
+  var subc = SEL.reduce(function(t,s){ return t+(s.vc||0); },0);
+  document.getElementById("np-valcos").value = subc>0?subc:"";
   calcCom();
   var inf = document.getElementById("np-dinfo");
   if(d>0){ inf.style.display="block"; inf.textContent="Desconto "+(d*100)+"% aplicado"; }
@@ -753,8 +781,7 @@ function addServ(){
 var n = document.getElementById("np-snome").value.trim();
 var v = parseFloat(document.getElementById("np-sval").value)||0;
 if(!n){ alert("Digite o nome."); return; }
-SERVICOS.push({n:n,v:v});
-saveServicos();
+svcNovoDB(n,v,0);
 document.getElementById("np-snome").value="";
 document.getElementById("np-sval").value="";
 initSvc();
@@ -763,10 +790,12 @@ if(document.getElementById("tela-config").classList.contains("active")) renderCo
 function renderConfig(){
 var c = document.getElementById("cfg-servicos");
 c.innerHTML = SERVICOS.map(function(s,i){
-return "<div class='cfg-row'><input value='"+s.n.replace(/'/g,"&#39;")+"' onchange='updateServicoNome("+i+",this.value)'>"+
+return "<div class='cfg-row cfg-svc'><input value='"+s.n.replace(/'/g,"&#39;")+"' onchange='updateServicoNome("+i+",this.value)'>"+
 "<div class='vw'><span class='vp'>R$</span><input type='number' class='vi' value='"+s.v+"' min='0' step='0.01' onchange='updateServicoVal("+i+",this.value)'></div>"+
+"<div class='vw'><span class='vp'>R$</span><input type='number' class='vi' value='"+(s.vc||0)+"' min='0' step='0.01' onchange='updateServicoVC("+i+",this.value)'></div>"+
 "<button class='cfg-del' onclick='delServico("+i+")'>✕</button></div>";
 }).join("") || "<div class='vz'>Nenhum serviço cadastrado.</div>";
+if(SERVICOS.length) c.innerHTML = "<div class='cfg-svc-h'><span>Serviço</span><span>Cliente</span><span>Costureira</span><span></span></div>"+c.innerHTML;
 var m = document.getElementById("cfg-marcas");
 m.innerHTML = MARCAS.map(function(nm,i){
 return "<div class='cfg-row'><input value='"+nm.replace(/'/g,"&#39;")+"' onchange='updateMarcaNome("+i+",this.value)'>"+
@@ -776,18 +805,26 @@ return "<div class='cfg-row'><input value='"+nm.replace(/'/g,"&#39;")+"' onchang
 function addServico(){
 var n = document.getElementById("cfg-sv-nome").value.trim();
 var v = parseFloat(document.getElementById("cfg-sv-val").value)||0;
+var vc = parseFloat(document.getElementById("cfg-sv-vc").value)||0;
 if(!n){ alert("Digite o nome do serviço."); return; }
-SERVICOS.push({n:n,v:v});
-saveServicos();
+if(n.indexOf("+")>=0){ alert("Cadastre cada serviço separado (sem +). O app soma sozinho."); return; }
+svcNovoDB(n,v,vc);
 document.getElementById("cfg-sv-nome").value="";
 document.getElementById("cfg-sv-val").value="";
-renderConfig();
-initSvc();
+document.getElementById("cfg-sv-vc").value="";
 }
-function updateServicoNome(i,val){ SERVICOS[i].n = val.trim(); saveServicos(); initSvc(); }
-function updateServicoVal(i,val){ SERVICOS[i].v = parseFloat(val)||0; saveServicos(); initSvc(); }
+async function svcNovoDB(n,v,vc){
+  try{ var r = await supa("servicos",{method:"POST",body:{nome:n, valor:v, valor_costureira:vc, ordem:SERVICOS.length+1}}); if(r&&r[0]) SERVICOS.push(_svcRow(r[0])); }
+  catch(e){ if(String(e.message).indexOf("duplicate")>=0){ alert("Esse serviço já existe."); } else { SERVICOS.push({n:n,v:v,vc:vc}); } }
+  saveServicos(); initSvc(); if(document.getElementById("tela-config").classList.contains("active")) renderConfig();
+}
+function svcPatch(i, body){ var s=SERVICOS[i]; saveServicos(); initSvc(); if(s && s.id) supa("servicos?id=eq."+s.id,{method:"PATCH",body:body}).catch(function(e){ showToast("Erro ao salvar serviço"); }); }
+function updateServicoNome(i,val){ SERVICOS[i].n = val.trim(); svcPatch(i,{nome:SERVICOS[i].n}); }
+function updateServicoVal(i,val){ SERVICOS[i].v = parseFloat(val)||0; svcPatch(i,{valor:SERVICOS[i].v}); }
+function updateServicoVC(i,val){ SERVICOS[i].vc = parseFloat(val)||0; svcPatch(i,{valor_costureira:SERVICOS[i].vc}); }
 function delServico(i){
 if(!confirm("Remover este serviço?")) return;
+var _s=SERVICOS[i]; if(_s && _s.id) supa("servicos?id=eq."+_s.id,{method:"DELETE"}).catch(function(){});
 SERVICOS.splice(i,1);
 saveServicos();
 renderConfig();
@@ -2021,7 +2058,7 @@ p = p[0];
 if(p.status==="entregue" && !ED_SO_EDITAR){ abrirRetorno(p); return; } RETRABALHO_ATIVO = false; DATA_RETORNO_ESCOLHIDA = null; RETRABALHO_COSTUREIRA = null; RETRABALHO_VALOR = null; RETRABALHO_COMISSAO = null; abrirEditarForm(p); } function abrirEditarForm(p) { document.getElementById("ed-id").value = p.id; ED_STATUS_ORIG = p.status;
 document.getElementById("ed-peca").value = p.peca||"";
 document.getElementById("ed-marca").value = p.marca||"";
-document.getElementById("ed-serv").value = p.servico||"";
+document.getElementById("ed-serv").value = p.servico||""; document.getElementById("ed-svc-busca").value=""; renderEdSvc("");
 document.getElementById("ed-val").value = p.valor||""; document.getElementById("ed-semcusto").checked=!!p.sem_custo; semCustoToggle("ed");
 document.getElementById("ed-valcos").value = p.valor_costureira||"";
 document.getElementById("ed-com").value = p.comissao||"";
@@ -2085,6 +2122,24 @@ await supa("pecas?id=eq."+id, {method:"PATCH", body:{foto_url:fotoUrlEd}});
 closeMod("mod-editar");
 showToast("Peça atualizada!");
 renderPerfil();
+}
+function edSvcLista(){ return document.getElementById("ed-serv").value.split(/\s*\+\s*|\n+/).map(function(x){ return x.trim(); }).filter(Boolean); }
+function renderEdSvc(filtro){
+  var c=document.getElementById("ed-stags"); if(!c) return;
+  var q=normPal((filtro||"").trim()); var atuais=edSvcLista().map(function(x){ return normPal(x); });
+  var lista=allSvc().map(function(s,i){ return {s:s,i:i}; });
+  lista = q ? lista.filter(function(o){ return normPal(o.s.n).indexOf(q)>=0; }) : lista.filter(function(o){ return SVC_DESTAQUE.indexOf(normPal(o.s.n))>=0 || atuais.indexOf(normPal(o.s.n))>=0; });
+  c.innerHTML = lista.map(function(o){ var sel=atuais.indexOf(normPal(o.s.n))>=0; return "<button type='button' class='stag"+(sel?" sel":"")+"' onclick='togEdSvc("+o.i+")'>"+o.s.n+"</button>"; }).join("");
+}
+function togEdSvc(i){
+  var s=allSvc()[i]; var l=edSvcLista(); var k=l.findIndex(function(x){ return normPal(x)===normPal(s.n); });
+  var sinal = k>=0 ? -1 : 1;
+  if(k>=0) l.splice(k,1); else l.push(s.n);
+  document.getElementById("ed-serv").value = l.join(" + ");
+  var ev=document.getElementById("ed-val"), ec=document.getElementById("ed-valcos");
+  if(!document.getElementById("ed-semcusto").checked){ var nv=Math.max(0,(parseFloat(ev.value)||0)+sinal*(s.v||0)); ev.value = nv>0?nv:""; }
+  var nc=Math.max(0,(parseFloat(ec.value)||0)+sinal*(s.vc||0)); ec.value = nc>0?nc:""; calcComEd();
+  renderEdSvc(document.getElementById("ed-svc-busca").value);
 }
 function calcComEd() {
   var v = parseFloat(document.getElementById("ed-valcos").value)||0;
@@ -2257,6 +2312,7 @@ function enviarSoTextoLista(){
   window.open("https://wa.me/"+tel+"?text="+encodeURIComponent(d.msg||""),"_blank");
   var ov=document.getElementById("img-share"); if(ov) ov.style.display="none";
 }
+carregarServicosDB();
 </script>
 <!-- MODAL EDITAR PEÇA -->
 <div class="mov" id="mod-editar">
@@ -2266,7 +2322,7 @@ function enviarSoTextoLista(){
     <input type="hidden" id="ed-id">
     <div class="fg"><label>Peça</label><input id="ed-peca" placeholder="Nome da peça" style="text-transform:uppercase" oninput="corrigirCampoPeca(this)" onblur="corrigirUltimaPalavra(this)"></div><div class="fg"><label>Observação (opcional)</label><textarea id="ed-obs" placeholder="Detalhes, observações..." style="height:60px;resize:none;width:100%;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-family:DM Sans,sans-serif;font-size:14px;text-transform:uppercase;color:royalblue" oninput="this.value=this.value.toUpperCase()"></textarea></div>
     <div class="fg"><label>Marca (opcional)</label><input id="ed-marca" list="marcas-dl" placeholder="Ex: Zara, Farm..." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
-    <div class="fg"><label>Serviço</label><textarea id="ed-serv" style="height:80px;resize:none;width:100%;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-family:DM Sans,sans-serif;font-size:14px" placeholder="Descrição do serviço"></textarea></div>
+    <div class="fg"><label>Serviço</label><input id="ed-svc-busca" placeholder="🔍 Buscar serviço para adicionar..." oninput="renderEdSvc(this.value)" style="margin-bottom:8px"><div class="stags" id="ed-stags" style="margin-bottom:8px"></div><textarea id="ed-serv" oninput="renderEdSvc(document.getElementById('ed-svc-busca').value)" style="height:80px;resize:none;width:100%;padding:12px;border:1px solid #E8E8E8;border-radius:6px;font-family:DM Sans,sans-serif;font-size:14px" placeholder="Descrição do serviço"></textarea></div>
     <div class="fr">
       <div class="fg"><label>Valor cliente (R$)</label><div class="vw"><span class="vp">R$</span><input type="number" id="ed-val" class="vi" placeholder="0,00" min="0" step="0.01"></div><label id="ed-semcusto-lbl" style="display:inline-block;font-size:12px;font-weight:600;color:#6B6B6B;border:1px solid #DDD;border-radius:14px;padding:5px 10px;margin-top:6px;text-transform:none;letter-spacing:0;cursor:pointer;background:#fff"><input type="checkbox" id="ed-semcusto" onchange="semCustoToggle('ed')" style="display:none">🎁 Sem custo</label></div>
       <div class="fg"><label>Valor costureira (R$)</label><div class="vw"><span class="vp">R$</span><input type="number" id="ed-valcos" class="vi" placeholder="0,00" min="0" step="0.01" oninput="calcComEd()"></div></div>
