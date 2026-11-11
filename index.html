@@ -1141,6 +1141,22 @@ function toggleClearBusca(){var inp=document.getElementById("busca-cli");var btn
       return cli;
     });
     clientes.sort(function(a,b){ var da=(a.pecas&&a.pecas.length)?a.pecas.reduce(function(m,p){ return (p.data_entrada&&p.data_entrada>m)?p.data_entrada:m; },""):""; var db=(b.pecas&&b.pecas.length)?b.pecas.reduce(function(m,p){ return (p.data_entrada&&p.data_entrada>m)?p.data_entrada:m; },""):""; if(da===db) return a.nome.localeCompare(b.nome); return db.localeCompare(da); }); var busca = (document.getElementById("busca-cli")||{}).value||"";
+    window._buscaCom = false;
+    if(busca && /^\d+$/.test(busca.trim()) && todasPecas.some(function(p){ return p.numero_comanda!=null && Number(p.numero_comanda)===Number(busca.trim()); })){
+      var nCom = Number(busca.trim());
+      window._buscaCom = true;
+      var pcs = await supa("pecas?numero_comanda=eq."+nCom+"&order=criado_em") || [];
+      var porCli = {}; pcs.forEach(function(p){ (porCli[p.cliente_id]=porCli[p.cliente_id]||[]).push(p); });
+      cont.innerHTML = Object.keys(porCli).map(function(cid){
+        var cli = clientes.filter(function(c){ return c.id===cid; })[0] || {id:cid, nome:(porCli[cid][0].cliente_nome||"Cliente")};
+        var tot = porCli[cid].reduce(function(t,p){ return t+(Number(p.valor)||0); },0);
+        return "<div class='eg'><div class='ehdr'><span class='edata'>🎫 Comanda Nº "+String(nCom).padStart(4,"0")+" · "+cli.nome+"</span><span class='eres'>"+porCli[cid].length+" peça"+(porCli[cid].length>1?"s":"")+"</span></div>"+
+          porCli[cid].map(function(p){ return mkPecaHTML(p, false); }).join("")+
+          "<div class='etot'><span>Total da comanda</span><span>"+fval(tot)+"</span></div>"+
+          "<div class='eprint'><button class='bm' style='width:100%' data-id='"+cid+"' data-nome='"+String(cli.nome).replace(/'/g,"&#39;")+"' onclick='abrirPerfil(this.dataset.id,this.dataset.nome)'>👤 Abrir cliente para editar</button></div></div>";
+      }).join("");
+      return;
+    }
     if(busca){
       var buscaNum = busca.trim();
       var isNumBusca = /^\d+$/.test(buscaNum);
@@ -2134,7 +2150,7 @@ await supa("pecas?id=eq."+id, {method:"PATCH", body:{foto_url:fotoUrlEd}});
 }
 closeMod("mod-editar");
 showToast("Peça atualizada!");
-renderPerfil();
+renderPerfil(); if(window._buscaCom) renderLista();
 }
 function edSvcLista(){ return document.getElementById("ed-serv").value.split(/\s*\+\s*|\n+/).map(function(x){ return x.trim(); }).filter(Boolean); }
 function renderEdSvc(filtro){
