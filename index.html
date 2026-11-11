@@ -137,7 +137,7 @@ input:focus,select:focus{border-color:#0A0A0A}
 <header>
   <div class="hl">
     <img src="https://allynekarvalho.github.io/metrica-atelie/logo.png" alt="Métrica">
-    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 11/11 19:20</span></p></div>
+    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 11/11 19:25</span></p></div>
     <button id="bt-olho" onclick="toggleValores()" title="Mostrar/ocultar valores" style="margin-left:auto;background:none;border:1px solid #2E2E2E;border-radius:20px;color:#fff;font-size:18px;padding:6px 12px;cursor:pointer">👁️</button>
   </div>
   <div class="tabs">
@@ -1911,14 +1911,14 @@ async function renderComissoes(pecas){
   var pags = []; try { pags = await supa("pagamentos_costureiras?mes_ref=eq."+mes+"&order=data") || []; } catch(e){ pags = []; }
   var porCost = {};
   function nomeCost(c){ return String(c||"").trim().toLowerCase().replace(/(^|[\s(])\S/g, function(x){ return x.toUpperCase(); }); }
-  function garante(c){ c = nomeCost(c); if(!porCost[c]) porCost[c] = {itens:[], totVal:0, totCom:0, pago:0, pags:[]}; return porCost[c]; }
-  function add(c, item){ c = nomeCost(c); var d=garante(c); d.itens.push(item); d.totVal += item.val; d.totCom += item.com; }
+  function garante(c){ c = nomeCost(c); if(!porCost[c]) porCost[c] = {itens:[], totVal:0, totCom:0, totCli:0, pago:0, pags:[]}; return porCost[c]; }
+  function add(c, item){ c = nomeCost(c); var d=garante(c); d.itens.push(item); d.totVal += item.val; d.totCom += item.com; d.totCli += (item.vcli||0); }
   pecas.forEach(function(p){
     var feito = p.status==="pronto" || p.status==="entregue";
     var dia = p.data_pronto || (feito ? (p.data_entrega||p.data_entrada) : null);
     var vc = Number(p.valor_costureira)||0;
     if(p.costureira && vc>0 && entra(dia, p.numero_comanda)){
-      add(p.costureira, {dia:dia, num:p.numero_comanda, cli:p.cliente_nome||"", peca:p.peca, serv:p.servico, val:vc, com:+(vc*0.45).toFixed(2), semData:!p.data_pronto && !!dia, andamento:!dia});
+      add(p.costureira, {dia:dia, num:p.numero_comanda, cli:p.cliente_nome||"", peca:p.peca, serv:p.servico, val:vc, vcli:(p.sem_custo?0:(Number(p.valor)||0)), com:+(vc*0.45).toFixed(2), semData:!p.data_pronto && !!dia, andamento:!dia});
     }
     var rv = Number(p.retrabalho_valor_costureira)||0;
     if(p.retrabalho_costureira && rv>0 && entra(p.retrabalho_data, p.numero_comanda, true)){
@@ -1956,6 +1956,7 @@ async function renderComissoes(pecas){
     "<div class='lj-row'><span>"+(porNum?"Comandas · peças":"Peças prontas no mês")+"</span><b>"+(porNum?(NUMS.length-faltam.length)+" · ":"")+d.itens.length+"</b></div>"+
     "<div class='lj-row'><span>Valor costureira</span><b>"+fval(d.totVal)+"</b></div>"+
     "<div class='lj-row'><span>A pagar (45%)</span><b>"+fval(d.totCom)+"</b></div>"+
+    "<div class='lj-row' style='cursor:pointer' onclick='var x=this.querySelector(\".ocl\");x.style.display=x.style.display===\"none\"?\"inline\":\"none\";this.querySelector(\".ocb\").style.display=x.style.display===\"none\"?\"inline\":\"none\"'><span style='color:#B8B8B8'>🔒 Valor cliente</span><span><b class='ocb' style='color:#B8B8B8;letter-spacing:2px'>•••••</b><span class='ocl' style='display:none;font-size:12px;color:#6B6B6B;text-align:right'><b style='color:#0A0A0A'>"+fval(d.totCli)+"</b> · fica p/ ateliê <b style='color:#2E5E2E'>"+fval(d.totCli-d.totCom)+"</b></span></span></div>"+
     (porNum?"":"<div class='lj-row'><span style='color:#2E5E2E'>Já pago</span><b style='color:#2E5E2E'>− "+fval(d.pago)+"</b></div>"+
     "<div style='display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid #0A0A0A;margin-top:8px;padding-top:10px'><b style='font-size:14px;text-transform:uppercase'>"+(falta>0.009?"Falta pagar":"Situação")+"</b><b style='font-size:24px;color:"+(falta>0.009?"#8B0000":"#2E5E2E")+"'>"+(falta>0.009?fval(falta):(falta<-0.009?"Pago a mais "+fval(-falta):"Tudo pago ✓"))+"</b></div>")+
     "<details style='margin-top:10px'"+(porNum?" open":"")+"><summary style='font-size:13px;font-weight:600;cursor:pointer;padding:6px 0'>📋 Ver por comanda ("+comGrupos(d.itens).length+" comandas · "+d.itens.length+" peças)</summary>"+
