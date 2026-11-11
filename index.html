@@ -137,7 +137,7 @@ input:focus,select:focus{border-color:#0A0A0A}
 <header>
   <div class="hl">
     <img src="https://allynekarvalho.github.io/metrica-atelie/logo.png" alt="Métrica">
-    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 11/11 19:00</span></p></div>
+    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 11/11 19:05</span></p></div>
     <button id="bt-olho" onclick="toggleValores()" title="Mostrar/ocultar valores" style="margin-left:auto;background:none;border:1px solid #2E2E2E;border-radius:20px;color:#fff;font-size:18px;padding:6px 12px;cursor:pointer">👁️</button>
   </div>
   <div class="tabs">
@@ -2016,23 +2016,21 @@ function comWpp(c){
 function comImprimir(c){
   var t=comTexto(c); if(!t) return;
   function esc(x){ return String(x||"").replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
-  var blocos=comGrupos(t.d.itens).map(function(g){
-    return "<div class='blk'><div class='gh'><span>"+comNum(g)+"</span><span>"+fval(g.val)+"</span></div>"+
-      g.itens.map(function(it){ var sv=String(it.serv||"").replace(/\s*\n+\s*/g," + ").replace(/^[-\s]+|\s*-\s*/g," ").trim(); return "<div class='ln'><span class='d'><b>"+esc(it.peca)+"</b>"+(sv?" · "+esc(sv):"")+"</span><span class='v'>"+fval(it.val)+"</span></div>"; }).join("")+"</div>";
-  }).join("");
+  var gs=comGrupos(t.d.itens);
+  var blocos=gs.map(function(g){ return "<div class='lc'><b>"+comNum(g)+"</b><span class='c'>"+g.itens.length+" pç</span><span class='v'>"+fval(g.val)+"</span></div>"; }).join("");
   var tot="<div class='tot'><span>"+t.d.itens.length+" peças · Valor costureira <b>"+fval(t.d.totVal)+"</b></span><span>A receber (45%): <b>"+fval(t.d.totCom)+"</b></span>"+(t.porNum?"":"<span>Já pago: "+fval(t.d.pago||0)+" · Falta: <b>"+fval(Math.max(t.d.totCom-(t.d.pago||0),0))+"</b></span>")+"</div>";
   var html="<!DOCTYPE html><html lang='pt-BR'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Comissão "+esc(c)+"</title><style>"+
     "@page{size:A4;margin:8mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;margin:10px;color:#000;font-size:8.5pt;line-height:1.22}"+
     "h1{font-size:12pt;margin:0}.sub{font-size:8pt;color:#444;margin:1px 0 4px}"+
     ".tot{display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:space-between;border:1px solid #000;padding:4px 6px;margin:4px 0 6px;font-size:9pt}"+
-    ".cols{column-count:2;column-gap:10px;column-rule:1px solid #ddd}"+
+    ".cols{column-count:3;column-gap:14px;column-rule:1px solid #ddd}.lc{display:flex;gap:6px;padding:1px 2px;border-bottom:1px dotted #bbb;break-inside:avoid;font-size:9pt}.lc b{flex:0 0 auto}.lc .c{flex:1;text-align:center;color:#555}.lc .v{white-space:nowrap}"+
     ".blk{break-inside:avoid;margin-bottom:3px}.gh{display:flex;justify-content:space-between;font-weight:700;background:#e9e9e9;padding:1px 4px}"+
     ".ln{display:flex;justify-content:space-between;gap:6px;padding:0 4px;border-bottom:1px dotted #ccc}.ln .d{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0}.ln .v{white-space:nowrap}"+
     ".barra{display:flex;gap:8px;margin-bottom:10px}.barra button{flex:1;font-size:14px;font-weight:600;padding:10px;border-radius:6px;border:1px solid #ccc;background:#f5f5f5}.barra .bimp{background:#8B0000;color:#fff;border-color:#8B0000}"+
     "@media print{.barra{display:none}body{margin:0}}</style></head><body>"+
     "<div class='barra'><button onclick='window.close()'>✕ Fechar</button><button class='bimp' onclick='window.print()'>🖨️ Imprimir</button></div>"+
     "<h1>Métrica Ateliê · Comissão · "+esc(c)+"</h1><div class='sub'>"+esc(t.titulo)+"</div>"+tot+
-    "<div class='cols'>"+blocos+"</div>"+tot+"</body></html>";
+    "<div class='cols'>"+blocos+"</div>"+tot+"<div class='sub' style='margin-top:4px'>"+gs.length+" comandas</div>"+"</body></html>";
   var w=window.open("","_blank"); if(!w){ alert("Libere pop-ups para imprimir."); return; } w.document.write(html); w.document.close();
 }
 function populateLojaSelect(){var sel=document.getElementById("fechloja-nome");if(!sel)return;var cur=sel.value;sel.innerHTML="<option value=''>Selecione a loja...</option>"+LOJAS.slice().sort().map(function(l){return "<option"+(l===cur?" selected":"")+">"+l+"</option>";}).join("");}async function renderFechamentoLoja(){populateLojaSelect();var loja=document.getElementById("fechloja-nome").value;var mesEl=document.getElementById("fechloja-mes");if(!mesEl.value){var hj=new Date();mesEl.value=hj.getFullYear()+"-"+String(hj.getMonth()+1).padStart(2,"0");}var mes=mesEl.value;var box=document.getElementById("res-fechloja");if(!loja){box.innerHTML="<div class='vz'>Selecione uma loja para ver o fechamento.</div>";return;}box.innerHTML="<div class='loading'>Carregando...</div>";var partes=mes.split("-");var ini=mes+"-01";var ultimoDia=new Date(parseInt(partes[0]),parseInt(partes[1]),0).getDate();var fim=mes+"-"+String(ultimoDia).padStart(2,"0");try{var pecasLoja=await supa("pecas?pago_por=eq."+encodeURIComponent(loja)+"&data_entrada=gte."+ini+"&data_entrada=lte."+fim+"&order=data_entrada");var pend=pecasLoja.filter(function(p){return !p.loja_pago;});var pagas=pecasLoja.filter(function(p){return p.loja_pago;});var totPend=pend.reduce(function(s,p){return s+(p.valor||0);},0);var totPagas=pagas.reduce(function(s,p){return s+(p.valor||0);},0);var linhaP=function(p){return "<div class='cp'><span style='color:#2E2E2E'>"+p.cliente_nome+" · "+p.peca+"</span><span style='font-weight:600;color:#8B0000'>"+fval(p.valor)+"</span></div>";};var html="<div class='cb'><div class='ct'>🏬 "+loja+" · "+pend.length+" pendente"+(pend.length!==1?"s":"")+"</div>"+(pend.length?pend.map(linhaP).join(""):"<div class='cp'><span style='color:#6B6B6B'>Nenhuma pendência neste mês.</span></div>")+"<div class='cp' style='border-top:1px solid #F0F0F0;margin-top:6px;padding-top:8px'><span style='font-weight:700'>Total a receber</span><span style='font-weight:700;color:#8B0000'>"+fval(totPend)+"</span></div></div>"+(pagas.length?("<div class='cb'><div class='ct'>✓ Já pagas neste mês · "+pagas.length+"</div><div class='cp'><span style='color:#2E2E2E'>Total recebido</span><span style='font-weight:600;color:#2E5E2E'>"+fval(totPagas)+"</span></div></div>"):"");if(pend.length){html+="<button class='btn-p' style='margin-top:10px' onclick='marcarFechamentoLojaPago("+JSON.stringify(loja)+","+JSON.stringify(ini)+","+JSON.stringify(fim)+")'>✓ Marcar mês como pago ("+fval(totPend)+")</button>";}box.innerHTML=html;}catch(e){box.innerHTML="<div style='padding:12px;color:red'>Erro: "+e.message+"</div>";}}async function marcarFechamentoLojaPago(loja,ini,fim){if(!confirm("Confirmar recebimento de "+loja+" para este período?"))return;await supa("pecas?pago_por=eq."+encodeURIComponent(loja)+"&data_entrada=gte."+ini+"&data_entrada=lte."+fim+"&loja_pago=eq.false",{method:"PATCH",body:{loja_pago:true}});showToast("Fechamento registrado!");renderFechamentoLoja();}async function imprimirComanda(id, apenasEsta) {
