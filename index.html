@@ -2028,11 +2028,16 @@ if(mudar.length){
   mudar.forEach(function(pc){ pc.numero_comanda = numeroComanda; });
 }
 var data = p.data_entrada ? new Date(p.data_entrada+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"}) : new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
+var _vcUpd = [];
+pecasImprimir.forEach(function(pc){
+  if(!(Number(pc.valor_costureira)>0) && !pc.sem_custo){ var est = vcEstimado(pc.servico); if(est>0){ pc.valor_costureira = est; _vcUpd.push(supa("pecas?id=eq."+pc.id,{method:"PATCH",body:{valor_costureira:est, comissao:+(est*0.45).toFixed(2)}}).catch(function(){})); } }
+});
+if(_vcUpd.length) await Promise.all(_vcUpd);
 var itensHTML = pecasImprimir.map(function(pc){
 return "<div class='item-peca'>"+
 "<div class='pc-nome'>"+pc.peca+(pc.marca?" <span class='pc-marca'>· "+pc.marca+"</span>":"")+"</div>"+
 "<div class='servico'>"+(pc.servico||"")+"</div>"+
-"<div class='vcos'>"+(pc.costureira?"Costureira: <b>"+pc.costureira+"</b> · ":"")+"Valor: R$ __________</div>"+
+"<div class='vcos'>"+(pc.costureira?"Costureira: <b>"+pc.costureira+"</b> · ":"")+"Valor: R$ "+(Number(pc.valor_costureira)>0?"<b>"+fmtBR(pc.valor_costureira)+"</b>":"__________")+"</div>"+
 "</div>";
 }).join("<hr class='sep'>");
 var corpo = "<div class='via'>"+
@@ -2151,6 +2156,18 @@ await supa("pecas?id=eq."+id, {method:"PATCH", body:{foto_url:fotoUrlEd}});
 closeMod("mod-editar");
 showToast("Peça atualizada!");
 renderPerfil(); if(window._buscaCom) renderLista();
+}
+function vcEstimado(serv){
+  var partes = String(serv||"").split(/\s*\+\s*|\n+/).map(function(x){ return x.replace(/^[-•\s]+/,"").trim(); }).filter(Boolean);
+  if(!partes.length) return 0;
+  var tot = 0;
+  for(var i=0;i<partes.length;i++){
+    var alvo = normPal(partes[i]);
+    var s = allSvc().filter(function(x){ return normPal(x.n)===alvo; })[0];
+    if(!s || !(s.vc>0)) return 0;
+    tot += s.vc;
+  }
+  return tot;
 }
 function edSvcLista(){ return document.getElementById("ed-serv").value.split(/\s*\+\s*|\n+/).map(function(x){ return x.trim(); }).filter(Boolean); }
 function renderEdSvc(filtro){
