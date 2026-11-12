@@ -137,7 +137,7 @@ input:focus,select:focus{border-color:#0A0A0A}
 <header>
   <div class="hl">
     <img src="https://allynekarvalho.github.io/metrica-atelie/logo.png" alt="Métrica">
-    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 11/11 19:40</span></p></div>
+    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 12/11 10:15</span></p></div>
     <button id="bt-olho" onclick="toggleValores()" title="Mostrar/ocultar valores" style="margin-left:auto;background:none;border:1px solid #2E2E2E;border-radius:20px;color:#fff;font-size:18px;padding:6px 12px;cursor:pointer">👁️</button>
   </div>
   <div class="tabs">
@@ -852,7 +852,21 @@ saveMarcas();
 renderConfig();
 populateMarcasDL();
 }
-function addCostureira(){ var n = document.getElementById("cfg-cs-nome").value.trim(); if(!n){ alert("Digite o nome da costureira."); return; } var existe = COSTUREIRAS.some(function(c){ return c.toLowerCase()===n.toLowerCase(); }); if(!existe){ COSTUREIRAS.push(n); saveCostureiras(); } document.getElementById("cfg-cs-nome").value=""; renderConfig(); } function updateCostureiraNome(i,val){ val = val.trim(); if(!val) return; COSTUREIRAS[i]=val; saveCostureiras(); } function delCostureira(i){ if(!confirm("Remover esta costureira?")) return; COSTUREIRAS.splice(i,1); saveCostureiras(); renderConfig(); } async function renderRelatorio(){
+function addCostureira(){ var n = document.getElementById("cfg-cs-nome").value.trim(); if(!n){ alert("Digite o nome da costureira."); return; } var existe = COSTUREIRAS.some(function(c){ return c.toLowerCase()===n.toLowerCase(); }); if(!existe){ COSTUREIRAS.push(n); saveCostureiras(); supa("costureiras_lista",{method:"POST",prefer:"resolution=merge-duplicates,return=minimal",body:{nome:n, ordem:COSTUREIRAS.length}}).catch(function(){}); } document.getElementById("cfg-cs-nome").value=""; renderConfig(); }
+function updateCostureiraNome(i,val){ val = val.trim(); if(!val) return; var antigo=COSTUREIRAS[i]; COSTUREIRAS[i]=val; saveCostureiras(); supa("costureiras_lista?nome=eq."+encodeURIComponent(antigo),{method:"PATCH",body:{nome:val}}).catch(function(){}); }
+function delCostureira(i){ if(!confirm("Remover esta costureira da lista? As peças dela continuam com o nome.")) return; var nm=COSTUREIRAS[i]; COSTUREIRAS.splice(i,1); saveCostureiras(); supa("costureiras_lista?nome=eq."+encodeURIComponent(nm),{method:"DELETE"}).catch(function(){}); renderConfig(); }
+async function carregarCostureirasDB(){
+  try{
+    var rows = await supa("costureiras_lista?select=nome,ordem&order=ordem.asc,nome.asc"); if(!rows) return;
+    if(!localStorage.getItem("metrica_cos_migrado")){
+      var locais = JSON.parse(localStorage.getItem("metrica_costureiras")||"[]");
+      for(var i=0;i<locais.length;i++){ var l=String(locais[i]||"").trim(); if(!l || COSTUREIRAS_PADRAO.indexOf(l)>=0 && l!=="Allyne (eu)") continue; if(!rows.some(function(r){ return r.nome.toLowerCase()===l.toLowerCase(); })){ try{ await supa("costureiras_lista",{method:"POST",prefer:"resolution=merge-duplicates,return=minimal",body:{nome:l, ordem:50+i}}); rows.push({nome:l}); }catch(e){} } }
+      localStorage.setItem("metrica_cos_migrado","1");
+    }
+    COSTUREIRAS = rows.map(function(r){ return r.nome; }); saveCostureiras();
+    var tc=document.getElementById("tela-config"); if(tc && tc.classList.contains("active")) renderConfig();
+  }catch(e){ console.warn("costureiras", e); }
+} async function renderRelatorio(){
   var el = document.getElementById("rel-conteudo");
   el.innerHTML = "<div class='loading'>Carregando...</div>";
   try {
@@ -2387,7 +2401,7 @@ function enviarSoTextoLista(){
   window.open("https://wa.me/"+tel+"?text="+encodeURIComponent(d.msg||""),"_blank");
   var ov=document.getElementById("img-share"); if(ov) ov.style.display="none";
 }
-carregarServicosDB();
+carregarServicosDB(); carregarCostureirasDB();
 </script>
 <!-- MODAL EDITAR PEÇA -->
 <div class="mov" id="mod-editar">
