@@ -137,7 +137,7 @@ input:focus,select:focus{border-color:#0A0A0A}
 <header>
   <div class="hl">
     <img src="https://allynekarvalho.github.io/metrica-atelie/logo.png" alt="Métrica">
-    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 12/11 10:50</span></p></div>
+    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 12/11 13:30</span></p></div>
     <button id="bt-olho" onclick="toggleValores()" title="Mostrar/ocultar valores" style="margin-left:auto;background:none;border:1px solid #2E2E2E;border-radius:20px;color:#fff;font-size:18px;padding:6px 12px;cursor:pointer">👁️</button>
   </div>
   <div class="tabs">
@@ -1065,12 +1065,16 @@ function imprimirSel(){ var ids = selIds(); if(!ids.length) return; window.IMPR_
 async function selEnviar(){
   var ids = selIds(); if(!ids.length) return;
   try {
-    var pp = await supa("pecas?id=in.("+ids.join(",")+")&order=criado_em") || [];
-    var comValor = !OCULTO;
-    var total = comValor ? pp.reduce(function(t,p){ return t + ((p.sem_custo||emRetrabalho(p)) ? 0 : (Number(p.valor)||0)); },0) : 0;
-    var msg = "Métrica Ateliê\n\n"+pp.map(function(p){ return "• "+p.peca+(p.servico?" — "+String(p.servico).replace(/\s*\n+\s*/g," + "):"")+(comValor && p.valor && !p.sem_custo ? " · "+fval(p.valor) : ""); }).join("\n")+(total>0?"\n\nTotal: "+fval(total):"");
-    abrirEnvioImagem(pp, total, msg, "", comValor);
-  } catch(e){ showToast("Erro ao montar a lista."); }
+    var al="abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789", cod="";
+    for(var i=0;i<8;i++) cod += al[Math.floor(Math.random()*al.length)];
+    await supa("links_pecas",{method:"POST",prefer:"return=minimal",body:{codigo:cod, ids:ids}});
+    var link = "https://allynekarvalho.github.io/metrica-atelie/ver/?c="+cod;
+    var msg = "Métrica Ateliê · "+ids.length+" peça"+(ids.length>1?"s":"")+"\n"+link;
+    document.getElementById("mw-cli").textContent = ids.length+" peça"+(ids.length>1?"s":"")+" selecionada"+(ids.length>1?"s":"");
+    document.getElementById("mw-txt").textContent = msg;
+    document.getElementById("wpp-open").href = "https://wa.me/?text="+encodeURIComponent(msg);
+    document.getElementById("mod-wpp").classList.add("open");
+  } catch(e){ showToast("Erro ao gerar o link."); }
 }
 function calcComSt(){
   var v = parseFloat(document.getElementById("mst-valcos").value)||0;

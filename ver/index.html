@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Métrica Ateliê · Peças</title>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Métrica Ateliê">
+<meta property="og:title" content="Métrica Ateliê · Peças">
+<meta property="og:description" content="Veja as fotos das peças.">
+<meta property="og:image" content="https://allynekarvalho.github.io/metrica-atelie/logo.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"DM Sans",sans-serif;background:#0A0A0A;color:#fff;min-height:100vh}
+.header{padding:24px 20px 16px;border-bottom:1px solid #2E2E2E;display:flex;align-items:center;gap:12px}
+.header img{height:36px}
+.header h1{font-family:"Cormorant Garamond",serif;font-size:16px;font-weight:300;letter-spacing:3px;text-transform:uppercase}
+.header p{font-size:9px;color:#B8B8B8;letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
+.body{padding:20px;max-width:640px;margin:0 auto}
+.sub{font-size:11px;color:#B8B8B8;letter-spacing:.5px;margin-bottom:14px}
+.pcard{background:#1C1C1C;border-radius:10px;margin-bottom:12px;overflow:hidden;border:1px solid #2E2E2E}
+.pfoto{width:100%;height:320px;object-fit:contain;background:#111;display:block;cursor:zoom-in}
+.pfoto-sem{width:100%;height:90px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#777;background:#111}
+.pinfo{padding:14px}
+.pnome{font-size:15px;font-weight:500;text-transform:uppercase}
+.pmarca{font-size:11px;color:#B8B8B8;letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.pserv{font-size:13px;color:#ddd;margin-top:8px;white-space:pre-line}
+.pst{display:inline-block;margin-top:10px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:20px;background:#2E2E2E;color:#ddd}
+.vz{text-align:center;color:#999;padding:40px 10px;font-size:14px}
+#zoom{position:fixed;inset:0;background:rgba(0,0,0,.95);display:none;align-items:center;justify-content:center;z-index:9}
+#zoom img{max-width:100%;max-height:100%}
+</style>
+</head>
+<body>
+<div class="header"><img src="../logo.png" alt=""><div><h1>Métrica</h1><p>Ateliê</p></div></div>
+<div class="body"><div class="sub" id="sub"></div><div id="lista"><div class="vz">Carregando...</div></div></div>
+<div id="zoom" onclick="this.style.display='none'"><img id="zoom-img" alt=""></div>
+<script>
+var U="https://trzjmdrwjqvuzbzbxbhu.supabase.co/rest/v1/", K="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyemptZHJ3anF2dXpiemJ4Ymh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDIyOTAsImV4cCI6MjA5ODg3ODI5MH0.YtZIGWAzpKdHrTdvtwUIRsRYJy5Yvxyn7q3GX_s-uLg";
+function q(p){ return fetch(U+p,{headers:{apikey:K,Authorization:"Bearer "+K}}).then(function(r){ return r.json(); }); }
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+var ST={"aguardando":"Aguardando","em-andamento":"Em andamento","pronto":"Pronta","entregue":"Entregue"};
+function ampliar(u){ document.getElementById("zoom-img").src=u; document.getElementById("zoom").style.display="flex"; }
+(async function(){
+  var c=new URLSearchParams(location.search).get("c"), el=document.getElementById("lista");
+  try{
+    var r=await q("links_pecas?codigo=eq."+encodeURIComponent(c||"")+"&select=ids");
+    if(!r||!r[0]){ el.innerHTML="<div class='vz'>Link não encontrado.</div>"; return; }
+    var ids=r[0].ids, pp=await q("pecas?id=in.("+ids.join(",")+")&select=id,peca,marca,servico,status,foto_url");
+    pp.sort(function(a,b){ return ids.indexOf(a.id)-ids.indexOf(b.id); });
+    document.getElementById("sub").textContent=pp.length+" peça"+(pp.length>1?"s":"");
+    el.innerHTML=pp.map(function(p){
+      return "<div class='pcard'>"+(p.foto_url?"<img class='pfoto' src='"+esc(p.foto_url)+"' onclick='ampliar(this.src)' alt=''>":"<div class='pfoto-sem'>Sem foto</div>")+
+        "<div class='pinfo'><div class='pnome'>"+esc(p.peca)+"</div>"+(p.marca?"<div class='pmarca'>"+esc(p.marca)+"</div>":"")+
+        (p.servico?"<div class='pserv'>"+esc(p.servico)+"</div>":"")+(ST[p.status]?"<span class='pst'>"+ST[p.status]+"</span>":"")+"</div></div>";
+    }).join("")||"<div class='vz'>Nenhuma peça.</div>";
+  }catch(e){ el.innerHTML="<div class='vz'>Não foi possível carregar.</div>"; }
+})();
+</script>
+</body>
+</html>
