@@ -226,6 +226,11 @@ html += "<label class='selw'><input type='checkbox' "+(SEL[p.id]?"checked ":"")+
   if(tipo==="pecas") {
     html += "<button class='btn-toggle"+(p.prioridade_cliente?" ativo":"")+"' onclick=\"togglePeca('"+p.id+"','prioridade_cliente')\">"+(p.prioridade_cliente?"⭐ Prioridade":"☆ Marcar como prioridade")+"</button>";
   }
+  if(tipo==="entregues" && p.data_entrega && !emRetrabalho(p)) {
+    var lim = new Date(p.data_entrega+"T12:00"); lim.setDate(lim.getDate()+10);
+    var hj = new Date(); hj.setHours(12,0,0,0); var limIso = lim.getFullYear()+"-"+String(lim.getMonth()+1).padStart(2,"0")+"-"+String(lim.getDate()).padStart(2,"0");
+    html += lim >= hj ? "<div style='margin-top:6px;font-size:12.5px;color:#8FD18F'>🔁 Retorno sem custo até "+fdata(limIso)+"</div>" : "<div style='margin-top:6px;font-size:12.5px;color:#aaa'>Prazo de retorno sem custo encerrado em "+fdata(limIso)+"</div>";
+  }
   if(tipo==="entregues") {
     if(p.confirmado_cliente_em) {
       html += "<div class='confirmado-txt'>✓ Recebimento confirmado em "+fdata(p.confirmado_cliente_em.split("T")[0])+"</div>";
@@ -488,9 +493,10 @@ var saldoHTML = "<div class='saldo-box'>"+
   document.getElementById("ct-prontos").textContent = prontos.length;
   document.getElementById("ct-entregues").textContent = entregues.length;
   document.getElementById("ct-saldo").textContent = saldo>0?fval(saldo):"";
+  var AVISO_RET = "<div style='margin:0 0 12px;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);font-size:13.5px;line-height:1.45;color:#eee'>🔁 <b>Retorno de peças:</b> ajustes de retorno são <b>sem custo em até 10 dias</b> após a entrega. Depois desse prazo, o serviço será cobrado.</div>";
   var html = "<div class='painel' id='painel-pecas'>"+renderComTotal(emAndamento,"Total em andamento","Nenhuma peça em andamento no momento.","pecas")+"</div>"+
-    "<div class='painel' id='painel-prontos'>"+renderComTotal(prontos,"Total pronto para retirar","Nenhuma peça pronta para retirar no momento.","prontos")+"</div>"+
-    "<div class='painel' id='painel-entregues'>"+renderEntregues(entregues, FALTA)+"</div>"+
+    "<div class='painel' id='painel-prontos'>"+AVISO_RET+renderComTotal(prontos,"Total pronto para retirar","Nenhuma peça pronta para retirar no momento.","prontos")+"</div>"+
+    "<div class='painel' id='painel-entregues'>"+AVISO_RET+renderEntregues(entregues, FALTA)+"</div>"+
     "<div class='painel' id='painel-saldo'>"+saldoHTML+"</div>"+
     "<div class='painel' id='painel-medidas'>"+medidasHTML()+"</div>";
   document.getElementById("body").innerHTML = html;
