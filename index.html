@@ -137,7 +137,7 @@ input:focus,select:focus{border-color:#0A0A0A}
 <header>
   <div class="hl">
     <img src="https://allynekarvalho.github.io/metrica-atelie/logo.png" alt="Métrica">
-    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 19/11 11:55</span></p></div>
+    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 23/11 06:50</span></p></div>
     <button id="bt-olho" onclick="toggleValores()" title="Mostrar/ocultar valores" style="margin-left:auto;background:none;border:1px solid #2E2E2E;border-radius:20px;color:#fff;font-size:18px;padding:6px 12px;cursor:pointer">👁️</button>
   </div>
   <div class="tabs">
@@ -459,7 +459,14 @@ async function supa(path, opts) {
     throw new Error(err);
   }
   var text = await res.text();
-  return text ? JSON.parse(text) : null;
+  var data = text ? JSON.parse(text) : null;
+  // o banco devolve no máximo 1000 linhas por vez: se veio 1000, busca o resto em páginas
+  if((!opts || !opts.method || opts.method==="GET") && Array.isArray(data) && data.length===1000 && !/[?&](limit|offset)=/.test(path) && !(opts && opts._pag)){
+    var base = path + (path.indexOf("?")>=0 ? "&" : "?") + (/[?&]order=/.test(path) ? "" : "order=id.asc&"), tudo = [], off = 0, pg;
+    do { pg = await supa(base + "limit=1000&offset=" + off, { _pag: true }); tudo = tudo.concat(pg||[]); off += 1000; } while(pg && pg.length===1000 && off < 200000);
+    return tudo;
+  }
+  return data;
 }
 async function enviarArquivoFoto(file, path){
   var r = await fetch(SUPA_URL + "/storage/v1/object/fotos-pecas/" + path, { method:"POST", headers:{ "apikey":SUPA_KEY, "Authorization":"Bearer "+SUPA_KEY, "Content-Type":file.type||"image/jpeg", "x-upsert":"true" }, body:file });
