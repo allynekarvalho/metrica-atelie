@@ -137,7 +137,7 @@ input:focus,select:focus{border-color:#0A0A0A}
 <header>
   <div class="hl">
     <img src="https://allynekarvalho.github.io/metrica-atelie/logo.png" alt="Métrica">
-    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 23/11 06:50</span></p></div>
+    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 24/11 10:30</span></p></div>
     <button id="bt-olho" onclick="toggleValores()" title="Mostrar/ocultar valores" style="margin-left:auto;background:none;border:1px solid #2E2E2E;border-radius:20px;color:#fff;font-size:18px;padding:6px 12px;cursor:pointer">👁️</button>
   </div>
   <div class="tabs">
@@ -1463,7 +1463,7 @@ pp.map(function(p){ return mkPecaHTML(p, comAcoes); }).join("")+
 }
 function mkPecaHTML(p, comAcoes){
   var fotoHTML = p.foto_url ? "<img src='"+fotoMini(p.foto_url)+"' class='pfoto' loading='lazy' decoding='async' data-url='"+p.foto_url+"' data-full='"+p.foto_url+"' onerror='fotoCarregaErro(this)' onclick='verFoto(this.dataset.url)'>" : "";
-  var html = "<div class='pi'>"+(comAcoes ? "<label class='selw'><input type='checkbox' class='selp-cb' value='"+p.id+"' onchange='selAtualizar()'><span></span></label>" : "")+"<div class='pin'>"+fotoHTML+"<div class='pn' style='text-transform:uppercase'>"+p.peca+"</div>"+(emRetrabalho(p)?"<div class='ps' style='color:#2E5E2E;font-weight:700'>🔁 Retrabalho · sem custo p/ cliente</div>":"")+(p.observacao?"<div class='ps' style='font-style:italic;color:royalblue'>"+p.observacao+"</div>":"")+(p.marca?"<div class='ps' style='text-transform:uppercase;font-weight:700;color:#6B6B6B'>"+p.marca+"</div>":"")+(p.pago_por?"<div class='ps' style='color:#6B4FA0;font-weight:700'>🏬 "+p.pago_por+(p.loja_pago?" · pago":" · a receber")+"</div>":"")+(p.servico?p.servico.split(" + ").map(function(sv){ return "<div class='ps'>• "+sv+"</div>"; }).join(""):"<div class='ps'>—</div>")+(p.sem_custo?"<div style='display:inline-block;font-size:12px;font-weight:700;color:#2E5E2E;background:#E6F2E6;border-radius:10px;padding:2px 8px;margin-top:4px'>🎁 SEM CUSTO</div>":(!(p.valor>0)&&!emRetrabalho(p))?"<div style='display:inline-block;font-size:12px;font-weight:700;color:#B8860B;background:#FFF4D6;border-radius:10px;padding:2px 8px;margin-top:4px'>⚠️ SEM VALOR</div>":(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+fmtBR(p.valor)+"</div>":""))+"<div class='pc'>"+(p.numero_comanda?"🎫 Nº "+String(p.numero_comanda).padStart(4,"0")+" · ":"")+(p.costureira?"🪡 "+p.costureira+(p.costureira2?" + "+p.costureira2:""):"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div>"+((p.data_pronto||p.data_entrega)?"<div class='pc' style='color:#2E5E2E'>"+(p.data_pronto?"✅ Pronta "+fdata(p.data_pronto):"")+(p.data_pronto&&p.data_entrega?" · ":"")+(p.data_entrega?"🎁 Entregue "+fdata(p.data_entrega):"")+"</div>":"")+(window.CLI_ATIVA_LOJA?(p.pago_em?"<div style='display:inline-block;margin-top:6px;padding:3px 10px;border-radius:12px;background:#E6F2E6;color:#2E5E2E;font-size:12px;font-weight:700'>✅ PAGA em "+fdata(p.pago_em)+"</div>":"<div style='display:inline-block;margin-top:6px;padding:3px 10px;border-radius:12px;background:#FBEAEA;color:#8B0000;font-size:12px;font-weight:700'>⏳ AGUARDANDO PAGAMENTO</div>"):"")+(p.retrabalho_costureira?"<div class='ps' style='color:#B8860B;font-weight:600'>🔁 Retrabalho: "+p.retrabalho_costureira+(p.retrabalho_valor_costureira?" · R$ "+fmtBR(p.retrabalho_valor_costureira):"")+"</div>":"")+(p.prioridade_cliente?"<div class='ps' style='color:#B8860B;font-weight:700'>⭐ Cliente marcou como prioridade</div>":"")+(p.confirmado_cliente_em?"<div class='ps' style='color:#2E5E2E;font-weight:600'>✓ Cliente confirmou recebimento em "+fdata(p.confirmado_cliente_em.split("T")[0])+"</div>":"")+"</div><div class='pd'><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
+  var html = "<div class='pi'>"+(true ? "<label class='selw'><input type='checkbox' class='selp-cb' value='"+p.id+"' onchange='selAtualizar()'><span></span></label>" : "")+"<div class='pin'>"+fotoHTML+"<div class='pn' style='text-transform:uppercase'>"+p.peca+"</div>"+(emRetrabalho(p)?"<div class='ps' style='color:#2E5E2E;font-weight:700'>🔁 Retrabalho · sem custo p/ cliente</div>":"")+(p.observacao?"<div class='ps' style='font-style:italic;color:royalblue'>"+p.observacao+"</div>":"")+(p.marca?"<div class='ps' style='text-transform:uppercase;font-weight:700;color:#6B6B6B'>"+p.marca+"</div>":"")+(p.pago_por?"<div class='ps' style='color:#6B4FA0;font-weight:700'>🏬 "+p.pago_por+(p.loja_pago?" · pago":" · a receber")+"</div>":"")+(p.servico?p.servico.split(" + ").map(function(sv){ return "<div class='ps'>• "+sv+"</div>"; }).join(""):"<div class='ps'>—</div>")+(p.sem_custo?"<div style='display:inline-block;font-size:12px;font-weight:700;color:#2E5E2E;background:#E6F2E6;border-radius:10px;padding:2px 8px;margin-top:4px'>🎁 SEM CUSTO</div>":(!(p.valor>0)&&!emRetrabalho(p))?"<div style='display:inline-block;font-size:12px;font-weight:700;color:#B8860B;background:#FFF4D6;border-radius:10px;padding:2px 8px;margin-top:4px'>⚠️ SEM VALOR</div>":(p.valor?"<div style='font-size:13px;font-weight:600;color:#2E2E2E;margin-top:3px'>R$ "+fmtBR(p.valor)+"</div>":""))+"<div class='pc'>"+(p.numero_comanda?"🎫 Nº "+String(p.numero_comanda).padStart(4,"0")+" · ":"")+(p.costureira?"🪡 "+p.costureira+(p.costureira2?" + "+p.costureira2:""):"")+(p.prazo?" · 📅 "+fdata(p.prazo):"")+"</div>"+((p.data_pronto||p.data_entrega)?"<div class='pc' style='color:#2E5E2E'>"+(p.data_pronto?"✅ Pronta "+fdata(p.data_pronto):"")+(p.data_pronto&&p.data_entrega?" · ":"")+(p.data_entrega?"🎁 Entregue "+fdata(p.data_entrega):"")+"</div>":"")+(window.CLI_ATIVA_LOJA?(p.pago_em?"<div style='display:inline-block;margin-top:6px;padding:3px 10px;border-radius:12px;background:#E6F2E6;color:#2E5E2E;font-size:12px;font-weight:700'>✅ PAGA em "+fdata(p.pago_em)+"</div>":"<div style='display:inline-block;margin-top:6px;padding:3px 10px;border-radius:12px;background:#FBEAEA;color:#8B0000;font-size:12px;font-weight:700'>⏳ AGUARDANDO PAGAMENTO</div>"):"")+(p.retrabalho_costureira?"<div class='ps' style='color:#B8860B;font-weight:600'>🔁 Retrabalho: "+p.retrabalho_costureira+(p.retrabalho_valor_costureira?" · R$ "+fmtBR(p.retrabalho_valor_costureira):"")+"</div>":"")+(p.prioridade_cliente?"<div class='ps' style='color:#B8860B;font-weight:700'>⭐ Cliente marcou como prioridade</div>":"")+(p.confirmado_cliente_em?"<div class='ps' style='color:#2E5E2E;font-weight:600'>✓ Cliente confirmou recebimento em "+fdata(p.confirmado_cliente_em.split("T")[0])+"</div>":"")+"</div><div class='pd'><span class='badge "+(isUrgente(p)?"urgente":p.status)+"'>"+(isUrgente(p)?"🔴 Urgente":slbl(p.status))+"</span><div class='pv'>"+fval(p.valor)+"</div></div></div>";
   if(comAcoes){
     var id = p.id;
     var acoes = "<button class='bm' data-id='"+id+"' data-peca='"+p.peca+"' data-serv='"+(p.servico||"")+"' data-cos='"+(p.costureira||"").replace(/'/g,"&#39;")+"' onclick='abrirSt(this)'>Status</button>";
@@ -2071,11 +2071,14 @@ if(!pecasImprimir || !pecasImprimir.length) pecasImprimir = [p];
 var nums = pecasImprimir.map(function(pc){ return pc.numero_comanda; }).filter(function(n){ return n!=null; });
 if(!nums.length && apenasEsta) nums = pecasDia.map(function(pc){ return pc.numero_comanda; }).filter(function(n){ return n!=null; });
 var numeroComanda = nums.length ? Math.min.apply(null, nums) : null;
-if(!numeroComanda){
+var manterNums = pecasImprimir.every(function(pc){ return pc.status==="entregue" && pc.numero_comanda!=null; });
+var numsDist = manterNums ? nums.filter(function(n,i){ return nums.indexOf(n)===i; }).sort(function(a,b){ return a-b; }) : [];
+if(manterNums){ /* peças já entregues: mantém o número de cada uma */ }
+else if(!numeroComanda){
   var ultimo = await supa("pecas?numero_comanda=not.is.null&order=numero_comanda.desc&limit=1");
   numeroComanda = ((ultimo&&ultimo[0]&&ultimo[0].numero_comanda)||0) + 1;
 }
-var mudar = pecasImprimir.filter(function(pc){ return pc.numero_comanda !== numeroComanda; });
+var mudar = manterNums ? [] : pecasImprimir.filter(function(pc){ return pc.numero_comanda !== numeroComanda; });
 if(mudar.length){
   await Promise.all(mudar.map(function(pc){ return supa("pecas?id=eq."+pc.id, {method:"PATCH", body:{numero_comanda:numeroComanda}}); }));
   mudar.forEach(function(pc){ pc.numero_comanda = numeroComanda; });
@@ -2088,6 +2091,7 @@ pecasImprimir.forEach(function(pc){
 if(_vcUpd.length) await Promise.all(_vcUpd);
 var itensHTML = pecasImprimir.map(function(pc){
 return "<div class='item-peca'>"+
+(numsDist.length>1?"<div class='label'>Nº "+String(pc.numero_comanda).padStart(4,"0")+(pc.data_entrada?" · "+fdata(pc.data_entrada):"")+"</div>":"")+
 "<div class='pc-nome'>"+pc.peca+(pc.marca?" <span class='pc-marca'>· "+pc.marca+"</span>":"")+"</div>"+
 "<div class='servico'>"+(pc.servico||"")+"</div>"+
 "<div class='vcos'>"+(pc.costureira?"Costureira: <b>"+pc.costureira+"</b> · ":"")+"Valor: R$ "+(Number(pc.valor_costureira)>0?"<b>"+fmtBR(pc.valor_costureira)+"</b>":"__________")+"</div>"+
@@ -2096,7 +2100,7 @@ return "<div class='item-peca'>"+
 var corpo = "<div class='via'>"+
 "<div class='header'><h1>MÉTRICA ATELIÊ</h1><p>Allyne Carvalho · Ordem de Serviço</p><div class='os-num'>"+p.cliente_nome+" · "+pecasImprimir.length+" peça"+(pecasImprimir.length>1?"s":"")+"</div></div>"+
 "<div class='row'>"+
-"<div class='campo' style='flex:2'><div class='label'>Pedido</div><div class='valor' style='font-size:24px;font-weight:800;letter-spacing:1px'>Nº "+String(numeroComanda).padStart(4,"0")+"</div></div>"+
+"<div class='campo' style='flex:2'><div class='label'>Pedido</div><div class='valor' style='font-size:24px;font-weight:800;letter-spacing:1px'>Nº "+(numsDist.length>1?numsDist.map(function(n){ return String(n).padStart(4,"0"); }).join(", "):String(numeroComanda).padStart(4,"0"))+"</div></div>"+
 "<div class='campo' style='flex:1'><div class='label'>Data</div><div class='valor'>"+data+"</div></div>"+
 "</div>"+
 itensHTML+
