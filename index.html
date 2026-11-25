@@ -137,7 +137,7 @@ input:focus,select:focus{border-color:#0A0A0A}
 <header>
   <div class="hl">
     <img src="https://allynekarvalho.github.io/metrica-atelie/logo.png" alt="Métrica">
-    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 24/11 10:30</span></p></div>
+    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 25/11 10:35</span></p></div>
     <button id="bt-olho" onclick="toggleValores()" title="Mostrar/ocultar valores" style="margin-left:auto;background:none;border:1px solid #2E2E2E;border-radius:20px;color:#fff;font-size:18px;padding:6px 12px;cursor:pointer">👁️</button>
   </div>
   <div class="tabs">
@@ -2086,7 +2086,7 @@ if(mudar.length){
 var data = p.data_entrada ? new Date(p.data_entrada+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"}) : new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
 var _vcUpd = [];
 pecasImprimir.forEach(function(pc){
-  if(!(Number(pc.valor_costureira)>0) && !pc.sem_custo){ var est = vcEstimado(pc.servico); if(est>0){ pc.valor_costureira = est; _vcUpd.push(supa("pecas?id=eq."+pc.id,{method:"PATCH",body:{valor_costureira:est, comissao:+(est*0.45).toFixed(2)}}).catch(function(){})); } }
+  /* não preenche mais sozinho na impressão: respeita o valor salvo na edição (vazio = linha em branco) */
 });
 if(_vcUpd.length) await Promise.all(_vcUpd);
 var itensHTML = pecasImprimir.map(function(pc){
