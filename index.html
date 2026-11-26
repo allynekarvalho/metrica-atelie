@@ -137,7 +137,7 @@ input:focus,select:focus{border-color:#0A0A0A}
 <header>
   <div class="hl">
     <img src="https://allynekarvalho.github.io/metrica-atelie/logo.png" alt="Métrica">
-    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 26/11 07:00</span></p></div>
+    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 26/11 07:10</span></p></div>
     <button id="bt-olho" onclick="toggleValores()" title="Mostrar/ocultar valores" style="margin-left:auto;background:none;border:1px solid #2E2E2E;border-radius:20px;color:#fff;font-size:18px;padding:6px 12px;cursor:pointer">👁️</button>
   </div>
   <div class="tabs">
@@ -1524,18 +1524,20 @@ function contaSimplesHTML(pecas, pags, saldoAnt, desconto){
     "</div>";
 }
 function contaAtualHTML(ALP, faltaAnt){
-  var g = {andamento:0, pronto:0, entregue:0}, abertos = ALP.itens.filter(function(i){ return i.falta > 0.009; });
-  abertos.forEach(function(i){ var st = i.p.status; g[st==="entregue"?"entregue":(st==="pronto"?"pronto":"andamento")] += i.falta; });
+  // só o que está em aberto (pagamentos e desconto já abatidos das peças mais antigas)
+  var g = {andamento:0, pronto:0, entregue:0}, n = {andamento:0, pronto:0, entregue:0}, abertos = ALP.itens.filter(function(i){ return i.falta > 0.009; });
+  abertos.forEach(function(i){ var st = i.p.status, k = st==="entregue"?"entregue":(st==="pronto"?"pronto":"andamento"); g[k] += i.falta; n[k]++; });
   var total = (faltaAnt||0) + g.andamento + g.pronto + g.entregue;
+  var qt = function(k){ return " <span style='color:#9A9A9A;font-weight:400'>("+n[k]+" peça"+(n[k]!==1?"s":"")+")</span>"; };
   var ln = function(ico, lbl, v){ return v > 0.009 ? "<div style='display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid #F0F0F0;font-size:15px;color:#0A0A0A'><span>"+ico+" "+lbl+"</span><b style='white-space:nowrap'>"+fval(v)+"</b></div>" : ""; };
-  var lista = abertos.map(function(i){ var p=i.p; return "<div style='display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:12px;color:#555'><span style='text-transform:uppercase'>"+p.peca+"</span><span style='white-space:nowrap'>"+fval(i.falta)+"</span></div>"; }).join("");
+  var lista = abertos.map(function(i){ var p=i.p, parc = i.falta < (p.valor||0)-0.009; return "<div style='display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:12px;color:#555'><span style='text-transform:uppercase'>"+p.peca+(parc?" <span style='text-transform:none;color:#9A9A9A'>(falta parte)</span>":"")+"</span><span style='white-space:nowrap'>"+fval(i.falta)+"</span></div>"; }).join("");
   return "<div style='margin-top:12px'>"+
     ln("📌","Saldo anterior", faltaAnt||0)+
-    ln("🧵","Peças em andamento", g.andamento)+
-    ln("✅","Peças prontas", g.pronto)+
-    ln("🎁","Peças entregues", g.entregue)+
-    "<div style='display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px;border-top:2px solid #0A0A0A;font-size:16px;font-weight:700;color:#0A0A0A'><span>Total</span><span>"+fval(total)+"</span></div>"+
-    (abertos.length ? "<details style='margin-top:6px'><summary style='font-size:12px;color:#9A9A9A;cursor:pointer;list-style:none'>Ver peças ›</summary><div style='margin-top:4px'>"+lista+"</div></details>" : "")+
+    ln("🧵","Em andamento"+qt("andamento"), g.andamento)+
+    ln("✅","Prontas"+qt("pronto"), g.pronto)+
+    ln("🎁","Entregues"+qt("entregue"), g.entregue)+
+    "<div style='display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px;border-top:2px solid #0A0A0A;font-size:16px;font-weight:700;color:#0A0A0A'><span>Falta pagar</span><span>"+fval(total)+"</span></div>"+
+    (abertos.length ? "<details style='margin-top:6px'><summary style='font-size:12px;color:#9A9A9A;cursor:pointer;list-style:none'>Ver peças em aberto ›</summary><div style='margin-top:4px'>"+lista+"</div></details>" : "")+
     "</div>";
 }
 async function renderFinanceiro(){
@@ -1562,7 +1564,7 @@ async function renderFinanceiro(){
     ALP.itens.forEach(function(i){ if(i.p.status==="entregue") faltaEnt+=i.falta; else faltaAt+=i.falta; });
     var faltaAnt = Math.max(0, +(saldoAnt-ALP.antPago).toFixed(2));
     var linhaS = function(ico, lbl, v){ return "<div style='display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid #F0F0F0;font-size:14px;color:#0A0A0A'><span>"+ico+" "+lbl+"</span><b style='white-space:nowrap'>"+fval(v)+"</b></div>"; };
-    var separaHTML = saldo>0.009 ? contaSimplesHTML(pecas.filter(function(p){ return !p.pago_por; }), pags, saldoAnt, desconto) : "<div style='margin-top:10px;font-size:13px;color:#2E5E2E'>Conta zerada. Novas peças começam uma conta nova. 🌸</div>";
+    var separaHTML = saldo>0.009 ? contaAtualHTML(ALP, faltaAnt) : "<div style='margin-top:10px;font-size:13px;color:#2E5E2E'>Conta zerada. Novas peças começam uma conta nova. 🌸</div>";
     var resumoHTML = "<div style='background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:18px 16px;margin-bottom:12px'>"+
       "<div style='display:flex;justify-content:space-between;align-items:baseline'><div style='font-size:14px;font-weight:700;color:#0A0A0A;text-transform:uppercase;letter-spacing:.5px'>"+(saldo>0.009?"Total a pagar":"Situação")+"</div><div style='font-size:26px;font-weight:700;color:"+cor+"'>"+(saldo>0.009?fval(saldo):"Tudo pago ✓")+"</div></div>"+
       separaHTML+
@@ -1579,9 +1581,9 @@ async function renderFinanceiro(){
     var pgMeses = {}; pags.forEach(function(p){ var m=(p.data||"").slice(0,7)||"sem-data"; (pgMeses[m]=pgMeses[m]||[]).push(p); });
     var pgOrd = Object.keys(pgMeses).sort().reverse();
     var pgHTML = pags.length
-      ? "<div style='font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#B8B8B8;margin:16px 0 8px'>💵 Pagamentos já feitos</div>"+pgOrd.map(function(m){ var pp=pgMeses[m], t=pp.reduce(function(s,p){ return s+(p.valor||0); },0);
+      ? "<details style='margin:16px 0 8px'><summary style='display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#fff;border:1px solid #E8E8E8;border-radius:10px;cursor:pointer;list-style:none;font-size:14px;font-weight:700;color:#2E5E2E'><span>✅ Já pago"+(desconto>0?" <span style='font-weight:400;color:#6B6B6B'>+ desconto "+fval(desconto)+"</span>":"")+"</span><span style='white-space:nowrap'>"+fval(totPg)+" ›</span></summary><div style='margin-top:8px'>"+pgOrd.map(function(m){ var pp=pgMeses[m], t=pp.reduce(function(s,p){ return s+(p.valor||0); },0);
           return "<details class='pgl' style='margin-bottom:8px'><summary style='display:flex;justify-content:space-between;align-items:center;padding:14px 16px;cursor:pointer;list-style:none;font-size:14px;font-weight:700;color:#2E5E2E'><span>✅ "+(m==="sem-data"?"Sem data":relmNomeMes(m))+" <span style='font-weight:400;color:#6B6B6B'>("+pp.length+")</span></span><span style='white-space:nowrap'>"+fval(t)+" ›</span></summary>"+
-            pp.map(function(p){ return "<div class='pgi'><div><div class='pgv'>+ "+fval(p.valor)+"</div><div class='pgd'>"+(p.data?p.data.split("-").reverse().join("/"):"")+(p.forma?" · "+p.forma:"")+(p.observacao?" · "+p.observacao:"")+"</div></div><button data-id='"+p.id+"' onclick='excluirPag(this)' style='font-size:11px;color:#B8B8B8;border:none;background:none;cursor:pointer'>✕</button></div>"; }).join("")+"</details>"; }).join("")
+            pp.map(function(p){ return "<div class='pgi'><div><div class='pgv'>+ "+fval(p.valor)+"</div><div class='pgd'>"+(p.data?p.data.split("-").reverse().join("/"):"")+(p.forma?" · "+p.forma:"")+(p.observacao?" · "+p.observacao:"")+"</div></div><button data-id='"+p.id+"' onclick='excluirPag(this)' style='font-size:11px;color:#B8B8B8;border:none;background:none;cursor:pointer'>✕</button></div>"; }).join("")+"</details>"; }).join("")+"</div></details>"
       : "<div class='pgl'><div style='padding:16px;font-size:13px;color:#6B6B6B'>Nenhum pagamento registrado.</div></div>";
     var hojeStr = new Date().toISOString().split("T")[0];
     document.getElementById("fp-f").innerHTML =
