@@ -137,7 +137,7 @@ input:focus,select:focus{border-color:#0A0A0A}
 <header>
   <div class="hl">
     <img src="https://allynekarvalho.github.io/metrica-atelie/logo.png" alt="Métrica">
-    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 25/11 10:35</span></p></div>
+    <div class="ht"><h1>Métrica</h1><p>Allyne Carvalho · Ateliê <span style="opacity:.45;font-size:9px;letter-spacing:0">v 26/11 06:50</span></p></div>
     <button id="bt-olho" onclick="toggleValores()" title="Mostrar/ocultar valores" style="margin-left:auto;background:none;border:1px solid #2E2E2E;border-radius:20px;color:#fff;font-size:18px;padding:6px 12px;cursor:pointer">👁️</button>
   </div>
   <div class="tabs">
@@ -623,7 +623,7 @@ function relmImprimir(){
     "<tr><td>Peças do mês ("+d.pp.length+" peça"+(d.pp.length!==1?"s":"")+")</td><td class='v'>"+fval(d.tot)+"</td></tr>"+
     (d.pg.length?"<tr><td>Pago no mês</td><td class='v'>− "+fval(d.totPg)+"</td></tr>":"")+
     "<tr><td><b>Total a pagar</b></td><td class='v'><b>"+fval(Math.max(d.totalPagar,0))+"</b></td></tr></table></body></html>";
-  var w=window.open("","_blank"); if(!w){ alert("Libere pop-ups para imprimir."); return; } w.document.write(html); w.document.close();
+  var w=window.open("","_blank"); if(!w){ alert("Libere pop-ups para imprimir."); return; } w.document.write(html); w.document.close(); w.addEventListener("afterprint",function(){setTimeout(function(){try{w.close();}catch(e){}},300);});
 }
 function slbl(s){ return {urgente:"Urgente",aguardando:"Aguardando","em-andamento":"Em andamento",pronto:"Pronto",entregue:"Entregue"}[s]||s; } function prazoVencido(p){ if(!p||!p.prazo) return false; if(p.status==="pronto"||p.status==="entregue") return false; var lim=new Date(); lim.setDate(lim.getDate()+1); var limStr=lim.toISOString().split("T")[0]; return p.prazo<=limStr; } function isUrgente(p){ if(p&&p.ignorar_urgente) return false; return prazoVencido(p); }
 function fdata(d){ if(!d)return""; return new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}); }
@@ -2056,7 +2056,7 @@ function comImprimir(c){
     "<div class='barra'><button onclick='window.close()'>✕ Fechar</button><button class='bimp' onclick='window.print()'>🖨️ Imprimir</button></div>"+
     "<h1>Métrica Ateliê · Comissão · "+esc(c)+"</h1><div class='sub'>"+esc(t.titulo)+"</div>"+tot+
     "<div class='cols'>"+blocos+"</div>"+tot+"<div class='sub' style='margin-top:4px'>"+gs.length+" comandas</div>"+"</body></html>";
-  var w=window.open("","_blank"); if(!w){ alert("Libere pop-ups para imprimir."); return; } w.document.write(html); w.document.close();
+  var w=window.open("","_blank"); if(!w){ alert("Libere pop-ups para imprimir."); return; } w.document.write(html); w.document.close(); w.addEventListener("afterprint",function(){setTimeout(function(){try{w.close();}catch(e){}},300);});
 }
 function populateLojaSelect(){var sel=document.getElementById("fechloja-nome");if(!sel)return;var cur=sel.value;sel.innerHTML="<option value=''>Selecione a loja...</option>"+LOJAS.slice().sort().map(function(l){return "<option"+(l===cur?" selected":"")+">"+l+"</option>";}).join("");}async function renderFechamentoLoja(){populateLojaSelect();var loja=document.getElementById("fechloja-nome").value;var mesEl=document.getElementById("fechloja-mes");if(!mesEl.value){var hj=new Date();mesEl.value=hj.getFullYear()+"-"+String(hj.getMonth()+1).padStart(2,"0");}var mes=mesEl.value;var box=document.getElementById("res-fechloja");if(!loja){box.innerHTML="<div class='vz'>Selecione uma loja para ver o fechamento.</div>";return;}box.innerHTML="<div class='loading'>Carregando...</div>";var partes=mes.split("-");var ini=mes+"-01";var ultimoDia=new Date(parseInt(partes[0]),parseInt(partes[1]),0).getDate();var fim=mes+"-"+String(ultimoDia).padStart(2,"0");try{var pecasLoja=await supa("pecas?pago_por=eq."+encodeURIComponent(loja)+"&data_entrada=gte."+ini+"&data_entrada=lte."+fim+"&order=data_entrada");var pend=pecasLoja.filter(function(p){return !p.loja_pago;});var pagas=pecasLoja.filter(function(p){return p.loja_pago;});var totPend=pend.reduce(function(s,p){return s+(p.valor||0);},0);var totPagas=pagas.reduce(function(s,p){return s+(p.valor||0);},0);var linhaP=function(p){return "<div class='cp'><span style='color:#2E2E2E'>"+p.cliente_nome+" · "+p.peca+"</span><span style='font-weight:600;color:#8B0000'>"+fval(p.valor)+"</span></div>";};var html="<div class='cb'><div class='ct'>🏬 "+loja+" · "+pend.length+" pendente"+(pend.length!==1?"s":"")+"</div>"+(pend.length?pend.map(linhaP).join(""):"<div class='cp'><span style='color:#6B6B6B'>Nenhuma pendência neste mês.</span></div>")+"<div class='cp' style='border-top:1px solid #F0F0F0;margin-top:6px;padding-top:8px'><span style='font-weight:700'>Total a receber</span><span style='font-weight:700;color:#8B0000'>"+fval(totPend)+"</span></div></div>"+(pagas.length?("<div class='cb'><div class='ct'>✓ Já pagas neste mês · "+pagas.length+"</div><div class='cp'><span style='color:#2E2E2E'>Total recebido</span><span style='font-weight:600;color:#2E5E2E'>"+fval(totPagas)+"</span></div></div>"):"");if(pend.length){html+="<button class='btn-p' style='margin-top:10px' onclick='marcarFechamentoLojaPago("+JSON.stringify(loja)+","+JSON.stringify(ini)+","+JSON.stringify(fim)+")'>✓ Marcar mês como pago ("+fval(totPend)+")</button>";}box.innerHTML=html;}catch(e){box.innerHTML="<div style='padding:12px;color:red'>Erro: "+e.message+"</div>";}}async function marcarFechamentoLojaPago(loja,ini,fim){if(!confirm("Confirmar recebimento de "+loja+" para este período?"))return;await supa("pecas?pago_por=eq."+encodeURIComponent(loja)+"&data_entrada=gte."+ini+"&data_entrada=lte."+fim+"&loja_pago=eq.false",{method:"PATCH",body:{loja_pago:true}});showToast("Fechamento registrado!");renderFechamentoLoja();}async function imprimirComanda(id, apenasEsta) {
 var idsSel = window.IMPR_IDS || null; window.IMPR_IDS = null;
@@ -2135,6 +2135,7 @@ var html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><meta name='viewpor
 "<div class='barra'><button onclick='fechar()'>✕ Fechar</button><button class='bimp' onclick='window.print()'>🖨️ Imprimir</button></div>"+
 corpo+
 "<scr"+"ipt>function fechar(){window.close();setTimeout(function(){if(!window.closed){history.length>1?history.back():alert('Pode fechar esta aba.');}},200);}</scr"+"ipt>"+
+"<scr"+"ipt>window.addEventListener('afterprint',function(){setTimeout(function(){try{window.close();}catch(e){}},300);});</scr"+"ipt>"+
 "</body></html>";
 var blob = new Blob([html], {type:"text/html"});
 var url = URL.createObjectURL(blob);
@@ -2321,7 +2322,7 @@ function imprimirEtiqueta(){
     "</style></head><body><div class='bar'><button onclick='window.print()'>🖨️ Imprimir</button></div><div class='tira'>"+et+"</div></body></html>";
   fecharEtiqueta();
   if(!win){ alert("O celular bloqueou a janela de impressão. Tente de novo."); return; }
-  win.document.write(html); win.document.close();
+  win.document.write(html); win.document.close(); win.addEventListener("afterprint",function(){setTimeout(function(){try{win.close();}catch(e){}},300);});
   setTimeout(function(){ try{ win.print(); }catch(e){} }, 600);
 }
 async function gerarPDFCliente(){
@@ -2337,7 +2338,7 @@ async function gerarPDFCliente(){
     }).join("")+
     "<div class='rodape'>Métrica Ateliê · Allyne Carvalho</div></body></html>";
   win.document.write(html);
-  win.document.close();
+  win.document.close(); win.addEventListener("afterprint",function(){setTimeout(function(){try{win.close();}catch(e){}},300);});
   setTimeout(function(){ win.print(); },500);
 }
 
